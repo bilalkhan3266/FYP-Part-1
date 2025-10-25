@@ -740,7 +740,10 @@ body {
   font-size: 13px;
   box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.1);
   position: relative;
-  min-width: 2px;
+  min-width: 32px;
+  background-size: 100% 100%;
+  background-position: left center;
+  background-repeat: no-repeat;
 }
 
 .progress-bar-fill::after {

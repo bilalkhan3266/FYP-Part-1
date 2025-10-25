@@ -337,7 +337,22 @@ export default function StudentDashboard() {
                   stroke={getProgressColor(progress)}
                   style={{ strokeDashoffset: 339.292 - (339.292 * progress) / 100 }}
                 />
-                <text x="50%" y="50%" textAnchor="middle" dy=".3em" className="percent-text">
+                <text 
+                  x="60" 
+                  y="65" 
+                  textAnchor="middle" 
+                  dominantBaseline="central" 
+                  className="percent-text"
+                  transform="rotate(90 60 65)"
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "bold",
+                    fill: getProgressColor(progress),
+                    fontFamily: "'Segoe UI', Arial, sans-serif",
+                    letterSpacing: "0",
+                    pointerEvents: "none"
+                  }}
+                >
                   {progress}%
                 </text>
               </svg>
