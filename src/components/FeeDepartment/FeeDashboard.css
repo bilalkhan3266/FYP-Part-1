@@ -1,0 +1,140 @@
+
+/* ✅ Overall Layout */
+.student-dashboard {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+  background: #eef2f7;
+}
+
+/* ✅ Sidebar (Left Navigation) */
+.sidebar {
+  width: 240px;
+  background: #1e3a8a; /* Dark Blue */
+  color: white;
+  padding: 25px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar .logo {
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar ul li {
+  padding: 12px 15px;
+  margin: 5px 0;
+  background: #2a4cb0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sidebar ul li:hover {
+  background: #3b5fdc;
+  transform: translateX(5px);
+}
+
+.sidebar ul li.logout {
+  background: #d62828;
+}
+
+.sidebar ul li.logout:hover {
+  background: #ff4d4d;
+}
+
+/* ✅ Main Content Area */
+.main-content {
+  flex: 1;
+  padding: 40px;
+}
+
+.main-content h1 {
+  font-size: 30px;
+  font-weight: bold;
+  color: #1e3a8a;
+}
+
+.main-content p {
+  color: #555;
+  margin-bottom: 20px;
+}
+
+/* ✅ Dashboard Cards Layout */
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.card {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.card h3 {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.card p {
+  font-size: 14px;
+  color: #666;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.logout-card {
+  background: #d62828;
+  color: white;
+}
+
+.logout-card:hover {
+  background: #ff4d4d;
+}
+
+/* ✅ Search Bar for SAP ID */
+.search-bar {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.search-bar input {
+  padding: 10px;
+  width: 250px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.search-bar button {
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.search-bar button:hover {
+  background: #3b5fdc;
+}

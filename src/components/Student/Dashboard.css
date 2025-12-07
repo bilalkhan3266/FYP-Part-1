@@ -1,0 +1,399 @@
+/* ---- Root & utilities ---- */
+:root {
+  --primary: #003366;
+  --primary-2: #00509e;
+  --bg: #f4f7fc;
+  --card: #fff;
+  --muted: #6b7280;
+  --success: #16a34a;
+  --pending: #f59e0b;
+  --danger: #ef4444;
+  --radius: 12px;
+  --shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+}
+
+/* ---- Reset ---- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: #0f172a;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* ---- Layout ---- */
+.student-dashboard-page {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ---- Sidebar ---- */
+.sd-sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, #0a0f24 0%, #1b2a56 50%, #182848 100%);
+  color: white;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  box-shadow: 4px 0 25px rgba(0, 0, 0, 0.25);
+  z-index: 10;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Sidebar Profile */
+.sd-profile {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.sd-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #1b4d8f, #0a2647);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 20px;
+  color: white;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.sd-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.sd-small {
+  margin: 0;
+  color: #c9d8ff;
+  font-size: 13px;
+}
+
+/* Navigation */
+.sd-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.sd-nav-btn {
+  background: transparent;
+  border: 0;
+  color: white;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.25s ease;
+}
+
+.sd-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(6px);
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+.sd-nav-btn.active {
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.25);
+}
+
+.sd-nav-btn i {
+  font-size: 18px;
+  color: #b0c4ff;
+}
+
+.sd-footer {
+  font-size: 12px;
+  color: #a5b8e6;
+  text-align: center;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ---- Main Content ---- */
+.sd-main {
+  margin-left: 260px;
+  flex-grow: 1;
+  padding: 32px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: var(--bg);
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/* Header */
+.sd-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.sd-header h1 {
+  color: var(--primary);
+  font-size: 22px;
+}
+
+.sd-header p {
+  color: var(--muted);
+}
+
+/* ---- Buttons ---- */
+.btn-refresh {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+.btn-refresh:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.btn-submit {
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+}
+
+/* Message Button */
+.btn-message {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.btn-message:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* ---- Overview Cards ---- */
+.sd-overview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  width: 100%;
+  align-items: stretch;
+}
+
+.sd-progress-card,
+.sd-actions-card {
+  background: var(--card);
+  padding: 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  flex: 1 1 320px;
+  min-width: 300px;
+}
+
+/* Circular Progress */
+.sd-progress-circle {
+  width: 150px;
+  height: 150px;
+  margin: 12px auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sd-progress-circle svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.sd-progress-circle circle {
+  fill: none;
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+
+.sd-progress-circle circle.bg {
+  stroke: #d0d7f5;
+}
+
+.sd-progress-circle circle.progress {
+  stroke-dasharray: 339.292;
+  transition: stroke-dashoffset 0.7s ease, stroke 0.7s ease;
+}
+
+/* ---- Card Status ---- */
+.status {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.status.cleared {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status.pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.status.rejected {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* ---- Cards ---- */
+.sd-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.sd-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.sd-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.sd-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+/* ---- Quick Grid Buttons ---- */
+.sd-quick-grid button {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #dbeafe;
+  background: rgb(234, 92, 92);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
+.sd-quick-grid button:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-3px);
+}
+/* ---- Button Container ---- */
+.sd-header-actions {
+  display: flex;
+  gap: 12px; /* space between buttons */
+  align-items: center;
+  justify-content: flex-end; /* align buttons to the right */
+  margin-top: 12px;
+  flex-wrap: wrap; /* allow wrapping on smaller screens */
+}
+
+/* ---- Refresh Button ---- */
+.btn-refresh {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.25s ease;
+  flex: 1 1 auto; /* allow shrinking on smaller screens */
+  text-align: center;
+}
+
+.btn-refresh:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+/* ---- Submit New Request Button ---- */
+.btn-submit {
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.25s ease;
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+}
+
+/* ---- Responsive Adjustment ---- */
+@media (max-width: 600px) {
+  .sd-header-actions {
+    flex-direction: column; /* stack buttons vertically */
+    align-items: stretch;
+  }
+
+  .btn-refresh,
+  .btn-submit {
+    width: 100%; /* full width on small screens */
+  }
+}
+

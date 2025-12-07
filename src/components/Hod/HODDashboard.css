@@ -1,0 +1,298 @@
+/* 🌐 Root Variables */
+:root {
+  --primary: #0a0f24;
+  --primary-light: #182848;
+  --accent: #0356d6;
+  --bg-light: #f4f7fc;
+  --white: #ffffff;
+  --text-dark: #333;
+  --text-light: #fff;
+  --success: #28a745;
+  --warning: #ffc107;
+  --danger: #ff4d4d;
+  --radius: 12px;
+  --shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  --transition: 0.3s ease;
+}
+
+/* 🧭 Full Page Layout */
+.hod-dashboard-page {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+  background-color: var(--bg-light);
+  font-family: "Segoe UI", sans-serif;
+  overflow: hidden;
+}
+
+/* 🧱 Sidebar Styling */
+.hod-sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: var(--text-light);
+  padding: 30px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 4px 0 25px rgba(0, 0, 0, 0.25);
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+}
+
+.hod-profile {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.hod-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #1b4d8f, #0a2647);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 22px;
+  margin: 0 auto 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.hod-profile h2 {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.hod-profile p {
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+/* 📋 Sidebar Menu */
+.hod-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hod-menu button {
+  width: 100%;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  color: var(--text-light);
+  font-size: 15px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hod-menu button:hover,
+.menu-active {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateX(5px);
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.1);
+}
+
+.hod-menu button i {
+  font-size: 17px;
+  color: #bcd3ff;
+}
+
+.logout-btn {
+  color: #ff6b6b;
+  margin-top: 10px;
+}
+
+.hod-footer {
+  font-size: 12px;
+  text-align: center;
+  opacity: 0.6;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 📄 Main Content */
+.hod-main-content {
+  flex: 1;
+  margin-left: 260px;
+  padding: 40px 50px;
+  overflow-y: auto;
+  height: 100vh;
+}
+
+/* 🧩 Header */
+.hod-header {
+  background: var(--white);
+  padding: 25px 30px;
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
+  margin-bottom: 30px;
+}
+
+.hod-header h1 {
+  color: var(--primary);
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.hod-header p {
+  color: #555;
+  font-size: 15px;
+}
+
+/* 📊 Table */
+.table-wrapper {
+  background: var(--white);
+  padding: 25px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow-x: auto;
+}
+
+.hod-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.hod-table th,
+.hod-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+}
+
+.hod-table th {
+  background: #eef1f7;
+  color: var(--primary);
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+}
+
+.hod-table tbody tr:hover {
+  background: #f5f7ff;
+}
+
+/* ✅ Approve Button */
+.approve-btn {
+  background: var(--success);
+  color: #fff;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.approve-btn:hover {
+  background: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(40, 167, 69, 0.25);
+}
+
+/* ⏳ Pending Button */
+.pending-btn {
+  background: var(--warning);
+  color: #222;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+/* ❌ Reject Button (added for consistency) */
+.reject-btn {
+  background: var(--danger);
+  color: #fff;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.reject-btn:hover {
+  background: #e03333;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(255, 77, 77, 0.25);
+}
+
+/* 🧾 Barcode Section */
+.barcode-area {
+  margin-top: 40px;
+  text-align: center;
+  background: var(--white);
+  padding: 30px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.barcode-area h2 {
+  color: var(--success);
+  margin-bottom: 15px;
+}
+
+.barcode-box {
+  margin: 20px 0;
+}
+
+.print-btn {
+  background: var(--accent);
+  color: var(--text-light);
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.print-btn:hover {
+  background: #004bb5;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(3, 86, 214, 0.3);
+}
+
+/* 📱 Responsive */
+@media (max-width: 992px) {
+  .hod-sidebar {
+    position: static;
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+  }
+
+  .hod-main-content {
+    margin-left: 0;
+    padding: 24px 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .hod-header h1 {
+    font-size: 20px;
+  }
+
+  .hod-header p {
+    font-size: 13px;
+  }
+
+  .approve-btn,
+  .pending-btn,
+  .reject-btn {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+}

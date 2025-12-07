@@ -1,0 +1,219 @@
+/* ========== CSS Variables ========== */
+:root {
+  --primary-color: #003366;
+  --primary-2: #00509e;
+  --success-color: #10b981;
+  --pending-color: #f59e0b;
+  --danger-color: #ef4444;
+  --bg-light: #f8f9fa;
+  --text-dark: #1f2937;
+  --text-light: #6b7280;
+  --border-color: #e5e7eb;
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== Table Container ========== */
+.table-container {
+  padding: 30px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-light);
+  min-height: 100vh;
+}
+
+.table-container h2 {
+  color: var(--primary-color);
+  margin: 0 0 25px 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* ========== Table Styling ========== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  box-shadow: var(--shadow-md);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 30px;
+}
+
+table thead tr {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-2) 100%);
+}
+
+th {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-dark);
+  font-size: 14px;
+}
+
+tbody tr {
+  transition: var(--transition);
+}
+
+tbody tr:hover {
+  background-color: var(--bg-light);
+}
+
+/* ========== Input Fields ========== */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+textarea {
+  padding: 10px 12px;
+  width: 100%;
+  border: 1.5px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: 'Segoe UI', sans-serif;
+  transition: var(--transition);
+  background: white;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-light);
+}
+
+/* ========== Action Buttons ========== */
+button {
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: white;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: var(--transition);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+button:hover {
+  background: rgba(0, 51, 102, 0.05);
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* ========== Status Badges ========== */
+.status-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-approved {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+  color: #065f46;
+}
+
+.status-pending {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
+  color: #92400e;
+}
+
+.status-rejected {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+  color: #7f1d1d;
+}
+
+/* ========== Responsive Design ========== */
+@media (max-width: 1024px) {
+  .table-container {
+    padding: 20px;
+  }
+
+  table {
+    font-size: 13px;
+  }
+
+  th,
+  td {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .table-container {
+    padding: 15px;
+  }
+
+  .table-container h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  th,
+  td {
+    padding: 10px 8px;
+  }
+
+  input,
+  button {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-container {
+    padding: 12px;
+  }
+
+  .table-container h2 {
+    font-size: 18px;
+  }
+
+  table {
+    font-size: 11px;
+    overflow-x: auto;
+    display: block;
+  }
+
+  th,
+  td {
+    padding: 8px 6px;
+  }
+
+  button {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+}

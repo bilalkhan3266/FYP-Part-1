@@ -1,0 +1,137 @@
+/* src/components/styles/dashboard.css - main shared style */
+:root{
+  --primary:#003366;
+  --accent:#00509e;
+  --bg:#f4f7fc;
+  --card:#ffffff;
+  --radius:12px;
+  --shadow: 0 8px 30px rgba(14,30,50,0.08);
+}
+
+*{box-sizing:border-box}
+.dashboard-page{
+  display:flex;
+  min-height:100vh;
+  font-family:"Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+}
+
+/* Sidebar */
+.sidebar {
+  width:260px;
+  background: linear-gradient(180deg,#0a0f24,#182848);
+  color: #fff;
+  padding:25px 18px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  position:fixed;
+  top:0; bottom:0; left:0;
+  box-shadow: 4px 0 20px rgba(0,0,0,0.08);
+}
+
+.student-info h2{margin:0 0 4px; font-size:18px}
+.student-info p{margin:0; color:rgba(255,255,255,0.8); font-size:13px}
+
+nav { display:flex; flex-direction:column; gap:10px; margin-top:20px; }
+.nav-btn {
+  background: transparent;
+  border: none;
+  color: #dfe7f6;
+  text-align:left;
+  padding:10px 12px;
+  border-radius:8px;
+  font-size:15px;
+  cursor:pointer;
+  transition: all .25s ease;
+}
+.nav-btn:hover{ background: rgba(255,255,255,0.08); transform: translateX(6px); color:#fff}
+footer{ text-align:center; font-size:12px; opacity:0.85; }
+
+/* Main content */
+.dashboard-content {
+  margin-left:260px;
+  padding:36px 48px;
+  flex:1;
+  overflow:auto;
+}
+
+/* header card */
+.dashboard-header{
+  background:var(--card);
+  padding:28px;
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  margin-bottom:20px;
+}
+.dashboard-header h1{color:var(--primary); margin:0 0 6px}
+.dashboard-header p{margin:0; color:#6b7280}
+
+/* program/details containers (cards) */
+.program-details{
+  background:var(--card);
+  padding:28px;
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
+
+/* details-grid and stat-card */
+.details-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:18px; margin-bottom:20px; }
+.stat-card{
+  background:#f8fbff;
+  padding:18px;
+  border-radius:10px;
+  border:1px solid #e9efff;
+  text-align:center;
+}
+.stat-card strong{display:block; margin-bottom:8px; color:#334155}
+.stat-card p{font-size:20px; color:#0f172a; font-weight:600}
+
+/* Request form */
+.service-form .form-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:12px; margin-bottom:12px; }
+.service-form input, .service-form textarea{ padding:12px; border-radius:8px; border:1px solid #e6eefc; outline:none}
+.service-form textarea{ min-height:100px; resize:vertical; }
+
+/* buttons */
+.request-submit {
+  background: var(--primary); color:#fff; border:none; padding:12px 18px; border-radius:8px; cursor:pointer; font-weight:600;
+}
+.request-submit:hover{ background:var(--accent) }
+
+/* request list */
+.requests-list{ margin-top:18px; display:flex; flex-direction:column; gap:12px }
+.request-card{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  background:#fff;
+  padding:14px;
+  border-radius:10px;
+  box-shadow:0 6px 18px rgba(14,30,50,0.05);
+}
+.request-card .muted{ color:#6b7280; font-size:13px }
+.request-actions button{ margin-left:8px; padding:8px 10px; border-radius:8px; border:none; cursor:pointer; font-weight:600 }
+.approve{ background:#16a34a; color:#fff }
+.reject{ background:#ef4444; color:#fff }
+
+/* approved/rejected visuals */
+.request-card.approved{ border-left:4px solid #16a34a }
+.request-card.rejected{ border-left:4px solid #ef4444 }
+
+/* Messages page */
+.messages-page{ display:flex; gap:18px }
+.threads-list{ width:260px; background:#fff; padding:12px; border-radius:10px; box-shadow:var(--shadow) }
+.thread{ padding:10px; border-radius:8px; cursor:pointer; margin-top:8px; background:#f8fbff }
+.thread.active{ background:#eef2ff; border-left:3px solid var(--accent) }
+.chat-area{ flex:1; display:flex; flex-direction:column }
+.chat-box{ flex:1; background:#fff; padding:12px; border-radius:10px; overflow:auto; box-shadow:var(--shadow) }
+.chat-msg{ padding:8px; margin-bottom:8px; border-radius:10px; max-width:70% }
+.chat-msg.dept{ background:#eef2ff; align-self:flex-start }
+.chat-msg.user{ background:#e6ffe6; align-self:flex-end }
+.chat-input{ display:flex; gap:8px; margin-top:12px }
+.chat-input input{ flex:1; padding:10px; border-radius:8px; border:1px solid #e6eefc }
+
+/* small helpers */
+.lab-btn{ padding:8px 12px; border-radius:8px; border:none; cursor:pointer }
+.lab-btn.primary{ background:var(--accent); color:#fff }
+.muted{ color:#6b7280 }

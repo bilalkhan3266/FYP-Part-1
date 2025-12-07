@@ -1,0 +1,127 @@
+/* ==============================================
+   Premium Professional Department Login (2025)
+   ============================================== */
+
+/* Page Container */
+.dept-container {
+  width: 100%;
+  min-height: 100vh;
+  padding: 50px 20px;
+  background: radial-gradient(circle at top, #f5f7fa, #e8ecf3 40%, #dfe4eb 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeMain 0.8s ease-in-out;
+}
+
+/* Title */
+.dept-container h1 {
+  font-size: 38px;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+  text-align: center;
+  letter-spacing: 0.5px;
+  background: linear-gradient(90deg, #1e3c72, #2a5298);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.dept-container p {
+  font-size: 17px;
+  color: #444;
+  margin-bottom: 35px;
+  text-align: center;
+}
+
+/* Grid Layout */
+.dept-grid {
+  width: 100%;
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 28px;
+  padding: 10px;
+}
+
+/* Department Card */
+.dept-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  padding: 28px 24px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  text-align: center;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transition: 0.45s cubic-bezier(0.19, 1, 0.22, 1);
+
+  transform: translateY(25px);
+  opacity: 0;
+  animation: floatUp 0.7s ease forwards;
+}
+
+/* Hover Effect (Premium Glow) */
+.dept-card:hover {
+  transform: translateY(-8px) scale(1.07);
+  box-shadow: 0 18px 35px rgba(30, 86, 200, 0.28);
+  background: linear-gradient(135deg, #1f6feb, #255edb);
+  color: #fff;
+}
+
+/* Icon Style */
+.dept-icon {
+  font-size: 40px;
+  color: #1f6feb;
+  transition: 0.45s ease;
+}
+
+/* Icon Animation on Hover */
+.dept-card:hover .dept-icon {
+  color: #fff;
+  transform: scale(1.25) rotate(3deg);
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* Floating appear animation */
+@keyframes floatUp {
+  0% {
+    transform: translateY(35px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+}
+
+/* Main fade-in */
+@keyframes fadeMain {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .dept-container h1 {
+    font-size: 30px;
+  }
+  .dept-card {
+    padding: 22px;
+  }
+  .dept-icon {
+    font-size: 34px;
+  }
+}

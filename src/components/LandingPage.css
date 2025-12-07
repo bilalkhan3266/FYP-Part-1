@@ -1,0 +1,120 @@
+/* === Global Reset === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* === Full Page Background === */
+.landing-page {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #004aad, #007bff, #60a5fa);
+  background-size: cover;
+  background-repeat: no-repeat;
+  color: white;
+  font-family: "Poppins", sans-serif;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* === Logo === */
+.landing-logo {
+  width: 150px;
+  height: auto;
+  margin-bottom: 20px;
+  animation: fadeIn 1.5s ease-in-out;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+}
+
+/* === Header === */
+.header {
+  width: 100%;
+  height: 85vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.header-content {
+  max-width: 720px;
+  animation: fadeIn 1.2s ease-in-out;
+}
+
+.header h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.header p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: #e5e7eb;
+}
+
+/* === Buttons === */
+.header-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1.2rem;
+}
+
+.header-buttons button {
+  padding: 0.8rem 1.6rem;
+  border: none;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.student-btn {
+  background-color: white;
+  color: #004aad;
+}
+
+.student-btn:hover {
+  background-color: #e0e7ff;
+}
+
+.dept-btn {
+  background-color: transparent;
+  border: 2px solid white;
+  color: white;
+}
+
+.dept-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* === Footer === */
+.footer {
+  width: 100%;
+  text-align: center;
+  padding: 1rem 0;
+  font-size: 0.9rem;
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(4px);
+  letter-spacing: 0.5px;
+}
+
+/* === Animation === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

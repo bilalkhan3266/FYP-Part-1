@@ -1,0 +1,1116 @@
+/* ============================================
+   STUDENT PAGE CONTAINER
+   ============================================ */
+
+.student-dashboard-page {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ============================================
+   SIDEBAR
+   ============================================ */
+
+.sd-sidebar {
+  width: 280px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30px 20px;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.sd-profile {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  align-items: flex-start;
+}
+
+.sd-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.sd-name {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sd-small {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.sd-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 30px;
+}
+
+.sd-nav-btn {
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.sd-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(5px);
+}
+
+.sd-nav-btn.active {
+  background: rgba(255, 255, 255, 0.25);
+  border-left: 3px solid white;
+  padding-left: 12px;
+}
+
+.sd-footer {
+  font-size: 11px;
+  opacity: 0.7;
+  text-align: center;
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
+
+.sd-main {
+  margin-left: 280px;
+  flex: 1;
+  padding: 40px;
+  overflow-y: auto;
+}
+
+.sd-header {
+  margin-bottom: 40px;
+}
+
+.sd-header h1 {
+  font-size: 28px;
+  color: #1a1a1a;
+  margin: 0 0 10px 0;
+  font-weight: 700;
+}
+
+.sd-header p {
+  color: #666;
+  margin: 0;
+  font-size: 14px;
+}
+
+/* ============================================
+   ALERTS
+   ============================================ */
+
+.alert {
+  padding: 15px 20px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  font-size: 14px;
+  font-weight: 500;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-error {
+  background: #fee;
+  color: #c33;
+  border: 1px solid #fcc;
+}
+
+.alert-success {
+  background: #efe;
+  color: #3c3;
+  border: 1px solid #cfc;
+}
+
+/* ============================================
+   FORM
+   ============================================ */
+
+.edit-form {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+  margin-bottom: 25px;
+}
+
+.form-row.full {
+  grid-template-columns: 1fr;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group select {
+  padding: 14px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  background: #f9fafb;
+}
+
+.form-group input:disabled,
+.form-group select:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.form-group input::placeholder {
+  color: #999;
+}
+
+/* ============================================
+   FORM DIVIDER
+   ============================================ */
+
+.form-divider {
+  margin: 40px 0 30px 0;
+  padding: 30px 0;
+  border-top: 2px solid #e0e0e0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.form-divider h3 {
+  margin: 0 0 5px 0;
+  color: #667eea;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.submit-btn {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  min-height: 50px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+}
+
+.submit-btn:active:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 1024px) {
+  .sd-sidebar {
+    width: 250px;
+  }
+
+  .sd-main {
+    margin-left: 250px;
+    padding: 30px;
+  }
+
+  .edit-form {
+    padding: 30px;
+  }
+
+  .form-row {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sd-sidebar {
+    position: fixed;
+    left: -280px;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    width: 280px;
+  }
+
+  .sd-sidebar.active {
+    left: 0;
+  }
+
+  .sd-main {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .sd-header h1 {
+    font-size: 22px;
+  }
+
+  .edit-form {
+    padding: 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .form-group input,
+  .form-group select {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .form-divider {
+    margin: 30px 0 20px 0;
+    padding: 20px 0;
+  }
+
+  .submit-btn {
+    padding: 12px 24px;
+    font-size: 13px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .sd-sidebar {
+    width: 70vw;
+    padding: 20px 15px;
+  }
+
+  .sd-main {
+    padding: 15px;
+  }
+
+  .sd-header h1 {
+    font-size: 18px;
+  }
+
+  .sd-header p {
+    font-size: 12px;
+  }
+
+  .edit-form {
+    padding: 15px;
+  }
+
+  .form-row {
+    gap: 12px;
+  }
+
+  .form-group label {
+    font-size: 11px;
+  }
+
+  .form-group input,
+  .form-group select {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .form-divider {
+    margin: 25px 0 15px 0;
+    padding: 15px 0;
+  }
+
+  .form-divider h3 {
+    font-size: 14px;
+  }
+
+  .submit-btn {
+    padding: 11px 16px;
+    font-size: 11px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .sd-profile {
+    gap: 10px;
+  }
+
+  .sd-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .sd-name {
+    font-size: 12px;
+  }
+
+  .sd-small {
+    font-size: 10px;
+  }
+
+  .sd-nav-btn {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}
+
+/* ============================================
+   DARK MODE SUPPORT
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  .edit-form {
+    background: #1e1e1e;
+    color: #fff;
+  }
+
+  .sd-header h1 {
+    color: #fff;
+  }
+
+  .sd-header p {
+    color: #aaa;
+  }
+
+  .form-group label {
+    color: #ddd;
+  }
+
+  .form-group input,
+  .form-group select {
+    background: #2a2a2a;
+    color: #fff;
+    border-color: #3a3a3a;
+  }
+
+  .form-group input::placeholder {
+    color: #666;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+    background: #323232;
+  }
+
+  .form-divider {
+    border-top-color: #3a3a3a;
+    border-bottom-color: #2a2a2a;
+  }
+
+  .form-divider h3 {
+    color: #90caf9;
+  }
+}
+/* ==================== Logo ==================== */
+.edit-form .riphah-logo {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 30px auto; /* centers it horizontally */
+  border-radius: 50%;
+  display: block; /* ensures proper centering */
+  object-fit: contain;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+}
+
+
+/* ==================== Title ==================== */
+.edit-form h1 {
+  margin-bottom: 40px;
+  font-size: 32px;
+  font-weight: 700;
+  color: #1f2937;
+  letter-spacing: 0.5px;
+}
+
+/* ==================== Input Groups ==================== */
+.input-group {
+  position: relative;
+  margin-bottom: 25px;
+  text-align: left;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 18px 16px; /* slightly larger padding for wider inputs */
+  border-radius: 14px;
+  border: 1px solid #d1d5db;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.3s ease;
+  background: #f9fafb;
+}
+
+.input-group input:focus {
+  border-color: #1a73e8;
+  box-shadow: 0 0 10px rgba(26, 115, 232, 0.25);
+  background: #fff;
+}
+
+/* Floating label */
+.input-group label {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  color: #6b7280;
+  font-size: 16px;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  background: #ffffff;
+  padding: 0 6px;
+}
+
+.input-group input:focus + label,
+.input-group input:not(:placeholder-shown) + label {
+  top: -12px;
+  font-size: 13px;
+  color: #1a73e8;
+  font-weight: 500;
+}
+
+/* ==================== Error Message ==================== */
+.error-message {
+  color: #ef4444;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* ==================== Buttons ==================== */
+.form-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+  gap: 20px;
+}
+
+.save-btn,
+.cancel-btn {
+  flex: 1;
+  padding: 18px 0;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Save button */
+.save-btn {
+  background: linear-gradient(90deg, #1a73e8, #4285f4);
+  color: #fff;
+  border: none;
+  box-shadow: 0 8px 16px rgba(26, 115, 232, 0.25);
+}
+
+.save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(26, 115, 232, 0.35);
+}
+
+/* Cancel button */
+.cancel-btn {
+  background: #6b7280;
+  color: #fff;
+  border: none;
+  box-shadow: 0 8px 16px rgba(107, 114, 128, 0.25);
+}
+
+.cancel-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(107, 114, 128, 0.35);
+}
+
+/* ==================== Responsive ==================== */
+@media (max-width: 1200px) {
+  .edit-form {
+    width: 85%;
+    padding: 45px 35px;
+  }
+}
+
+@media (max-width: 992px) {
+  .edit-form {
+    width: 80%;
+    padding: 40px 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .edit-form {
+    width: 95%;
+    padding: 35px 25px;
+  }
+
+  .form-buttons {
+    flex-direction: column;
+  }
+
+  .save-btn,
+  .cancel-btn {
+    width: 100%;
+    margin: 6px 0;
+  }
+}
+
+/* ============================================
+   STUDENT PAGE CONTAINER
+   ============================================ */
+
+.student-dashboard-page {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ============================================
+   SIDEBAR
+   ============================================ */
+
+.sd-sidebar {
+  width: 280px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30px 20px;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.sd-profile {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  align-items: flex-start;
+}
+
+.sd-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.sd-name {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sd-small {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.sd-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 30px;
+}
+
+.sd-nav-btn {
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.sd-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(5px);
+}
+
+.sd-nav-btn.active {
+  background: rgba(255, 255, 255, 0.25);
+  border-left: 3px solid white;
+  padding-left: 12px;
+}
+
+.sd-nav-btn.logout {
+  margin-top: 20px;
+  background: rgba(255, 74, 74, 0.3);
+}
+
+.sd-nav-btn.logout:hover {
+  background: rgba(255, 74, 74, 0.5);
+}
+
+.sd-footer {
+  font-size: 11px;
+  opacity: 0.7;
+  text-align: center;
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
+
+.sd-main {
+  margin-left: 280px;
+  flex: 1;
+  padding: 40px;
+}
+
+.sd-header {
+  margin-bottom: 40px;
+}
+
+.sd-header h1 {
+  font-size: 28px;
+  color: #1a1a1a;
+  margin: 0 0 10px 0;
+  font-weight: 700;
+}
+
+.sd-header p {
+  color: #666;
+  margin: 0;
+  font-size: 14px;
+}
+
+/* ============================================
+   ALERTS
+   ============================================ */
+
+.alert {
+  padding: 15px 20px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  font-size: 14px;
+  font-weight: 500;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-error {
+  background: #fee;
+  color: #c33;
+  border: 1px solid #fcc;
+}
+
+.alert-success {
+  background: #efe;
+  color: #3c3;
+  border: 1px solid #cfc;
+}
+
+/* ============================================
+   FORM
+   ============================================ */
+
+.edit-form {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 25px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group select {
+  padding: 14px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  background: #f9fafb;
+}
+
+.form-group input:disabled,
+.form-group select:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.form-group input::placeholder {
+  color: #999;
+}
+
+/* ============================================
+   FORM DIVIDER
+   ============================================ */
+
+.form-divider {
+  margin: 40px 0 30px 0;
+  padding: 30px 0;
+  border-top: 2px solid #e0e0e0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.form-divider h3 {
+  margin: 0 0 5px 0;
+  color: #667eea;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.submit-btn {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  min-height: 50px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+}
+
+.submit-btn:active:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 1024px) {
+  .sd-sidebar {
+    width: 250px;
+  }
+
+  .sd-main {
+    margin-left: 250px;
+    padding: 30px;
+  }
+
+  .edit-form {
+    padding: 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sd-sidebar {
+    position: fixed;
+    left: -280px;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    width: 280px;
+  }
+
+  .sd-sidebar.active {
+    left: 0;
+  }
+
+  .sd-main {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .sd-header h1 {
+    font-size: 22px;
+  }
+
+  .edit-form {
+    padding: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group input,
+  .form-group select {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .form-divider {
+    margin: 30px 0 20px 0;
+    padding: 20px 0;
+  }
+
+  .submit-btn {
+    padding: 12px 24px;
+    font-size: 13px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .sd-sidebar {
+    width: 70vw;
+    padding: 20px 15px;
+  }
+
+  .sd-main {
+    padding: 15px;
+  }
+
+  .sd-header h1 {
+    font-size: 18px;
+  }
+
+  .sd-header p {
+    font-size: 12px;
+  }
+
+  .edit-form {
+    padding: 15px;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group label {
+    font-size: 11px;
+  }
+
+  .form-group input,
+  .form-group select {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .form-divider {
+    margin: 25px 0 15px 0;
+    padding: 15px 0;
+  }
+
+  .form-divider h3 {
+    font-size: 14px;
+  }
+
+  .submit-btn {
+    padding: 11px 16px;
+    font-size: 11px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .sd-profile {
+    gap: 10px;
+  }
+
+  .sd-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .sd-name {
+    font-size: 12px;
+  }
+
+  .sd-small {
+    font-size: 10px;
+  }
+
+  .sd-nav-btn {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}
+
+/* ============================================
+   DARK MODE SUPPORT
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  .edit-form {
+    background: #1e1e1e;
+    color: #fff;
+  }
+
+  .sd-header h1 {
+    color: #fff;
+  }
+
+  .sd-header p {
+    color: #aaa;
+  }
+
+  .form-group label {
+    color: #ddd;
+  }
+
+  .form-group input,
+  .form-group select {
+    background: #2a2a2a;
+    color: #fff;
+    border-color: #3a3a3a;
+  }
+
+  .form-group input::placeholder {
+    color: #666;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+    background: #323232;
+  }
+
+  .form-divider {
+    border-top-color: #3a3a3a;
+    border-bottom-color: #2a2a2a;
+  }
+
+  .form-divider h3 {
+    color: #90caf9;
+  }
+}
