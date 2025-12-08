@@ -1,137 +1,143 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./EditProfile.css"; // Reuse the same CSS
+import { useAuthContext } from "../../contexts/AuthContext";
+import axios from "axios";
+import "./LibraryDashboard.css";
 
 export default function LibraryEditProfile() {
+  const { user, logout } = useAuthContext();
   const navigate = useNavigate();
 
-  const savedUser = JSON.parse(localStorage.getItem("user")) || {};
-
-  const [form, setForm] = useState({
-    name: "",
-    sap: "",
-    department: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+  const [formData, setFormData] = useState({
+    full_name: user?.full_name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    department: user?.department || "",
+    old_password: "",
+    new_password: "",
+    confirm_password: ""
   });
 
-  useEffect(() => {
-    setForm({
-      name: savedUser.name || "",
-      sap: savedUser.sap || "",
-      department: savedUser.department || "",
-      email: savedUser.email || "",
-      password: "",
-      confirmPassword: "",
-    });
-  }, []);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.password !== form.confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
+    setError("");
+    setSuccess("");
 
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/update-profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          full_name: form.name,
-          sap: form.sap,
-          department: form.department,
-          email: form.email,
-          password: form.password,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.message || "Update failed");
+    // Validate passwords if changing password
+    if (formData.new_password || formData.old_password || formData.confirm_password) {
+      if (!formData.old_password) {
+        setError("❌ Current password is required to change password");
         return;
       }
+      if (formData.new_password.length < 6) {
+        setError("❌ New password must be at least 6 characters");
+        return;
+      }
+      if (formData.new_password !== formData.confirm_password) {
+        setError("❌ Passwords do not match");
+        return;
+      }
+    }
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          ...savedUser,
-          name: form.name,
-          sap: form.sap,
-          department: form.department,
-          email: form.email,
-        })
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      const payload = {
+        full_name: formData.full_name,
+        email: formData.email,
+        phone: formData.phone,
+        department: formData.department
+      };
+
+      if (formData.old_password) {
+        payload.old_password = formData.old_password;
+        payload.new_password = formData.new_password;
+      }
+
+      const response = await axios.put(
+        apiUrl + "/api/update-profile",
+        payload,
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
       );
 
-      alert("Profile updated successfully!");
-      navigate(-1);
+      if (response.data.success) {
+        setSuccess("✅ Profile updated successfully!");
+        setFormData(prev => ({
+          ...prev,
+          old_password: "",
+          new_password: "",
+          confirm_password: ""
+        }));
+        setTimeout(() => setSuccess(""), 3000);
+      }
     } catch (err) {
-      console.error("Error updating profile:", err);
-      alert("Server error");
+      console.error("Error:", err);
+      setError(err.response?.data?.message || "❌ Failed to update profile");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleLogout = () => navigate("/library-login");
-  const handleHome = () => navigate("/");
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const displayName = user?.full_name || "Library Staff";
+  const displaySap = user?.sap || "N/A";
 
   return (
     <div className="student-dashboard-page">
-      {/* ---- SIDEBAR ---- */}
+      {/* SIDEBAR */}
       <aside className="sd-sidebar">
         <div className="sd-profile">
-          <div className="sd-avatar">L</div>
+          <div className="sd-avatar">{displayName.charAt(0).toUpperCase()}</div>
           <div>
-            <h3 className="sd-name">Library Dept</h3>
+            <h3 className="sd-name">{displayName}</h3>
+            <p className="sd-small">{displaySap} • Library</p>
             <p className="sd-small">Riphah International University</p>
-            <p className="sd-small">Clearance Management</p>
           </div>
         </div>
 
         <nav className="sd-nav">
-          <button className="sd-nav-btn" onClick={() => navigate("/library-home")}>
-            🏠 Home
-          </button>
           <button
             className="sd-nav-btn"
-            onClick={() => navigate("/library-requests")}
+            onClick={() => navigate("/library-dashboard")}
           >
-            📄 View Requests
+            📋 Dashboard
           </button>
           <button
             className="sd-nav-btn"
-            onClick={() => navigate("/library-approved")}
+            onClick={() => navigate("/library-messages")}
           >
-            ✅ Approved Requests
+            💬 Messages
           </button>
           <button
-            className="sd-nav-btn"
-            onClick={() => navigate("/library-rejected")}
-          >
-            ❌ Rejected Requests
-          </button>
-          <button
-            className="sd-nav-btn"
-            onClick={() => navigate("/library-message")}
-          >
-            💬 Message Student
-          </button>
-          <button
-            className="sd-nav-btn"
+            className="sd-nav-btn active"
             onClick={() => navigate("/library-edit-profile")}
           >
             📝 Edit Profile
           </button>
-          <button className="sd-nav-btn" onClick={handleLogout}>
+          <button className="sd-nav-btn logout" onClick={handleLogout}>
             🚪 Logout
           </button>
         </nav>
@@ -139,88 +145,123 @@ export default function LibraryEditProfile() {
         <footer className="sd-footer">© 2025 Riphah</footer>
       </aside>
 
-      {/* ---- MAIN CONTENT ---- */}
+      {/* MAIN CONTENT */}
       <main className="sd-main">
         <header className="sd-header">
-          <h1>Edit Library Profile</h1>
-          {/* <p>Update your information and password below.</p> */}
+          <h1>Edit Profile</h1>
+          <p>Update your library profile information and password</p>
         </header>
 
+        {error && <div className="alert alert-error">{error}</div>}
+        {success && <div className="alert alert-success">{success}</div>}
+
         <form className="edit-form" onSubmit={handleSubmit}>
-          <label>
-            Full Name
-            <input
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              required
-            />
-          </label>
+          <fieldset>
+            <legend>📋 Profile Information</legend>
 
-          <label>
-            SAP ID
-            <input
-              type="text"
-              name="sap"
-              value={form.sap}
-              onChange={handleChange}
-            />
-          </label>
+            <div className="form-group">
+              <label>Full Name *</label>
+              <input
+                type="text"
+                name="full_name"
+                value={formData.full_name}
+                onChange={handleChange}
+                placeholder="Your full name"
+                required
+              />
+            </div>
 
-          <label>
-            Department
-            <input
-              type="text"
-              name="department"
-              value={form.department}
-              onChange={handleChange}
-            />
-          </label>
+            <div className="form-group">
+              <label>Email Address *</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="your.email@riphah.edu.pk"
+                required
+              />
+            </div>
 
-          <label>
-            Email
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </label>
+            <div className="form-group">
+              <label>Phone Number</label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="+92-XXX-XXXXXXX"
+              />
+            </div>
 
-          <hr className="divider" />
+            <div className="form-group">
+              <label>Department</label>
+              <input
+                type="text"
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                placeholder="Your department"
+              />
+            </div>
+          </fieldset>
 
-          <label>
-            New Password (optional)
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-            />
-          </label>
+          <fieldset>
+            <legend>🔐 Change Password (Optional)</legend>
+            <p style={{ color: "#6b7280", fontSize: "13px", margin: "0 0 15px" }}>
+              Leave empty if you don't want to change your password
+            </p>
 
-          <label>
-            Confirm Password
-            <input
-              type="password"
-              name="confirmPassword"
-              value={form.confirmPassword}
-              onChange={handleChange}
-            />
-          </label>
+            <div className="form-group">
+              <label>Current Password</label>
+              <input
+                type="password"
+                name="old_password"
+                value={formData.old_password}
+                onChange={handleChange}
+                placeholder="Enter current password"
+              />
+            </div>
 
-          <div className="form-buttons">
-            <button type="submit" className="save-btn">
-              Save Changes
+            <div className="form-group">
+              <label>New Password</label>
+              <input
+                type="password"
+                name="new_password"
+                value={formData.new_password}
+                onChange={handleChange}
+                placeholder="Enter new password (min 6 characters)"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Confirm New Password</label>
+              <input
+                type="password"
+                name="confirm_password"
+                value={formData.confirm_password}
+                onChange={handleChange}
+                placeholder="Confirm new password"
+              />
+            </div>
+          </fieldset>
+
+          <div style={{ display: "flex", gap: "12px", marginTop: "30px" }}>
+            <button
+              type="submit"
+              disabled={loading}
+              className="submit-btn"
+              style={{ opacity: loading ? 0.7 : 1 }}
+            >
+              {loading ? "⏳ Updating..." : "💾 Save Changes"}
             </button>
             <button
               type="button"
-              className="cancel-btn"
-              onClick={() => navigate(-1)}
+              className="submit-btn"
+              style={{ background: "#6b7280" }}
+              onClick={() => navigate("/library-dashboard")}
             >
-              Cancel
+              ↩️ Back
             </button>
           </div>
         </form>

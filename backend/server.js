@@ -7,6 +7,9 @@ const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const crypto = require("crypto");
 
+// Import Routes
+const libraryRoutes = require("./routes/libraryRoutes");
+
 // --------------------
 // Express app
 // --------------------
@@ -1208,6 +1211,11 @@ app.put('/api/library/requests/:id/reject', verifyToken, async (req, res) => {
     });
   }
 });
+
+// --------------------
+// Mount Library Routes
+// --------------------
+app.use('/api', libraryRoutes);
 
 // --------------------
 // Health Check

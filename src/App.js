@@ -15,6 +15,8 @@ import StudentDashboard from "./components/Student/Dashboard";
 
 /* Library */
 import LibraryDashboard from "./components/Library/LibraryDashboard";
+import LibraryMessages from "./components/Library/LibraryMessages";
+import LibraryEditProfile from "./components/Library/LibraryEditProfile";
 
 /* Transport */
 import TransportDashboard from "./components/Transport/TransportDashboard";
@@ -117,6 +119,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["library"]}>
             <LibraryDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/library-messages"
+        element={
+          <ProtectedRoute allowedRoles={["library"]}>
+            <LibraryMessages />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/library-edit-profile"
+        element={
+          <ProtectedRoute allowedRoles={["library"]}>
+            <LibraryEditProfile />
           </ProtectedRoute>
         }
       />
