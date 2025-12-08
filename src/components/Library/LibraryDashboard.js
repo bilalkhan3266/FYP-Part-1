@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import axios from "axios";
-import "./LibraryDashboard.css";
+import "./LibraryDashboard.css"; // ✅ CORRECT IMPORT
 
 export default function LibraryDashboard() {
   const { user, logout } = useAuthContext();
@@ -14,8 +14,8 @@ export default function LibraryDashboard() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
-  const [remarks, setRemarks] = useState("");
   const [showRemarksModal, setShowRemarksModal] = useState(false);
+  const [remarks, setRemarks] = useState("");
   const [modalAction, setModalAction] = useState("");
   const [modalRequestId, setModalRequestId] = useState(null);
 
@@ -45,7 +45,7 @@ export default function LibraryDashboard() {
       if (response.data.success) {
         setRequests(response.data.data || []);
       } else {
-        setError("❌ Failed to fetch requests");
+        setError(response.data.message || "❌ Failed to fetch requests");
       }
     } catch (err) {
       console.error("Error:", err);
@@ -68,8 +68,6 @@ export default function LibraryDashboard() {
   };
 
   const handleApprove = async () => {
-    if (modalAction !== "approve") return;
-    
     setActionLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -87,7 +85,7 @@ export default function LibraryDashboard() {
       );
 
       if (response.data.success) {
-        setSuccess("✅ Request approved successfully!");
+        setSuccess("✅ Request approved and student notified!");
         setShowRemarksModal(false);
         setRemarks("");
         await fetchRequests();
@@ -104,8 +102,6 @@ export default function LibraryDashboard() {
   };
 
   const handleReject = async () => {
-    if (modalAction !== "reject") return;
-
     if (!remarks.trim()) {
       setError("❌ Rejection reason is required");
       return;
@@ -128,7 +124,7 @@ export default function LibraryDashboard() {
       );
 
       if (response.data.success) {
-        setSuccess("✅ Request rejected successfully!");
+        setSuccess("✅ Request rejected and student notified!");
         setShowRemarksModal(false);
         setRemarks("");
         await fetchRequests();
@@ -150,47 +146,63 @@ export default function LibraryDashboard() {
   };
 
   const displayName = user?.full_name || "Library Staff";
+  const displaySap = user?.sap || "N/A";
 
   return (
-    <div className="library-dashboard-page">
+    <div className="student-dashboard-page">
       {/* SIDEBAR */}
-      <aside className="ld-sidebar">
-        <div className="ld-profile">
-          <div className="ld-avatar">{displayName.charAt(0).toUpperCase()}</div>
+      <aside className="sd-sidebar">
+        <div className="sd-profile">
+          <div className="sd-avatar">{displayName.charAt(0).toUpperCase()}</div>
           <div>
-            <h3 className="ld-name">{displayName}</h3>
-            <p className="ld-small">Library Department</p>
-            <p className="ld-small">Riphah International University</p>
+            <h3 className="sd-name">{displayName}</h3>
+            <p className="sd-small">{displaySap} • Library</p>
+            <p className="sd-small">Riphah International University</p>
           </div>
         </div>
 
-        <nav className="ld-nav">
-          <button className="ld-nav-btn active" onClick={() => setActiveTab("pending")}>
-            📋 Pending Requests
+        <nav className="sd-nav">
+          <button
+            className={`sd-nav-btn ${activeTab === "pending" ? "active" : ""}`}
+            onClick={() => setActiveTab("pending")}
+          >
+            📋 Pending
           </button>
-          <button className="ld-nav-btn" onClick={() => setActiveTab("approved")}>
-            ✅ Approved Requests
+          <button
+            className={`sd-nav-btn ${activeTab === "approved" ? "active" : ""}`}
+            onClick={() => setActiveTab("approved")}
+          >
+            ✅ Approved
           </button>
-          <button className="ld-nav-btn" onClick={() => setActiveTab("rejected")}>
-            ❌ Rejected Requests
+          <button
+            className={`sd-nav-btn ${activeTab === "rejected" ? "active" : ""}`}
+            onClick={() => setActiveTab("rejected")}
+          >
+            ❌ Rejected
           </button>
-          <button className="ld-nav-btn" onClick={() => navigate("/library-messages")}>
+          <button
+            className="sd-nav-btn"
+            onClick={() => navigate("/library-messages")}
+          >
             💬 Messages
           </button>
-          <button className="ld-nav-btn" onClick={() => navigate("/library-edit-profile")}>
+          <button
+            className="sd-nav-btn"
+            onClick={() => navigate("/library-edit-profile")}
+          >
             📝 Edit Profile
           </button>
-          <button className="ld-nav-btn logout" onClick={handleLogout}>
+          <button className="sd-nav-btn logout" onClick={handleLogout}>
             🚪 Logout
           </button>
         </nav>
 
-        <footer className="ld-footer">© 2025 Riphah</footer>
+        <footer className="sd-footer">© 2025 Riphah</footer>
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="ld-main">
-        <header className="ld-header">
+      <main className="sd-main">
+        <header className="sd-header">
           <h1>Library Clearance Management</h1>
           <p>Review and manage student clearance requests</p>
         </header>
@@ -198,38 +210,15 @@ export default function LibraryDashboard() {
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
 
-        {/* TABS */}
-        <div className="ld-tabs">
-          <button
-            className={`ld-tab ${activeTab === "pending" ? "active" : ""}`}
-            onClick={() => setActiveTab("pending")}
-          >
-            📋 Pending ({requests.length})
-          </button>
-          <button
-            className={`ld-tab ${activeTab === "approved" ? "active" : ""}`}
-            onClick={() => setActiveTab("approved")}
-          >
-            ✅ Approved ({requests.length})
-          </button>
-          <button
-            className={`ld-tab ${activeTab === "rejected" ? "active" : ""}`}
-            onClick={() => setActiveTab("rejected")}
-          >
-            ❌ Rejected ({requests.length})
-          </button>
-        </div>
-
-        {/* CONTENT */}
         {loading ? (
-          <div className="loading">Loading {activeTab} requests...</div>
+          <div className="loading">⏳ Loading {activeTab} requests...</div>
         ) : requests.length === 0 ? (
           <div className="no-data">
             <p>📭 No {activeTab} requests found</p>
           </div>
         ) : (
-          <div className="ld-table-container">
-            <table className="ld-table">
+          <div className="table-wrapper">
+            <table className="requests-table">
               <thead>
                 <tr>
                   <th>#</th>
@@ -245,35 +234,45 @@ export default function LibraryDashboard() {
               </thead>
               <tbody>
                 {requests.map((req, index) => (
-                  <tr key={req._id} className="ld-row">
+                  <tr key={req._id || req.id} className="table-row">
                     <td>{index + 1}</td>
-                    <td><strong>{req.studentName}</strong></td>
-                    <td>{req.sapid}</td>
-                    <td>{req.program}</td>
-                    <td>{req.semester}</td>
                     <td>
-                      <span className={`ld-status ld-status-${(req.status || 'pending').toLowerCase()}`}>
-                        {req.status}
+                      <strong>{req.student_name || "N/A"}</strong>
+                    </td>
+                    <td>{req.sapid || "N/A"}</td>
+                    <td>{req.program || "N/A"}</td>
+                    <td>{req.semester || "N/A"}</td>
+                    <td>
+                      <span
+                        className={`status-badge status-${(req.status || "pending").toLowerCase()}`}
+                      >
+                        {req.status || "Pending"}
                       </span>
                     </td>
                     <td>
-                      <small className="ld-remarks">{req.libraryRemarks || req.reason || "-"}</small>
+                      <small className="remarks-text">
+                        {req.remarks || req.message || "-"}
+                      </small>
                     </td>
                     <td>
-                      <small>{new Date(req.createdAt).toLocaleDateString()}</small>
+                      <small>
+                        {new Date(
+                          req.created_at || req.createdAt
+                        ).toLocaleDateString()}
+                      </small>
                     </td>
                     {activeTab === "pending" && (
-                      <td>
+                      <td className="actions-cell">
                         <button
-                          className="ld-btn ld-btn-approve"
-                          onClick={() => handleOpenRemarksModal(req._id, "approve")}
+                          className="btn btn-approve"
+                          onClick={() => handleOpenRemarksModal(req._id || req.id, "approve")}
                           disabled={actionLoading}
                         >
                           ✅ Approve
                         </button>
                         <button
-                          className="ld-btn ld-btn-reject"
-                          onClick={() => handleOpenRemarksModal(req._id, "reject")}
+                          className="btn btn-reject"
+                          onClick={() => handleOpenRemarksModal(req._id || req.id, "reject")}
                           disabled={actionLoading}
                         >
                           ❌ Reject
@@ -289,14 +288,22 @@ export default function LibraryDashboard() {
 
         {/* REMARKS MODAL */}
         {showRemarksModal && (
-          <div className="ld-modal-overlay" onClick={() => setShowRemarksModal(false)}>
-            <div className="ld-modal" onClick={(e) => e.stopPropagation()}>
-              <h2>{modalAction === "approve" ? "✅ Approve Request" : "❌ Reject Request"}</h2>
-              
-              <div className="ld-modal-body">
+          <div className="modal-overlay" onClick={() => setShowRemarksModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h2 className="modal-title">
+                {modalAction === "approve"
+                  ? "✅ Approve Request"
+                  : "❌ Reject Request"}
+              </h2>
+
+              <div className="modal-body">
                 <label>
-                  {modalAction === "approve" ? "Approval Comments" : "Rejection Reason"} 
-                  {modalAction === "reject" && <span className="required">*</span>}
+                  {modalAction === "approve"
+                    ? "Approval Comments"
+                    : "Rejection Reason"}
+                  {modalAction === "reject" && (
+                    <span className="required">*</span>
+                  )}
                 </label>
                 <textarea
                   value={remarks}
@@ -306,25 +313,33 @@ export default function LibraryDashboard() {
                       ? "Enter any additional comments (optional)..."
                       : "Please explain why this request is being rejected..."
                   }
-                  rows="5"
-                  className="ld-textarea"
+                  className="modal-textarea"
                 />
               </div>
 
-              <div className="ld-modal-actions">
+              <div className="modal-actions">
                 <button
-                  className="ld-btn ld-btn-cancel"
+                  className="btn btn-cancel"
                   onClick={() => setShowRemarksModal(false)}
                   disabled={actionLoading}
                 >
                   Cancel
                 </button>
                 <button
-                  className={`btn ${modalAction === "approve" ? "btn-approve" : "btn-reject"}`}
+                  className={`btn ${
+                    modalAction === "approve" ? "btn-approve" : "btn-reject"
+                  }`}
                   onClick={modalAction === "approve" ? handleApprove : handleReject}
-                  disabled={actionLoading || (modalAction === "reject" && !remarks.trim())}
+                  disabled={
+                    actionLoading ||
+                    (modalAction === "reject" && !remarks.trim())
+                  }
                 >
-                  {actionLoading ? "Processing..." : (modalAction === "approve" ? "✅ Approve" : "❌ Reject")}
+                  {actionLoading
+                    ? "Processing..."
+                    : modalAction === "approve"
+                    ? "✅ Approve"
+                    : "❌ Reject"}
                 </button>
               </div>
             </div>

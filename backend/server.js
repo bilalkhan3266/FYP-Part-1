@@ -10,6 +10,12 @@ const crypto = require("crypto");
 // Import Routes
 const libraryRoutes = require("./routes/libraryRoutes");
 
+// Import Models
+const User = require("./models/User");
+const ClearanceRequest = require("./models/ClearanceRequest");
+const DepartmentClearance = require("./models/DepartmentClearance");
+const Message = require("./models/Message");
+
 // --------------------
 // Express app
 // --------------------
@@ -52,84 +58,6 @@ mongoose.connect(MONGO_URI, {
     // Continue running to allow server startup
     console.log('⚠️  Server starting without database connection...\n');
   });
-
-// --------------------
-// Schemas & Models
-// --------------------
-// User Schema
-const userSchema = new mongoose.Schema({
-  full_name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role: { type: String, required: true },
-  sap: String,
-  department: String,
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-
-const User = mongoose.model('User', userSchema);
-
-// Clearance Request Schema
-const clearanceRequestSchema = new mongoose.Schema({
-  student_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  student_name: String,
-  sapid: String,
-  registration_no: String,
-  father_name: String,
-  program: String,
-  semester: String,
-  degree_status: String,
-  department: String,
-  status: { type: String, default: 'Pending' },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-
-const ClearanceRequest = mongoose.model('ClearanceRequest', clearanceRequestSchema);
-
-// Department Clearance Schema
-const departmentClearanceSchema = new mongoose.Schema({
-  clearance_request_id: { type: mongoose.Schema.Types.ObjectId, ref: 'ClearanceRequest' },
-  student_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  sapid: String,
-  student_name: String,
-  registration_no: String,
-  father_name: String,
-  program: String,
-  semester: String,
-  degree_status: String,
-  department_name: String,
-  status: { type: String, default: 'Pending' },
-  remarks: String,
-  approved_by: String,
-  approved_at: Date,
-  createdAt: { type: Date, default: Date.now }
-});
-
-const DepartmentClearance = mongoose.model('DepartmentClearance', departmentClearanceSchema);
-
-// Message Schema (Two-way conversation between students and departments)
-const messageSchema = new mongoose.Schema({
-  conversation_id: { type: String, required: true, index: true },
-  sender_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  sender_name: String,
-  sender_role: String,
-  sender_sapid: String,
-  recipient_sapid: { type: String, required: true },
-  recipient_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  recipient_department: String,
-  subject: { type: String, required: true },
-  message: { type: String, required: true },
-  message_type: { type: String, enum: ['info', 'warning', 'error', 'success', 'question', 'reply'], default: 'reply' },
-  is_read: { type: Boolean, default: false },
-  read_at: Date,
-  parent_message_id: mongoose.Schema.Types.ObjectId,
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-
-const Message = mongoose.model('Message', messageSchema);
 
 // --------------------
 // JWT Configuration
