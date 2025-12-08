@@ -1,58 +1,93 @@
--- Create database
-CREATE DATABASE IF NOT EXISTS role_based_system;
-USE role_based_system;
+-- MongoDB Collections Documentation
+-- Use MongoDB Compass to create these collections
 
--- ========== USERS TABLE ==========
-DROP TABLE IF EXISTS users;
-CREATE TABLE users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  full_name VARCHAR(100) NOT NULL,
-  email VARCHAR(100) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  role VARCHAR(50) NOT NULL,
-  sap VARCHAR(50),
-  department VARCHAR(100),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_email (email),
-  INDEX idx_role (role)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- ============================================================
+-- USERS COLLECTION (Already exists)
+-- ============================================================
+-- Collections in MongoDB role_based_system:
+-- - users (Student, Library, Admin accounts)
 
--- ========== CLEARANCE REQUESTS TABLE ==========
-DROP TABLE IF EXISTS clearance_requests;
-CREATE TABLE clearance_requests (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  student_id INT NOT NULL,
-  department VARCHAR(100) NOT NULL,
-  reason TEXT,
-  status VARCHAR(50) DEFAULT 'Pending',
-  remarks TEXT,
-  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_student_id (student_id),
-  INDEX idx_status (status),
-  INDEX idx_submitted_at (submitted_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- ============================================================
+-- MESSAGES COLLECTION (Extended for library)
+-- ============================================================
+-- Sample document structure for library clearance requests:
+db.messages.insertOne({
+  _id: ObjectId(),
+  sender: ObjectId("librarian_id"),
+  recipient_sapid: "23-ARID-001",
+  studentId: ObjectId("student_user_id"),
+  studentName: "Ali Khan",
+  department: "Computer Science",
+  subject: "Library Clearance Request",
+  message: "Please approve my library clearance",
+  message_type: "library_request",  // or "library_approval", "library_rejection"
+  status: "Pending",  // "Pending", "Approved", "Rejected"
+  remarks: "",
+  approvedBy: ObjectId("librarian_id"),
+  is_read: false,
+  createdAt: new Date(),
+  updatedAt: new Date()
+});
 
--- ========== MESSAGES TABLE ==========
-DROP TABLE IF EXISTS messages;
-CREATE TABLE messages (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  sender_id INT NOT NULL,
-  receiver_id INT NOT NULL,
-  subject VARCHAR(255),
-  message TEXT NOT NULL,
-  is_read BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_receiver_id (receiver_id),
-  INDEX idx_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- For library approval notifications:
+db.messages.insertOne({
+  _id: ObjectId(),
+  sender: ObjectId("librarian_id"),
+  recipient_sapid: "23-ARID-001",
+  studentId: ObjectId("student_user_id"),
+  subject: "✅ Library Clearance Approved",
+  message: "Your library clearance request has been approved!",
+  message_type: "library_approval",
+  is_read: false,
+  createdAt: new Date()
+});
 
--- Verify tables
-SHOW TABLES;
-DESCRIBE users;
-DESCRIBE clearance_requests;
+-- For library rejection notifications:
+db.messages.insertOne({
+  _id: ObjectId(),
+  sender: ObjectId("librarian_id"),
+  recipient_sapid: "23-ARID-001",
+  studentId: ObjectId("student_user_id"),
+  subject: "❌ Library Clearance Rejected",
+  message: "Your library clearance request has been rejected.",
+  message_type: "library_rejection",
+  is_read: false,
+  createdAt: new Date()
+});
+
+-- ============================================================
+-- INDEXES (Create these for better performance)
+-- ============================================================
+db.messages.createIndex({ "message_type": 1, "status": 1, "createdAt": -1 });
+db.messages.createIndex({ "recipient_sapid": 1 });
+db.messages.createIndex({ "studentId": 1 });
+db.messages.createIndex({ "is_read": 1 });
+db.messages.createIndex({ "createdAt": -1 });
+
+-- ============================================================
+-- QUERIES (Common operations in library routes)
+-- ============================================================
+-- Pending library clearance requests:
+db.messages.find({ message_type: "library_request", status: "Pending" }).sort({ createdAt: -1 });
+
+-- Approved library clearance requests:
+db.messages.find({ message_type: "library_request", status: "Approved" }).sort({ updatedAt: -1 });
+
+-- Rejected library clearance requests:
+db.messages.find({ message_type: "library_request", status: "Rejected" }).sort({ updatedAt: -1 });
+
+-- Messages for a specific student:
+db.messages.find({ recipient_sapid: "23-ARID-001" });
+
+-- Unread notifications for a student:
+db.messages.find({ recipient_sapid: "23-ARID-001", is_read: false });
+
+-- ============================================================
+-- NOTES
+-- ============================================================
+-- 1. Use MongoDB Compass to view and manage collections
+-- 2. The backend uses Mongoose models to interact with MongoDB
+-- 3. Library clearance requests are stored in the messages collection
+-- 4. Use message_type field to differentiate library requests from other messages
+-- 5. Status field tracks the clearance status (Pending/Approved/Rejected)
 

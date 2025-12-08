@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import axios from "axios";
-import "./LibraryDashboard.css";
+import "../Student/EditProfile.css";
 
 export default function LibraryEditProfile() {
   const { user, logout } = useAuthContext();

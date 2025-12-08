@@ -28,11 +28,11 @@ export default function LibraryDashboard() {
 
       let endpoint = "";
       if (activeTab === "pending") {
-        endpoint = "/api/library/pending-requests";
+        endpoint = "/api/library/pending-messages";
       } else if (activeTab === "approved") {
-        endpoint = "/api/library/approved-requests";
+        endpoint = "/api/library/approved-messages";
       } else if (activeTab === "rejected") {
-        endpoint = "/api/library/rejected-requests";
+        endpoint = "/api/library/rejected-messages";
       }
 
       const response = await axios.get(apiUrl + endpoint, {
@@ -76,7 +76,7 @@ export default function LibraryDashboard() {
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
       const response = await axios.put(
-        apiUrl + `/api/library/requests/${modalRequestId}/approve`,
+        apiUrl + `/api/library/messages/${modalRequestId}/approve`,
         { remarks: remarks.trim() },
         {
           headers: {
@@ -117,7 +117,7 @@ export default function LibraryDashboard() {
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
       const response = await axios.put(
-        apiUrl + `/api/library/requests/${modalRequestId}/reject`,
+        apiUrl + `/api/library/messages/${modalRequestId}/reject`,
         { remarks: remarks.trim() },
         {
           headers: {
@@ -320,7 +320,7 @@ export default function LibraryDashboard() {
                   Cancel
                 </button>
                 <button
-                  className={`ld-btn ${modalAction === "approve" ? "ld-btn-approve" : "ld-btn-reject"}`}
+                  className={`btn ${modalAction === "approve" ? "btn-approve" : "btn-reject"}`}
                   onClick={modalAction === "approve" ? handleApprove : handleReject}
                   disabled={actionLoading || (modalAction === "reject" && !remarks.trim())}
                 >

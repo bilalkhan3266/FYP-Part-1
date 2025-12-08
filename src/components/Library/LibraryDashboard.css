@@ -1,7 +1,280 @@
+@import "../Student/EditProfile.css";
+
 /* ============================================
-   ROOT & UTILITIES
+   TABLE STYLES
 ============================================ */
-:root {
+.table-wrapper {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.requests-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.requests-table th {
+  background: #f3f4f6;
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 700;
+  color: #1f2937;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.requests-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+}
+
+.table-row:hover {
+  background: #f9fafb;
+}
+
+.remarks-text {
+  color: #6b7280;
+  display: block;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.status-pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.status-badge.status-approved {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.status-rejected {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+/* Action Buttons */
+.actions-cell {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-approve {
+  background: #10b981;
+  color: white;
+}
+
+.btn-approve:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-reject {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-reject:hover:not(:disabled) {
+  background: #b91c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-cancel {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: #d1d5db;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-title {
+  color: #1a73e8;
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.modal-body {
+  margin-bottom: 20px;
+}
+
+.modal-body label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.required {
+  color: #ef4444;
+  margin-left: 4px;
+}
+
+.modal-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  transition: all 0.3s ease;
+  color: #374151;
+}
+
+.modal-textarea:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Alerts */
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  animation: slideDown 0.3s ease;
+}
+
+.alert-error {
+  background: #fee2e2;
+  color: #7f1d1d;
+  border-left: 4px solid #ef4444;
+}
+
+.alert-success {
+  background: #d1fae5;
+  color: #065f46;
+  border-left: 4px solid #10b981;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .requests-table {
+    font-size: 12px;
+  }
+
+  .requests-table th,
+  .requests-table td {
+    padding: 10px;
+  }
+
+  .btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .modal-content {
+    padding: 20px;
+  }
+
+  .actions-cell {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
   --primary: #003366;
   --primary-2: #00509e;
   --bg: #f4f7fc;
