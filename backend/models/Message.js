@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 // Message Schema (Two-way conversation between students and departments)
 const messageSchema = new mongoose.Schema({
-  conversation_id: { type: String, required: true, index: true },
+  conversation_id: { type: String, index: true },
   sender_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   sender_name: String,
   sender_role: String,
@@ -21,7 +21,10 @@ const messageSchema = new mongoose.Schema({
   parent_message_id: mongoose.Schema.Types.ObjectId,
   studentId: String,
   studentName: String,
+  sapid: String,
   department: String,
+  program: String,
+  semester: String,
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

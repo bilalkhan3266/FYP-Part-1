@@ -1,109 +1,103 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const verifyToken = require("../verifyToken");
-const Message = require("../models/Message");
+const verifyToken = require('../verifyToken');
+const Message = require('../models/Message');
+const User = require('../models/User');
 
-// Create LibraryMessage model dynamically or use a simple approach
-// We'll work with messages collection but filter for library requests
-
-// GET pending messages for library dashboard
-router.get("/library/pending-messages", verifyToken, async (req, res) => {
+// ============================================
+// GET PENDING MESSAGES FROM MONGODB
+// ============================================
+router.get('/library/pending-messages', verifyToken, async (req, res) => {
   try {
+    console.log('📋 Fetching pending library messages...');
+    
     const messages = await Message.find({ 
-      message_type: "library_request", 
-      status: "Pending" 
-    }).sort({ createdAt: -1 });
+      message_type: 'library_request', 
+      status: 'Pending' 
+    }).sort({ createdAt: -1 }).exec();
 
-    res.json({ 
+    console.log(`✅ Found ${messages.length} pending messages`);
+    
+    res.status(200).json({ 
       success: true, 
-      data: messages.map(msg => ({
-        id: msg._id,
-        student_id: msg.studentId,
-        sapid: msg.sapid,
-        student_name: msg.studentName,
-        department: msg.department,
-        subject: msg.subject,
-        message: msg.message,
-        status: msg.status,
-        created_at: msg.createdAt
-      }))
+      data: messages,
+      count: messages.length
     });
   } catch (err) {
-    console.error("Error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error('❌ Error fetching pending messages:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '❌ Failed to fetch pending messages',
+      error: err.message
+    });
   }
 });
 
-// GET approved messages for library dashboard
-router.get("/library/approved-messages", verifyToken, async (req, res) => {
+// ============================================
+// GET APPROVED MESSAGES
+// ============================================
+router.get('/library/approved-messages', verifyToken, async (req, res) => {
   try {
     const messages = await Message.find({ 
-      message_type: "library_request", 
-      status: "Approved" 
-    }).sort({ updatedAt: -1 });
+      message_type: 'library_request', 
+      status: 'Approved' 
+    }).sort({ updatedAt: -1 }).exec();
 
-    res.json({ 
+    res.status(200).json({ 
       success: true, 
-      data: messages.map(msg => ({
-        id: msg._id,
-        student_id: msg.studentId,
-        sapid: msg.sapid,
-        student_name: msg.studentName,
-        department: msg.department,
-        subject: msg.subject,
-        message: msg.message,
-        status: msg.status,
-        remarks: msg.remarks,
-        approved_at: msg.updatedAt
-      }))
+      data: messages,
+      count: messages.length
     });
   } catch (err) {
-    console.error("Error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error('❌ Error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '❌ Failed to fetch approved messages'
+    });
   }
 });
 
-// GET rejected messages for library dashboard
-router.get("/library/rejected-messages", verifyToken, async (req, res) => {
+// ============================================
+// GET REJECTED MESSAGES
+// ============================================
+router.get('/library/rejected-messages', verifyToken, async (req, res) => {
   try {
     const messages = await Message.find({ 
-      message_type: "library_request", 
-      status: "Rejected" 
-    }).sort({ updatedAt: -1 });
+      message_type: 'library_request', 
+      status: 'Rejected' 
+    }).sort({ updatedAt: -1 }).exec();
 
-    res.json({ 
+    res.status(200).json({ 
       success: true, 
-      data: messages.map(msg => ({
-        id: msg._id,
-        student_id: msg.studentId,
-        sapid: msg.sapid,
-        student_name: msg.studentName,
-        department: msg.department,
-        subject: msg.subject,
-        message: msg.message,
-        status: msg.status,
-        remarks: msg.remarks,
-        approved_at: msg.updatedAt
-      }))
+      data: messages,
+      count: messages.length
     });
   } catch (err) {
-    console.error("Error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error('❌ Error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '❌ Failed to fetch rejected messages'
+    });
   }
 });
 
-// APPROVE a library message and send notification to student
-router.put("/library/messages/:id/approve", verifyToken, async (req, res) => {
+// ============================================
+// APPROVE MESSAGE - UPDATE & SEND MESSAGE TO STUDENT
+// ============================================
+router.put('/library/messages/:id/approve', verifyToken, async (req, res) => {
   try {
+    const { id } = req.params;
     const { remarks } = req.body;
     const librarianId = req.user.id;
 
+    console.log(`✅ Approving message ID: ${id}`);
+
     // Find and update the message
     const updatedMessage = await Message.findByIdAndUpdate(
-      req.params.id,
+      id,
       {
-        status: "Approved",
-        remarks: remarks || "",
+        status: 'Approved',
+        remarks: remarks || '',
         approvedBy: librarianId,
         updatedAt: new Date()
       },
@@ -111,45 +105,66 @@ router.put("/library/messages/:id/approve", verifyToken, async (req, res) => {
     );
 
     if (!updatedMessage) {
-      return res.status(404).json({ success: false, message: "Message not found" });
+      return res.status(404).json({ 
+        success: false, 
+        message: '❌ Message not found' 
+      });
     }
 
     // Send approval notification to student
     const approvalMessage = new Message({
-      sender: librarianId,
-      recipient_sapid: updatedMessage.sapid,
-      studentId: updatedMessage.studentId,
-      subject: "✅ Library Clearance Approved",
-      message: `Your library clearance request has been approved! ${remarks ? "Remarks: " + remarks : ""}`,
-      message_type: "library_approval",
+      sender_id: librarianId,
+      sender_name: req.user.full_name || 'Library',
+      sender_role: 'Library',
+      recipient_sapid: updatedMessage.sapid || updatedMessage.recipient_sapid,
+      subject: '✅ Library Clearance Approved',
+      message: `Your library clearance request has been approved! ${remarks ? 'Remarks: ' + remarks : ''}`,
+      message_type: 'library_approval',
       is_read: false,
       createdAt: new Date()
     });
 
     await approvalMessage.save();
 
-    res.json({ 
+    console.log(`✅ Approval notification sent to ${updatedMessage.sapid}`);
+
+    res.status(200).json({ 
       success: true, 
-      message: "Message approved and student notified" 
+      message: '✅ Request approved and student notified!'
     });
   } catch (err) {
-    console.error("Error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error('❌ Error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '❌ Server error'
+    });
   }
 });
 
-// REJECT a library message and send notification to student
-router.put("/library/messages/:id/reject", verifyToken, async (req, res) => {
+// ============================================
+// REJECT MESSAGE - UPDATE & SEND MESSAGE TO STUDENT
+// ============================================
+router.put('/library/messages/:id/reject', verifyToken, async (req, res) => {
   try {
+    const { id } = req.params;
     const { remarks } = req.body;
     const librarianId = req.user.id;
 
+    console.log(`❌ Rejecting message ID: ${id}`);
+
+    if (!remarks || remarks.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '❌ Rejection remarks are required'
+      });
+    }
+
     // Find and update the message
     const updatedMessage = await Message.findByIdAndUpdate(
-      req.params.id,
+      id,
       {
-        status: "Rejected",
-        remarks: remarks || "",
+        status: 'Rejected',
+        remarks: remarks.trim(),
         approvedBy: librarianId,
         updatedAt: new Date()
       },
@@ -157,30 +172,183 @@ router.put("/library/messages/:id/reject", verifyToken, async (req, res) => {
     );
 
     if (!updatedMessage) {
-      return res.status(404).json({ success: false, message: "Message not found" });
+      return res.status(404).json({ 
+        success: false, 
+        message: '❌ Message not found' 
+      });
     }
 
     // Send rejection notification to student
     const rejectionMessage = new Message({
-      sender: librarianId,
-      recipient_sapid: updatedMessage.sapid,
-      studentId: updatedMessage.studentId,
-      subject: "❌ Library Clearance Rejected",
-      message: `Your library clearance request has been rejected. ${remarks ? "Reason: " + remarks : ""}`,
-      message_type: "library_rejection",
+      sender_id: librarianId,
+      sender_name: req.user.full_name || 'Library',
+      sender_role: 'Library',
+      recipient_sapid: updatedMessage.sapid || updatedMessage.recipient_sapid,
+      subject: '❌ Library Clearance Rejected',
+      message: `Your library clearance request has been rejected. Reason: ${remarks.trim()}`,
+      message_type: 'library_rejection',
       is_read: false,
       createdAt: new Date()
     });
 
     await rejectionMessage.save();
 
-    res.json({ 
+    console.log(`❌ Rejection notification sent to ${updatedMessage.sapid}`);
+
+    res.status(200).json({ 
       success: true, 
-      message: "Message rejected and student notified" 
+      message: '✅ Request rejected and student notified!'
     });
   } catch (err) {
-    console.error("Error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error('❌ Error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '❌ Server error'
+    });
+  }
+});
+
+// ============================================
+// SEND MESSAGE TO STUDENT (From Library Staff)
+// ============================================
+router.post('/send-message', verifyToken, async (req, res) => {
+  try {
+    const { recipient_sapid, subject, message, message_type } = req.body;
+    const senderId = req.user.id;
+
+    console.log(`📤 Sending message to SAPID: ${recipient_sapid}`);
+
+    // Validate input
+    if (!recipient_sapid || !subject || !message) {
+      return res.status(400).json({
+        success: false,
+        message: '❌ All fields are required'
+      });
+    }
+
+    const newMessage = new Message({
+      sender_id: senderId,
+      sender_name: req.user.full_name || 'Library Staff',
+      sender_role: 'Library',
+      recipient_sapid: recipient_sapid.trim(),
+      subject: subject.trim(),
+      message: message.trim(),
+      message_type: message_type || 'info',
+      is_read: false,
+      createdAt: new Date()
+    });
+
+    await newMessage.save();
+
+    console.log(`✅ Message sent successfully to ${recipient_sapid}`);
+    
+    res.status(201).json({
+      success: true,
+      message: '✅ Message sent successfully!',
+      data: { id: newMessage._id }
+    });
+  } catch (err) {
+    console.error('❌ Error sending message:', err);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to send message',
+      error: err.message
+    });
+  }
+});
+
+// ============================================
+// GET MY MESSAGES (For Library Staff)
+// ============================================
+router.get('/my-messages', verifyToken, async (req, res) => {
+  try {
+    const senderId = req.user.id;
+
+    const messages = await Message.find({
+      sender_id: senderId,
+      sender_role: 'Library'
+    })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .exec();
+
+    res.status(200).json({
+      success: true,
+      data: messages || []
+    });
+  } catch (err) {
+    console.error('❌ Error fetching messages:', err);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to fetch messages'
+    });
+  }
+});
+
+// ============================================
+// UPDATE PROFILE (For Library Staff)
+// ============================================
+router.put('/update-profile', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { full_name, email, sap, department, password } = req.body;
+
+    console.log(`🔄 Updating profile for user: ${userId}`);
+
+    // Validate input
+    if (!full_name || !email) {
+      return res.status(400).json({
+        success: false,
+        message: '❌ Full name and email are required'
+      });
+    }
+
+    const updateData = {
+      full_name,
+      email,
+      sap: sap || null,
+      department: department || null
+    };
+
+    // If password is provided, hash and update it
+    if (password && password.trim()) {
+      const bcrypt = require('bcryptjs');
+      updateData.password = bcrypt.hashSync(password, 10);
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: '❌ User not found'
+      });
+    }
+
+    console.log(`✅ Profile updated successfully`);
+    
+    res.status(200).json({
+      success: true,
+      message: '✅ Profile updated successfully!',
+      data: {
+        id: updatedUser._id,
+        full_name: updatedUser.full_name,
+        email: updatedUser.email,
+        sap: updatedUser.sap,
+        department: updatedUser.department
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error updating profile:', err);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to update profile',
+      error: err.message
+    });
   }
 });
 
