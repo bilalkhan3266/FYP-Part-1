@@ -21,13 +21,33 @@ app.use(express.urlencoded({ extended: true }));
 // --------------------
 // MongoDB Connection
 // --------------------
-const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/role_based_system';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/role_based_system';
 
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('\n✅ MongoDB connected successfully\n'))
+console.log('🔄 Attempting to connect to MongoDB...');
+console.log(`📍 Connection String: ${MONGO_URI}`);
+
+mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 5000,
+})
+  .then(() => {
+    console.log('\n✅ MongoDB connected successfully!');
+    console.log(`📊 Database: role_based_system`);
+    console.log(`🚀 Server ready to accept requests\n`);
+  })
   .catch(err => {
-    console.error('❌ MongoDB connection error:', err);
-    process.exit(1);
+    console.error('\n❌ MongoDB connection error:');
+    console.error('Error Message:', err.message);
+    console.error('Connection String:', MONGO_URI);
+    console.error('\n💡 Possible Solutions:');
+    console.error('1. Make sure MongoDB is running (mongod)');
+    console.error('2. Check your MONGO_URI in .env file');
+    console.error('3. If using MongoDB Atlas, ensure IP whitelist includes your IP');
+    console.error('4. Check network connectivity\n');
+    // Continue running to allow server startup
+    console.log('⚠️  Server starting without database connection...\n');
   });
 
 // --------------------
@@ -978,6 +998,213 @@ app.delete('/api/messages/:id', verifyToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: '❌ Failed to delete message'
+    });
+  }
+});
+
+// ============================================
+// LIBRARY DEPARTMENT - GET PENDING REQUESTS
+// ============================================
+app.get('/api/library/pending-requests', verifyToken, async (req, res) => {
+  try {
+    const user = req.user;
+    if (user.role !== 'library') {
+      return res.status(403).json({
+        success: false,
+        message: '❌ Access denied'
+      });
+    }
+
+    const clearanceRequests = await ClearanceRequest.find({
+      department: 'Library',
+      status: 'Pending'
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: clearanceRequests || []
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to fetch pending requests'
+    });
+  }
+});
+
+// ============================================
+// LIBRARY DEPARTMENT - GET APPROVED REQUESTS
+// ============================================
+app.get('/api/library/approved-requests', verifyToken, async (req, res) => {
+  try {
+    const user = req.user;
+    if (user.role !== 'library') {
+      return res.status(403).json({
+        success: false,
+        message: '❌ Access denied'
+      });
+    }
+
+    const clearanceRequests = await ClearanceRequest.find({
+      department: 'Library',
+      status: 'Approved'
+    }).sort({ updatedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: clearanceRequests || []
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to fetch approved requests'
+    });
+  }
+});
+
+// ============================================
+// LIBRARY DEPARTMENT - GET REJECTED REQUESTS
+// ============================================
+app.get('/api/library/rejected-requests', verifyToken, async (req, res) => {
+  try {
+    const user = req.user;
+    if (user.role !== 'library') {
+      return res.status(403).json({
+        success: false,
+        message: '❌ Access denied'
+      });
+    }
+
+    const clearanceRequests = await ClearanceRequest.find({
+      department: 'Library',
+      rejectionStatus: 'Rejected'
+    }).sort({ updatedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: clearanceRequests || []
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to fetch rejected requests'
+    });
+  }
+});
+
+// ============================================
+// LIBRARY DEPARTMENT - APPROVE REQUEST WITH COMMENT
+// ============================================
+app.put('/api/library/requests/:id/approve', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const librarianId = req.user.id;
+
+    const clearanceRequest = await ClearanceRequest.findByIdAndUpdate(
+      id,
+      {
+        status: 'Approved',
+        libraryApprovedBy: librarianId,
+        libraryRemarks: remarks || '',
+        libraryApprovedAt: new Date()
+      },
+      { new: true }
+    );
+
+    if (!clearanceRequest) {
+      return res.status(404).json({
+        success: false,
+        message: '❌ Request not found'
+      });
+    }
+
+    // Send message to student
+    const message = new Message({
+      senderId: librarianId,
+      senderRole: 'library',
+      recipientSapid: clearanceRequest.sapid,
+      subject: 'Library Clearance Approved',
+      message: `Your library clearance has been approved. ${remarks ? `Comment: ${remarks}` : ''}`,
+      messageType: 'success',
+      isRead: false
+    });
+
+    await message.save();
+
+    res.status(200).json({
+      success: true,
+      message: '✅ Request approved and student notified'
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to approve request'
+    });
+  }
+});
+
+// ============================================
+// LIBRARY DEPARTMENT - REJECT REQUEST WITH COMMENT
+// ============================================
+app.put('/api/library/requests/:id/reject', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const librarianId = req.user.id;
+
+    if (!remarks || remarks.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '❌ Rejection remarks are required'
+      });
+    }
+
+    const clearanceRequest = await ClearanceRequest.findByIdAndUpdate(
+      id,
+      {
+        rejectionStatus: 'Rejected',
+        status: 'Rejected',
+        libraryApprovedBy: librarianId,
+        libraryRemarks: remarks.trim(),
+        libraryApprovedAt: new Date()
+      },
+      { new: true }
+    );
+
+    if (!clearanceRequest) {
+      return res.status(404).json({
+        success: false,
+        message: '❌ Request not found'
+      });
+    }
+
+    // Send rejection message to student
+    const message = new Message({
+      senderId: librarianId,
+      senderRole: 'library',
+      recipientSapid: clearanceRequest.sapid,
+      subject: 'Library Clearance Rejected',
+      message: `Your library clearance has been rejected. Reason: ${remarks.trim()}`,
+      messageType: 'error',
+      isRead: false
+    });
+
+    await message.save();
+
+    res.status(200).json({
+      success: true,
+      message: '✅ Request rejected and student notified'
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to reject request'
     });
   }
 });

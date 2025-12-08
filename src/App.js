@@ -42,6 +42,38 @@ import EditProfile from "./components/Student/EditProfile";
 
 import "./App.css";
 
+/* =====================
+   ROLE → DASHBOARD MAP
+===================== */
+function getDashboardPath() {
+  const savedUser = localStorage.getItem("user");
+  if (!savedUser) return "login";
+
+  const user = JSON.parse(savedUser);
+  const role = user.role?.toLowerCase();
+
+  switch (role) {
+    case "student":
+      return "student-dashboard";
+    case "library":
+      return "library-dashboard";
+    case "transport":
+      return "transport-dashboard";
+    case "laboratory":
+      return "lab-dashboard";
+    case "studentservice":
+      return "service-dashboard";
+    case "feedepartment":
+      return "fee-dashboard";
+    case "coordination":
+      return "coordination-dashboard";
+    case "hod":
+      return "hod-dashboard";
+    default:
+      return "login";
+  }
+}
+
 // Main App Routes Component
 function AppRoutes() {
   const { isAuthenticated, loading } = useAuthContext();
@@ -65,9 +97,9 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login />} />
-      <Route path="/signup" element={isAuthenticated ? <Navigate to="/" /> : <Signup />} />
-      <Route path="/forgot" element={isAuthenticated ? <Navigate to="/" /> : <ForgotPassword />} />
+      <Route path="/login" element={isAuthenticated ? <Navigate to={`/${getDashboardPath()}`} /> : <Login />} />
+      <Route path="/signup" element={isAuthenticated ? <Navigate to={`/${getDashboardPath()}`} /> : <Signup />} />
+      <Route path="/forgot" element={isAuthenticated ? <Navigate to={`/${getDashboardPath()}`} /> : <ForgotPassword />} />
 
       {/* Protected Routes - Student */}
       <Route
@@ -187,7 +219,15 @@ function AppRoutes() {
       />
 
       {/* Default Routes */}
-      <Route path="/" element={isAuthenticated ? <Navigate to="/student-dashboard" /> : <Navigate to="/login" />} />
+      <Route
+        path="/"
+        element={
+          isAuthenticated
+            ? <Navigate to={`/${getDashboardPath()}`} />
+            : <Navigate to="/login" />
+        }
+      />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
