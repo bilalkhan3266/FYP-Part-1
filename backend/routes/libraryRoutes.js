@@ -34,6 +34,66 @@ router.get('/library/pending-messages', verifyToken, async (req, res) => {
 });
 
 // ============================================
+// CREATE LIBRARY MESSAGE (Student submits request)
+// ============================================
+router.post('/library/create-request', verifyToken, async (req, res) => {
+  try {
+    const { subject, message, program, semester } = req.body;
+    const studentId = req.user.id;
+    const studentName = req.user.full_name;
+    const sapid = req.user.sap;
+    const department = req.user.department;
+
+    console.log(`📝 Creating library request from student: ${sapid}`);
+
+    if (!subject || !message) {
+      return res.status(400).json({
+        success: false,
+        message: '❌ Subject and message are required'
+      });
+    }
+
+    const libraryMessage = new Message({
+      sender_id: studentId,
+      sender_name: studentName,
+      sender_role: 'Student',
+      sender_sapid: sapid,
+      recipient_sapid: sapid,
+      subject: subject.trim(),
+      message: message.trim(),
+      message_type: 'library_request',
+      status: 'Pending',
+      is_read: false,
+      studentId: studentId.toString(),
+      studentName: studentName,
+      sapid: sapid,
+      department: department,
+      program: program || 'N/A',
+      semester: semester || 'N/A',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    await libraryMessage.save();
+
+    console.log(`✅ Library request created: ${libraryMessage._id}`);
+
+    res.status(201).json({
+      success: true,
+      message: '✅ Library request submitted successfully!',
+      data: libraryMessage
+    });
+  } catch (err) {
+    console.error('❌ Error creating library request:', err);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to create library request',
+      error: err.message
+    });
+  }
+});
+
+// ============================================
 // GET APPROVED MESSAGES
 // ============================================
 router.get('/library/approved-messages', verifyToken, async (req, res) => {
