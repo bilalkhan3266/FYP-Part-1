@@ -1,21 +1,90 @@
 // backend/controllers/clearanceController.js
 const ClearanceRequest = require("../models/ClearanceRequest");
+const DepartmentClearance = require("../models/DepartmentClearance");
+const { v4: uuidv4 } = require("uuid");
 
 // Submit a new clearance request (Student)
 exports.submitRequest = async (req, res) => {
   try {
-    const { student_name, sapid, program, semester } = req.body;
-    if (!student_name || !sapid || !program || !semester) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
+    const { registration_no, father_name, program, semester, degree_status } = req.body;
+    
+    // Get user info from JWT token
+    const sapid = req.user.sap || req.user.sap_id;
+    const studentId = req.user._id || req.user.id;
+    const student_name = req.user.full_name || req.user.name;
+
+    console.log(`📝 Submitting clearance request for student: ${sapid}`);
+
+    // Validation
+    if (!sapid) {
+      return res.status(400).json({
+        success: false,
+        message: "User SAP ID not found. Please update your profile."
+      });
     }
 
-    const request = new ClearanceRequest({ student_name, sapid, program, semester });
-    await request.save();
+    if (!registration_no || !father_name || !program || !semester || !degree_status) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required"
+      });
+    }
 
-    res.json({ success: true, message: "Clearance request submitted", request });
+    // Generate request ID to link all department clearances
+    const requestId = uuidv4();
+
+    // List of all departments
+    const departments = [
+      "Fee & Dues",
+      "Library",
+      "Student Services",
+      "Laboratory",
+      "Coordination Office",
+      "Transport",
+      "Hostel Mess"
+    ];
+
+    // Create clearance records for each department
+    const clearanceRecords = [];
+    for (const dept of departments) {
+      const clearance = new DepartmentClearance({
+        studentId: studentId,
+        sapid: sapid,
+        student_name: student_name,
+        registration_no: registration_no.trim(),
+        father_name: father_name.trim(),
+        program: program.trim(),
+        semester: semester.trim(),
+        degree_status: degree_status.trim(),
+        department: dept,
+        status: "Pending",
+        remarks: "",
+        requestId: requestId
+      });
+
+      await clearance.save();
+      clearanceRecords.push(clearance);
+    }
+
+    console.log(`✅ Clearance request submitted to ${departments.length} departments`);
+
+    res.status(201).json({
+      success: true,
+      message: `✅ Clearance request submitted to ${departments.length} departments!`,
+      data: {
+        requestId: requestId,
+        studentSap: sapid,
+        departmentsCount: departments.length,
+        clearances: clearanceRecords
+      }
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Failed to submit request" });
+    console.error("❌ Error submitting clearance request:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to submit clearance request",
+      error: err.message
+    });
   }
 };
 

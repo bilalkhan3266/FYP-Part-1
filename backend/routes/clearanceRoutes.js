@@ -7,15 +7,10 @@ const {
   approveRequest,
   rejectRequest
 } = require("../controllers/clearanceController");
-
-// Middleware to simulate authentication (replace with JWT middleware if needed)
-const verifyToken = (req, res, next) => {
-  // Example: req.user = { role: "Department" };
-  next();
-};
+const verifyToken = require("../verifyToken");
 
 // Submit a clearance request (student)
-router.post("/submit", submitRequest);
+router.post("/submit-request", verifyToken, submitRequest);
 
 // Get requests by status
 router.get("/requests/:status", verifyToken, getRequestsByStatus);
