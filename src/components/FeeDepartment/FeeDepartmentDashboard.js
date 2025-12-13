@@ -1,38 +1,153 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "../../contexts/AuthContext";
+import axios from "axios";
 import "./FeeDashboard.css";
 
 export default function FeeDepartmentDashboard() {
+  const { user, logout } = useAuthContext();
   const navigate = useNavigate();
-  const [user, setUser] = useState({ full_name: "", sap: "", department: "" });
+
+  const [activeTab, setActiveTab] = useState("pending");
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+  const [showRemarksModal, setShowRemarksModal] = useState(false);
+  const [remarks, setRemarks] = useState("");
+  const [modalAction, setModalAction] = useState("");
+  const [modalRequestId, setModalRequestId] = useState(null);
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      let endpoint = "";
+      if (activeTab === "pending") {
+        endpoint = "/api/fee/pending-requests";
+      } else if (activeTab === "approved") {
+        endpoint = "/api/fee/approved-requests";
+      } else if (activeTab === "rejected") {
+        endpoint = "/api/fee/rejected-requests";
+      }
+
+      const response = await axios.get(apiUrl + endpoint, {
+        headers: {
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (response.data.success) {
+        setRequests(response.data.data || []);
+      } else {
+        setError(response.data.message || "❌ Failed to fetch requests");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setError(err.response?.data?.message || "❌ Failed to fetch requests");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Fetch user data from API
-    const fetchUser = async () => {
-      try {
-        const token = localStorage.getItem("token"); // assuming auth token
-        const res = await fetch("http://localhost:5000/users/me", {
+    fetchRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const handleOpenRemarksModal = (requestId, action) => {
+    setModalRequestId(requestId);
+    setModalAction(action);
+    setRemarks("");
+    setShowRemarksModal(true);
+  };
+
+  const handleApprove = async () => {
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      const response = await axios.put(
+        apiUrl + `/api/fee/requests/${modalRequestId}/approve`,
+        { remarks: remarks.trim() },
+        {
           headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!res.ok) throw new Error("Failed to fetch user data");
-        const data = await res.json();
-        setUser({
-          full_name: data.full_name || "Fee Dept",
-          sap: data.sap || "N/A",
-          department: data.department || "N/A",
-        });
-      } catch (err) {
-        console.error(err);
-        setUser({ full_name: "Fee Dept", sap: "N/A", department: "N/A" });
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setSuccess("✅ Request approved successfully!");
+        setShowRemarksModal(false);
+        setRemarks("");
+        setTimeout(() => {
+          fetchRequests();
+          setSuccess("");
+        }, 1500);
+      } else {
+        setError(response.data.message || "❌ Failed to approve request");
       }
-    };
+    } catch (err) {
+      console.error("Error:", err);
+      setError(err.response?.data?.message || "❌ Failed to approve request");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
-    fetchUser();
-  }, []);
+  const handleReject = async () => {
+    if (!remarks.trim()) {
+      setError("❌ Please enter rejection remarks");
+      return;
+    }
 
-  const handleLogout = () => navigate("/fee-login");
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      const response = await axios.put(
+        apiUrl + `/api/fee/requests/${modalRequestId}/reject`,
+        { remarks: remarks.trim() },
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setSuccess("✅ Request rejected successfully!");
+        setShowRemarksModal(false);
+        setRemarks("");
+        setTimeout(() => {
+          fetchRequests();
+          setSuccess("");
+        }, 1500);
+      } else {
+        setError(response.data.message || "❌ Failed to reject request");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setError(err.response?.data?.message || "❌ Failed to reject request");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <div className="student-dashboard-page">
@@ -40,11 +155,11 @@ export default function FeeDepartmentDashboard() {
       <aside className="sd-sidebar">
         <div className="sd-profile">
           <div className="sd-avatar">
-            {user.full_name ? user.full_name.charAt(0).toUpperCase() : "F"}
+            {user?.full_name ? user.full_name.charAt(0).toUpperCase() : "F"}
           </div>
           <div>
-            <h3 className="sd-name">{user.full_name || "Fee Dept"}</h3>
-            <p className="sd-small">{user.sap || "N/A"} • {user.department || "N/A"}</p>
+            <h3 className="sd-name">{user?.full_name || "Fee Department"}</h3>
+            <p className="sd-small">{user?.sap || "N/A"} • {user?.department || "Fee Department"}</p>
             <p className="sd-small">Riphah International University</p>
           </div>
         </div>
@@ -56,26 +171,16 @@ export default function FeeDepartmentDashboard() {
 
           <button
             className="sd-nav-btn"
-            onClick={() => alert("Viewing pending student requests")}
+            onClick={() => setActiveTab("pending")}
           >
             📄 View Student Requests
           </button>
 
           <button
             className="sd-nav-btn"
-            onClick={() => alert("Approved Requests")}
+            onClick={() => setActiveTab("approved")}
           >
             ✅ Approved Requests
-          </button>
-
-          <button
-            className="sd-nav-btn"
-            onClick={() => {
-              const remarks = prompt("Enter rejection remarks:");
-              if (remarks) alert(`Rejected with remarks: ${remarks}`);
-            }}
-          >
-            ❌ Reject Request
           </button>
 
           <button
@@ -102,58 +207,135 @@ export default function FeeDepartmentDashboard() {
           </div>
         </header>
 
-        {/* ---- CARDS ---- */}
-        <section className="sd-cards">
-          <article
-            className="sd-card"
-            onClick={() => alert("Viewing student requests")}
-          >
-            <div className="sd-card-head">
-              <h4>📄 View Requests</h4>
-            </div>
-            <p>See all pending student clearance requests.</p>
-          </article>
+        {error && <div className="alert alert-error">{error}</div>}
+        {success && <div className="alert alert-success">{success}</div>}
 
-          <article
-            className="sd-card"
-            onClick={() => alert("Viewing approved requests")}
+        {/* Tabs */}
+        <div className="tabs-container">
+          <button
+            className={`tab-btn ${activeTab === "pending" ? "active" : ""}`}
+            onClick={() => setActiveTab("pending")}
           >
-            <div className="sd-card-head">
-              <h4>✅ Approved Requests</h4>
-            </div>
-            <p>View all approved fee clearance records.</p>
-          </article>
-
-          <article
-            className="sd-card"
-            onClick={() => {
-              const remarks = prompt("Enter rejection remarks:");
-              if (remarks) alert(`Rejected with remarks: ${remarks}`);
-            }}
+            ⏳ Pending Requests
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "approved" ? "active" : ""}`}
+            onClick={() => setActiveTab("approved")}
           >
-            <div className="sd-card-head">
-              <h4>❌ Reject Request</h4>
-            </div>
-            <p>Reject a student clearance with remarks.</p>
-          </article>
-
-          <article
-            className="sd-card"
-            onClick={() => navigate("/fee-messages")}
+            ✅ Approved
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "rejected" ? "active" : ""}`}
+            onClick={() => setActiveTab("rejected")}
           >
-            <div className="sd-card-head">
-              <h4>💬 Messages</h4>
-            </div>
-            <p>Chat with students or other departments.</p>
-          </article>
+            ❌ Rejected
+          </button>
+        </div>
 
-          <article className="sd-card" onClick={handleLogout}>
-            <div className="sd-card-head">
-              <h4>🚪 Logout</h4>
+        {/* Requests Table */}
+        <section className="requests-section">
+          {loading ? (
+            <p className="loading">Loading requests...</p>
+          ) : requests.length === 0 ? (
+            <p className="no-data">No {activeTab} requests found</p>
+          ) : (
+            <div className="requests-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Student Name</th>
+                    <th>SAP ID</th>
+                    <th>Registration No</th>
+                    <th>Program</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {requests.map((request) => (
+                    <tr key={request._id}>
+                      <td>{request.student_name}</td>
+                      <td>{request.sapid}</td>
+                      <td>{request.registration_no}</td>
+                      <td>{request.program}</td>
+                      <td>
+                        <span className={`status ${request.status.toLowerCase()}`}>
+                          {request.status}
+                        </span>
+                      </td>
+                      <td>
+                        {activeTab === "pending" && (
+                          <>
+                            <button
+                              className="btn-approve"
+                              onClick={() => handleOpenRemarksModal(request._id, "approve")}
+                            >
+                              ✅ Approve
+                            </button>
+                            <button
+                              className="btn-reject"
+                              onClick={() => handleOpenRemarksModal(request._id, "reject")}
+                            >
+                              ❌ Reject
+                            </button>
+                          </>
+                        )}
+                        {activeTab !== "pending" && (
+                          <span className="text-muted">{request.remarks || "No remarks"}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <p>Sign out from the dashboard.</p>
-          </article>
+          )}
         </section>
+
+        {/* Remarks Modal */}
+        {showRemarksModal && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <div className="modal-header">
+                <h2>{modalAction === "approve" ? "Approve Request" : "Reject Request"}</h2>
+                <button
+                  className="modal-close"
+                  onClick={() => setShowRemarksModal(false)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="modal-body">
+                <label>Remarks:</label>
+                <textarea
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  placeholder="Enter remarks..."
+                  rows="5"
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn-cancel"
+                  onClick={() => setShowRemarksModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className={`btn-${modalAction}`}
+                  onClick={modalAction === "approve" ? handleApprove : handleReject}
+                  disabled={actionLoading}
+                >
+                  {actionLoading
+                    ? "Processing..."
+                    : modalAction === "approve"
+                    ? "Approve"
+                    : "Reject"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

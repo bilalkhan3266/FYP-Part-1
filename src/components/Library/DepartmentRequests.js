@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import api from "../../services/api";
 import "./DepartmentRequests.css";
@@ -16,7 +16,7 @@ export default function DepartmentRequests() {
     { key: "rejected", label: "Rejected Requests" },
   ];
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     if (!department) {
       setError("Department not specified in URL");
       setRequests([]);
@@ -42,11 +42,11 @@ export default function DepartmentRequests() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [department, activeTab]);
 
   useEffect(() => {
     fetchRequests();
-  }, [department, activeTab]);
+  }, [fetchRequests]);
 
   const handleApprove = async (id) => {
     try {

@@ -3,6 +3,7 @@ const router = express.Router();
 const verifyToken = require('../verifyToken');
 const Message = require('../models/Message');
 const User = require('../models/User');
+const messageHelper = require('../utils/messageHelper'); // ✅ ADD HELPER
 
 // ============================================
 // GET PENDING MESSAGES FROM MONGODB
@@ -282,7 +283,17 @@ router.post('/send-message', verifyToken, async (req, res) => {
     if (!recipient_sapid || !subject || !message) {
       return res.status(400).json({
         success: false,
-        message: '❌ All fields are required'
+        message: '❌ Recipient SAP ID, subject, and message are required'
+      });
+    }
+
+    // ✅ USE HELPER TO FIND STUDENT
+    const student = await messageHelper.findStudentBySapId(recipient_sapid);
+    
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: `❌ Student with SAP ID ${recipient_sapid} not found`
       });
     }
 
@@ -290,7 +301,10 @@ router.post('/send-message', verifyToken, async (req, res) => {
       sender_id: senderId,
       sender_name: req.user.full_name || 'Library Staff',
       sender_role: 'Library',
+      sender_sapid: req.user.sap || req.user.sap_id,
+      recipient_id: student._id, // ✅ STORE STUDENT ID
       recipient_sapid: recipient_sapid.trim(),
+      recipient_department: 'Library',
       subject: subject.trim(),
       message: message.trim(),
       message_type: message_type || 'info',
@@ -300,12 +314,15 @@ router.post('/send-message', verifyToken, async (req, res) => {
 
     await newMessage.save();
 
-    console.log(`✅ Message sent successfully to ${recipient_sapid}`);
+    console.log(`✅ Message sent successfully to ${student.full_name}`);
     
     res.status(201).json({
       success: true,
       message: '✅ Message sent successfully!',
-      data: { id: newMessage._id }
+      data: { 
+        id: newMessage._id,
+        recipient: student.full_name
+      }
     });
   } catch (err) {
     console.error('❌ Error sending message:', err);
@@ -407,6 +424,169 @@ router.put('/update-profile', verifyToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: '❌ Failed to update profile',
+      error: err.message
+    });
+  }
+});
+
+// ============================================
+// GET LIBRARY REQUESTS BY STATUS
+// ============================================
+router.get('/library/requests/:status', verifyToken, async (req, res) => {
+  try {
+    // Check if user is library staff
+    const userRole = (req.user.role || '').toLowerCase();
+    console.log(`📋 User attempting to access library requests. Role: ${userRole}, Full role: ${req.user.role}`);
+    
+    if (userRole !== 'library') {
+      return res.status(403).json({
+        success: false,
+        message: `❌ Access denied. Your role is "${req.user.role}". Only library staff can access this resource.`
+      });
+    }
+
+    const { status } = req.params;
+    
+    // Map URL status to database status
+    const statusMap = {
+      'pending': 'Pending',
+      'approved': 'Approved',
+      'rejected': 'Rejected'
+    };
+    
+    const dbStatus = statusMap[status.toLowerCase()];
+    
+    if (!dbStatus) {
+      return res.status(400).json({
+        success: false,
+        message: '❌ Invalid status. Use: pending, approved, or rejected'
+      });
+    }
+
+    console.log(`📋 Fetching ${status} requests...`);
+    
+    const requests = await Message.find({ 
+      message_type: 'library_request', 
+      status: dbStatus 
+    }).sort({ createdAt: -1 }).exec();
+
+    console.log(`✅ Found ${requests.length} ${status} requests`);
+    
+    // Convert MongoDB documents to match frontend expectations
+    const formattedRequests = requests.map(req => ({
+      id: req._id.toString(),
+      student_name: req.sender_name || req.studentName || 'Unknown',
+      sapid: req.sender_sapid || req.sapid || 'N/A',
+      program: req.program || 'N/A',
+      semester: req.semester || 'N/A',
+      status: req.status || 'Pending',
+      subject: req.subject,
+      message: req.message,
+      createdAt: req.createdAt
+    }));
+    
+    res.status(200).json({ 
+      success: true, 
+      requests: formattedRequests || [],
+      count: formattedRequests.length
+    });
+  } catch (err) {
+    console.error('❌ Error fetching requests:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '❌ Failed to fetch requests',
+      error: err.message
+    });
+  }
+});
+
+// ============================================
+// APPROVE LIBRARY REQUEST
+// ============================================
+router.post('/library/requests/:id/approve', verifyToken, async (req, res) => {
+  try {
+    // Check if user is library staff
+    const userRole = req.user.role.toLowerCase();
+    if (userRole !== 'library') {
+      return res.status(403).json({
+        success: false,
+        message: '❌ Access denied. Only library staff can approve requests.'
+      });
+    }
+
+    const { id } = req.params;
+
+    console.log(`✅ Approving request: ${id}`);
+    
+    const request = await Message.findByIdAndUpdate(
+      id,
+      { status: 'Approved', updatedAt: new Date() },
+      { new: true }
+    );
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: '❌ Request not found'
+      });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      message: '✅ Request approved successfully',
+      data: request
+    });
+  } catch (err) {
+    console.error('❌ Error approving request:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '❌ Failed to approve request',
+      error: err.message
+    });
+  }
+});
+
+// ============================================
+// REJECT LIBRARY REQUEST
+// ============================================
+router.post('/library/requests/:id/reject', verifyToken, async (req, res) => {
+  try {
+    // Check if user is library staff
+    const userRole = req.user.role.toLowerCase();
+    if (userRole !== 'library') {
+      return res.status(403).json({
+        success: false,
+        message: '❌ Access denied. Only library staff can reject requests.'
+      });
+    }
+
+    const { id } = req.params;
+
+    console.log(`❌ Rejecting request: ${id}`);
+    
+    const request = await Message.findByIdAndUpdate(
+      id,
+      { status: 'Rejected', updatedAt: new Date() },
+      { new: true }
+    );
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: '❌ Request not found'
+      });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      message: '✅ Request rejected successfully',
+      data: request
+    });
+  } catch (err) {
+    console.error('❌ Error rejecting request:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '❌ Failed to reject request',
       error: err.message
     });
   }

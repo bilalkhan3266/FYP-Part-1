@@ -1,16 +1,18 @@
 const mongoose = require("mongoose");
 
 const clearanceSchema = new mongoose.Schema({
-  sapid: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  student_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  sapid: String,
   student_name: String,
   registration_no: String,
   father_name: String,
   program: String,
   semester: String,
   degree_status: String,
-  submitted_at: { type: Date, default: Date.now },
   department: String,
-  status: { type: String, default: "Pending" }
+  status: { type: String, default: "Pending" },
+  submitted_at: { type: Date, default: Date.now },
+  createdAt: { type: Date, default: Date.now }
 });
 
 // Prevent model overwrite

@@ -48,9 +48,33 @@ export default function ClearanceRequest() {
       return;
     }
 
+    // Also validate that sapid and student_name exist
+    if (!formData.sapid.trim() || !formData.student_name.trim()) {
+      setError("❌ Student information is missing. Please logout and login again.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      // Check if token exists
+      if (!token) {
+        setError("❌ No authentication token found. Please login again.");
+        setLoading(false);
+        return;
+      }
+
+      console.log('📝 Submitting form data:', {
+        sapid: formData.sapid,
+        student_name: formData.student_name,
+        registration_no: formData.registration_no,
+        father_name: formData.father_name,
+        program: formData.program,
+        semester: formData.semester,
+        degree_status: formData.degree_status,
+      });
 
       // Submit clearance request - will create records in all department tables
       const response = await axios.post(
@@ -99,10 +123,27 @@ export default function ClearanceRequest() {
       }
     } catch (err) {
       console.error("Clearance Request Error:", err);
-      setError(
-        err.response?.data?.message ||
-          "❌ Unable to submit request. Please try again."
-      );
+      
+      // Log full error details
+      console.error("Error Response:", {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+      
+      if (err.response?.status === 401) {
+        setError("❌ Invalid or expired token. Please login again.");
+      } else if (err.response?.status === 400) {
+        setError("❌ " + (err.response?.data?.message || "Invalid form data. Please check all fields."));
+      } else if (err.response?.status === 500) {
+        setError("❌ Server error: " + (err.response?.data?.message || "Failed to submit request."));
+      } else if (err.response?.data?.message) {
+        setError("❌ " + err.response.data.message);
+      } else {
+        setError(
+          "❌ Unable to submit request: " + (err.message || "Unknown error")
+        );
+      }
     } finally {
       setLoading(false);
     }

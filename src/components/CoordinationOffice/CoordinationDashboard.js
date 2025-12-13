@@ -1,170 +1,345 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import axios from "axios";
 import "./CoordinationDashboard.css";
 
 export default function CoordinationDashboard() {
-  const navigate = useNavigate();
   const { user, logout } = useAuthContext();
-  
-  const [requests] = useState([
-    { id: 1, name: "Ali Khan", sapid: "FA21-BCS-001", status: "Pending", date: "2025-01-10" },
-    { id: 2, name: "Ayesha Malik", sapid: "FA21-BCS-045", status: "Pending", date: "2025-01-09" },
-    { id: 3, name: "Bilal Ahmed", sapid: "FA20-BCE-077", status: "Approved", date: "2025-01-08" },
-    { id: 4, name: "Sana Riaz", sapid: "FA20-BBA-032", status: "Approved", date: "2025-01-07" },
-    { id: 5, name: "Hamza Ali", sapid: "FA21-BSSE-120", status: "Rejected", date: "2025-01-06" },
-  ]);
+  const navigate = useNavigate();
 
-  const stats = {
-    total: requests.length,
-    pending: requests.filter(r => r.status === "Pending").length,
-    approved: requests.filter(r => r.status === "Approved").length,
-    rejected: requests.filter(r => r.status === "Rejected").length,
+  const [activeTab, setActiveTab] = useState("pending");
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+  const [showRemarksModal, setShowRemarksModal] = useState(false);
+  const [remarks, setRemarks] = useState("");
+  const [modalAction, setModalAction] = useState("");
+  const [modalRequestId, setModalRequestId] = useState(null);
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      let endpoint = "";
+      if (activeTab === "pending") {
+        endpoint = "/api/coordination/pending-requests";
+      } else if (activeTab === "approved") {
+        endpoint = "/api/coordination/approved-requests";
+      } else if (activeTab === "rejected") {
+        endpoint = "/api/coordination/rejected-requests";
+      }
+
+      const response = await axios.get(apiUrl + endpoint, {
+        headers: {
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (response.data.success) {
+        setRequests(response.data.data || []);
+      } else {
+        setError(response.data.message || "❌ Failed to fetch requests");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setError(err.response?.data?.message || "❌ Failed to fetch requests");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const handleOpenRemarksModal = (requestId, action) => {
+    setModalRequestId(requestId);
+    setModalAction(action);
+    setRemarks("");
+    setShowRemarksModal(true);
+  };
+
+  const handleApprove = async () => {
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      const response = await axios.put(
+        apiUrl + `/api/coordination/requests/${modalRequestId}/approve`,
+        { remarks: remarks.trim() },
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setSuccess("✅ Request approved successfully!");
+        setShowRemarksModal(false);
+        setRemarks("");
+        setTimeout(() => {
+          fetchRequests();
+          setSuccess("");
+        }, 1500);
+      } else {
+        setError(response.data.message || "❌ Failed to approve request");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setError(err.response?.data?.message || "❌ Failed to approve request");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!remarks.trim()) {
+      setError("❌ Rejection reason is required");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      const response = await axios.put(
+        apiUrl + `/api/coordination/requests/${modalRequestId}/reject`,
+        { remarks: remarks.trim() },
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setSuccess("✅ Request rejected successfully!");
+        setShowRemarksModal(false);
+        setRemarks("");
+        setTimeout(() => {
+          fetchRequests();
+          setSuccess("");
+        }, 1500);
+      } else {
+        setError(response.data.message || "❌ Failed to reject request");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setError(err.response?.data?.message || "❌ Failed to reject request");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleLogout = () => {
     logout();
-    navigate("/login", { replace: true });
+    navigate("/login");
   };
 
-  if (!user) {
-    return <div>Loading...</div>;
-  }
+  const displayName = user?.full_name || "Coordination Staff";
+  const displaySap = user?.sap || "N/A";
 
   return (
-    <div className="dashboard-page">
-      {/* Professional Sidebar */}
-      <aside className="sidebar">
-        <div className="profile-section">
-          <div className="avatar">{user?.full_name?.charAt(0).toUpperCase()}</div>
-          <h3>{user?.full_name || "Coordinator"}</h3>
-          <p className="role">Coordination Office</p>
+    <div className="student-dashboard-page">
+      <aside className="sd-sidebar">
+        <div className="sd-profile">
+          <div className="sd-avatar">{displayName.charAt(0).toUpperCase()}</div>
+          <div>
+            <h3 className="sd-name">{displayName}</h3>
+            <p className="sd-small">{displaySap} • Coordination</p>
+            <p className="sd-small">Riphah International University</p>
+          </div>
         </div>
 
-        <nav className="nav-menu">
-          <button className="nav-item active" onClick={() => navigate("/coordination-dashboard")}>
-            <span className="icon">📊</span>
-            <span>Dashboard</span>
+        <nav className="sd-nav">
+          <button
+            className={`sd-nav-btn ${activeTab === "pending" ? "active" : ""}`}
+            onClick={() => setActiveTab("pending")}
+          >
+            📋 Pending
           </button>
-          <button className="nav-item" onClick={() => navigate("/coord-view-requests")}>
-            <span className="icon">📋</span>
-            <span>View Requests</span>
+          <button
+            className={`sd-nav-btn ${activeTab === "approved" ? "active" : ""}`}
+            onClick={() => setActiveTab("approved")}
+          >
+            ✅ Approved
           </button>
-          <button className="nav-item" onClick={() => navigate("/coord-approved")}>
-            <span className="icon">✅</span>
-            <span>Approved</span>
+          <button
+            className={`sd-nav-btn ${activeTab === "rejected" ? "active" : ""}`}
+            onClick={() => setActiveTab("rejected")}
+          >
+            ❌ Rejected
           </button>
-          <button className="nav-item" onClick={() => navigate("/coord-rejected")}>
-            <span className="icon">❌</span>
-            <span>Rejected</span>
+          <button
+            className="sd-nav-btn"
+            onClick={() => navigate("/coordination-messages")}
+          >
+            💬 Messages
           </button>
-          <button className="nav-item" onClick={() => navigate("/coord-messages")}>
-            <span className="icon">💬</span>
-            <span>Messages</span>
+          <button
+            className="sd-nav-btn"
+            onClick={() => navigate("/coordination-edit-profile")}
+          >
+            📝 Edit Profile
+          </button>
+          <button className="sd-nav-btn logout" onClick={handleLogout}>
+            🚪 Logout
           </button>
         </nav>
 
-        <div className="action-buttons">
-          <button className="btn-logout" onClick={handleLogout}>
-            🚪 Logout
-          </button>
-        </div>
-
-        <footer className="sidebar-footer">© 2025 Coordination Office</footer>
+        <footer className="sd-footer">© 2025 Riphah</footer>
       </aside>
 
-      {/* Main Content */}
-      <main className="dashboard-content">
-        <header className="dashboard-header">
-          <div className="header-content">
-            <h1>Welcome, {user?.full_name?.split(" ")[0] || "Coordinator"}!</h1>
-            <p>Manage and review student clearance requests efficiently</p>
-          </div>
+      <main className="sd-main">
+        <header className="sd-header">
+          <h1>📋 Coordination Office Clearance Management</h1>
+          <p>Review and manage student clearance requests</p>
         </header>
 
-        <section className="stats-section">
-          <div className="stat-card">
-            <div className="stat-icon">📊</div>
-            <div className="stat-content">
-              <h4>Total Requests</h4>
-              <p className="stat-number">{stats.total}</p>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">⏳</div>
-            <div className="stat-content">
-              <h4>Pending</h4>
-              <p className="stat-number pending">{stats.pending}</p>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">✅</div>
-            <div className="stat-content">
-              <h4>Approved</h4>
-              <p className="stat-number approved">{stats.approved}</p>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">❌</div>
-            <div className="stat-content">
-              <h4>Rejected</h4>
-              <p className="stat-number rejected">{stats.rejected}</p>
-            </div>
-          </div>
-        </section>
+        {error && <div className="alert alert-error">{error}</div>}
+        {success && <div className="alert alert-success">{success}</div>}
 
-        <section className="requests-section">
-          <h2>Recent Clearance Requests</h2>
+        {loading ? (
+          <div className="loading">⏳ Loading {activeTab} requests...</div>
+        ) : requests.length === 0 ? (
+          <div className="no-data">
+            <p>📭 No {activeTab} requests found</p>
+          </div>
+        ) : (
           <div className="table-wrapper">
             <table className="requests-table">
               <thead>
                 <tr>
+                  <th>#</th>
                   <th>Student Name</th>
-                  <th>SAPID</th>
+                  <th>SAP ID</th>
+                  <th>Program</th>
+                  <th>Semester</th>
                   <th>Status</th>
-                  <th>Date</th>
-                  <th>Actions</th>
+                  <th>Remarks</th>
+                  <th>Submitted</th>
+                  {activeTab === "pending" && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
-                {requests.map((req) => (
-                  <tr key={req.id}>
-                    <td><strong>{req.name}</strong></td>
-                    <td>{req.sapid}</td>
+                {requests.map((req, index) => (
+                  <tr key={req._id || req.id} className="table-row">
+                    <td>{index + 1}</td>
+                    <td><strong>{req.student_id?.full_name || req.student_name || "N/A"}</strong></td>
+                    <td>{req.student_id?.sap || req.sapid || "N/A"}</td>
+                    <td>{req.program || "N/A"}</td>
+                    <td>{req.semester || "N/A"}</td>
                     <td>
-                      <span className={`status-badge status-${req.status.toLowerCase()}`}>
-                        {req.status}
+                      <span className={`status-badge status-${(req.status || "pending").toLowerCase()}`}>
+                        {req.status || "Pending"}
                       </span>
                     </td>
-                    <td>{req.date}</td>
                     <td>
-                      <button className="action-btn view-btn">View</button>
-                      <button className="action-btn edit-btn">Edit</button>
+                      <small className="remarks-text">
+                        {req.remarks || "-"}
+                      </small>
                     </td>
+                    <td>
+                      <small>
+                        {new Date(req.createdAt).toLocaleDateString()}
+                      </small>
+                    </td>
+                    {activeTab === "pending" && (
+                      <td className="actions-cell">
+                        <button
+                          className="btn btn-approve"
+                          onClick={() => handleOpenRemarksModal(req._id || req.id, "approve")}
+                          disabled={actionLoading}
+                        >
+                          ✅ Approve
+                        </button>
+                        <button
+                          className="btn btn-reject"
+                          onClick={() => handleOpenRemarksModal(req._id || req.id, "reject")}
+                          disabled={actionLoading}
+                        >
+                          ❌ Reject
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </section>
+        )}
 
-        <section className="quick-actions">
-          <h3>Quick Actions</h3>
-          <div className="action-buttons-grid">
-            <button className="quick-action-btn" onClick={() => navigate("/coord-view-requests")}>
-              📥 Review Requests
-            </button>
-            <button className="quick-action-btn" onClick={() => navigate("/coord-approved")}>
-              ✅ View Approved
-            </button>
-            <button className="quick-action-btn" onClick={() => navigate("/coord-rejected")}>
-              ❌ View Rejected
-            </button>
-            <button className="quick-action-btn" onClick={() => navigate("/coord-messages")}>
-              📧 Send Notification
-            </button>
+        {showRemarksModal && (
+          <div className="modal-overlay" onClick={() => setShowRemarksModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h2 className="modal-title">
+                {modalAction === "approve"
+                  ? "✅ Approve Request"
+                  : "❌ Reject Request"}
+              </h2>
+
+              <div className="modal-body">
+                <label>
+                  {modalAction === "approve"
+                    ? "Approval Comments"
+                    : "Rejection Reason"}
+                  {modalAction === "reject" && (
+                    <span className="required">*</span>
+                  )}
+                </label>
+                <textarea
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  placeholder={
+                    modalAction === "approve"
+                      ? "Enter any additional comments (optional)..."
+                      : "Please explain why this request is being rejected..."
+                  }
+                  className="modal-textarea"
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  className="btn btn-cancel"
+                  onClick={() => setShowRemarksModal(false)}
+                  disabled={actionLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  className={`btn ${
+                    modalAction === "approve" ? "btn-approve" : "btn-reject"
+                  }`}
+                  onClick={modalAction === "approve" ? handleApprove : handleReject}
+                  disabled={
+                    actionLoading ||
+                    (modalAction === "reject" && !remarks.trim())
+                  }
+                >
+                  {actionLoading
+                    ? "Processing..."
+                    : modalAction === "approve"
+                    ? "✅ Approve"
+                    : "❌ Reject"}
+                </button>
+              </div>
+            </div>
           </div>
-        </section>
+        )}
       </main>
     </div>
   );

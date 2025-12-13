@@ -1,183 +1,345 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import axios from "axios";
 import "./TransportDashboard.css";
 
 export default function TransportDashboard() {
-  const navigate = useNavigate();
   const { user, logout } = useAuthContext();
+  const navigate = useNavigate();
 
-  const [requests] = useState([
-    { id: 1, studentName: "Ahmed Ali", status: "Pending", date: "2025-11-20" },
-    { id: 2, studentName: "Fatima Khan", status: "Approved", date: "2025-11-19" },
-    { id: 3, studentName: "Hassan Raza", status: "Pending", date: "2025-11-18" },
-    { id: 4, studentName: "Ayesha Malik", status: "Rejected", date: "2025-11-17" },
-    { id: 5, studentName: "Omar Shah", status: "Approved", date: "2025-11-16" },
-  ]);
+  const [activeTab, setActiveTab] = useState("pending");
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+  const [showRemarksModal, setShowRemarksModal] = useState(false);
+  const [remarks, setRemarks] = useState("");
+  const [modalAction, setModalAction] = useState("");
+  const [modalRequestId, setModalRequestId] = useState(null);
 
-  const stats = useMemo(() => {
-    return {
-      total: requests.length,
-      pending: requests.filter((r) => r.status === "Pending").length,
-      approved: requests.filter((r) => r.status === "Approved").length,
-      rejected: requests.filter((r) => r.status === "Rejected").length,
-    };
-  }, [requests]);
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      let endpoint = "";
+      if (activeTab === "pending") {
+        endpoint = "/api/transport/pending-requests";
+      } else if (activeTab === "approved") {
+        endpoint = "/api/transport/approved-requests";
+      } else if (activeTab === "rejected") {
+        endpoint = "/api/transport/rejected-requests";
+      }
+
+      const response = await axios.get(apiUrl + endpoint, {
+        headers: {
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (response.data.success) {
+        setRequests(response.data.data || []);
+      } else {
+        setError(response.data.message || "❌ Failed to fetch requests");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setError(err.response?.data?.message || "❌ Failed to fetch requests");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const handleOpenRemarksModal = (requestId, action) => {
+    setModalRequestId(requestId);
+    setModalAction(action);
+    setRemarks("");
+    setShowRemarksModal(true);
+  };
+
+  const handleApprove = async () => {
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      const response = await axios.put(
+        apiUrl + `/api/transport/requests/${modalRequestId}/approve`,
+        { remarks: remarks.trim() },
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setSuccess("✅ Request approved successfully!");
+        setShowRemarksModal(false);
+        setRemarks("");
+        setTimeout(() => {
+          fetchRequests();
+          setSuccess("");
+        }, 1500);
+      } else {
+        setError(response.data.message || "❌ Failed to approve request");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setError(err.response?.data?.message || "❌ Failed to approve request");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!remarks.trim()) {
+      setError("❌ Rejection reason is required");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      const response = await axios.put(
+        apiUrl + `/api/transport/requests/${modalRequestId}/reject`,
+        { remarks: remarks.trim() },
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setSuccess("✅ Request rejected successfully!");
+        setShowRemarksModal(false);
+        setRemarks("");
+        setTimeout(() => {
+          fetchRequests();
+          setSuccess("");
+        }, 1500);
+      } else {
+        setError(response.data.message || "❌ Failed to reject request");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setError(err.response?.data?.message || "❌ Failed to reject request");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  const statusClass = (status) => {
-    if (status === "Approved") return "status approved";
-    if (status === "Pending") return "status pending";
-    if (status === "Rejected") return "status rejected";
-    return "status";
-  };
-
-  if (!user) {
-    return <div>Loading...</div>;
-  }
+  const displayName = user?.full_name || "Transport Staff";
+  const displaySap = user?.sap || "N/A";
 
   return (
-    <div className="transport-dashboard-page">
-      {/* ---------- SIDEBAR ---------- */}
-      <aside className="td-sidebar">
-        <div className="td-profile">
-          <div className="td-avatar">
-            {user?.full_name ? user.full_name.charAt(0).toUpperCase() : "?"}
-          </div>
+    <div className="student-dashboard-page">
+      <aside className="sd-sidebar">
+        <div className="sd-profile">
+          <div className="sd-avatar">{displayName.charAt(0).toUpperCase()}</div>
           <div>
-            <h3 className="td-name">{user?.full_name || "Officer"}</h3>
-            <p className="td-small">Transport Department</p>
-            <p className="td-small">Riphah International University</p>
+            <h3 className="sd-name">{displayName}</h3>
+            <p className="sd-small">{displaySap} • Transport</p>
+            <p className="sd-small">Riphah International University</p>
           </div>
         </div>
 
-        <nav className="td-nav">
-          <button className="td-nav-btn active" onClick={() => navigate("/transport-dashboard")}>
-            🏠 Dashboard
+        <nav className="sd-nav">
+          <button
+            className={`sd-nav-btn ${activeTab === "pending" ? "active" : ""}`}
+            onClick={() => setActiveTab("pending")}
+          >
+            📋 Pending
           </button>
-          <button className="td-nav-btn" onClick={() => navigate("/transport-view-requests")}>
-            📋 View Requests
+          <button
+            className={`sd-nav-btn ${activeTab === "approved" ? "active" : ""}`}
+            onClick={() => setActiveTab("approved")}
+          >
+            ✅ Approved
           </button>
-          <button className="td-nav-btn" onClick={() => navigate("/transport-message")}>
+          <button
+            className={`sd-nav-btn ${activeTab === "rejected" ? "active" : ""}`}
+            onClick={() => setActiveTab("rejected")}
+          >
+            ❌ Rejected
+          </button>
+          <button
+            className="sd-nav-btn"
+            onClick={() => navigate("/transport-messages")}
+          >
             💬 Messages
           </button>
-          <button className="td-nav-btn" onClick={() => navigate("/transport-settings")}>
-            ⚙️ Settings
+          <button
+            className="sd-nav-btn"
+            onClick={() => navigate("/transport-edit-profile")}
+          >
+            📝 Edit Profile
           </button>
-          <button className="td-nav-btn logout" onClick={handleLogout}>
+          <button className="sd-nav-btn logout" onClick={handleLogout}>
             🚪 Logout
           </button>
         </nav>
 
-        <footer className="td-footer">© 2025 Riphah</footer>
+        <footer className="sd-footer">© 2025 Riphah</footer>
       </aside>
 
-      {/* ---------- MAIN CONTENT ---------- */}
-      <main className="td-main">
-        <header className="td-header">
-          <div>
-            <h1>🚚 Transport Department</h1>
-            <p>Manage student transport clearance requests</p>
-          </div>
-
-          <button className="refresh-btn" onClick={() => window.location.reload()}>
-            🔄 Refresh
-          </button>
+      <main className="sd-main">
+        <header className="sd-header">
+          <h1>🚌 Transport Clearance Management</h1>
+          <p>Review and manage student clearance requests</p>
         </header>
 
-        {/* ---------- STATS SECTION ---------- */}
-        <section className="td-stats">
-          <div className="stat-card total">
-            <div className="stat-icon">🚍</div>
-            <div className="stat-content">
-              <h3>Total Requests</h3>
-              <p className="stat-number">{stats.total}</p>
-            </div>
+        {error && <div className="alert alert-error">{error}</div>}
+        {success && <div className="alert alert-success">{success}</div>}
+
+        {loading ? (
+          <div className="loading">⏳ Loading {activeTab} requests...</div>
+        ) : requests.length === 0 ? (
+          <div className="no-data">
+            <p>📭 No {activeTab} requests found</p>
           </div>
-
-          <div className="stat-card pending">
-            <div className="stat-icon">⏳</div>
-            <div className="stat-content">
-              <h3>Pending</h3>
-              <p className="stat-number">{stats.pending}</p>
-            </div>
-          </div>
-
-          <div className="stat-card approved">
-            <div className="stat-icon">✅</div>
-            <div className="stat-content">
-              <h3>Approved</h3>
-              <p className="stat-number">{stats.approved}</p>
-            </div>
-          </div>
-
-          <div className="stat-card rejected">
-            <div className="stat-icon">❌</div>
-            <div className="stat-content">
-              <h3>Rejected</h3>
-              <p className="stat-number">{stats.rejected}</p>
-            </div>
-          </div>
-        </section>
-
-        {/* ---------- REQUESTS TABLE ---------- */}
-        <section className="td-card">
-          <h2>📋 Recent Requests</h2>
-
-          <div className="td-table-wrapper">
-            <table className="td-table">
+        ) : (
+          <div className="table-wrapper">
+            <table className="requests-table">
               <thead>
                 <tr>
-                  <th>Request ID</th>
+                  <th>#</th>
                   <th>Student Name</th>
+                  <th>SAP ID</th>
+                  <th>Program</th>
+                  <th>Semester</th>
                   <th>Status</th>
-                  <th>Date</th>
-                  <th>Actions</th>
+                  <th>Remarks</th>
+                  <th>Submitted</th>
+                  {activeTab === "pending" && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
-                {requests.map((req) => (
-                  <tr key={req.id}>
-                    <td>#{req.id}</td>
-                    <td>{req.studentName}</td>
+                {requests.map((req, index) => (
+                  <tr key={req._id || req.id} className="table-row">
+                    <td>{index + 1}</td>
+                    <td><strong>{req.student_name || "N/A"}</strong></td>
+                    <td>{req.sapid || "N/A"}</td>
+                    <td>{req.program || "N/A"}</td>
+                    <td>{req.semester || "N/A"}</td>
                     <td>
-                      <span className={statusClass(req.status)}>{req.status}</span>
+                      <span className={`status-badge status-${(req.status || "pending").toLowerCase()}`}>
+                        {req.status || "Pending"}
+                      </span>
                     </td>
-                    <td>{req.date}</td>
                     <td>
-                      {req.status === "Pending" && (
-                        <div className="action-buttons">
-                          <button className="btn-approve">✅ Approve</button>
-                          <button className="btn-reject">❌ Reject</button>
-                        </div>
-                      )}
-                      {req.status !== "Pending" && (
-                        <button className="btn-view">👁️ View</button>
-                      )}
+                      <small className="remarks-text">
+                        {req.remarks || req.message || "-"}
+                      </small>
                     </td>
+                    <td>
+                      <small>
+                        {new Date(req.created_at || req.createdAt).toLocaleDateString()}
+                      </small>
+                    </td>
+                    {activeTab === "pending" && (
+                      <td className="actions-cell">
+                        <button
+                          className="btn btn-approve"
+                          onClick={() => handleOpenRemarksModal(req._id || req.id, "approve")}
+                          disabled={actionLoading}
+                        >
+                          ✅ Approve
+                        </button>
+                        <button
+                          className="btn btn-reject"
+                          onClick={() => handleOpenRemarksModal(req._id || req.id, "reject")}
+                          disabled={actionLoading}
+                        >
+                          ❌ Reject
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </section>
+        )}
 
-        {/* ---------- QUICK ACTIONS ---------- */}
-        <section className="td-quick-actions">
-          <button className="action-btn" onClick={() => navigate("/transport-message")}>
-            💬 Send Message
-          </button>
-          <button className="action-btn" onClick={() => navigate("/transport-view-requests")}>
-            📊 View Full Report
-          </button>
-          <button className="action-btn" onClick={() => window.print()}>
-            🖨️ Print Report
-          </button>
-        </section>
+        {showRemarksModal && (
+          <div className="modal-overlay" onClick={() => setShowRemarksModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h2 className="modal-title">
+                {modalAction === "approve"
+                  ? "✅ Approve Request"
+                  : "❌ Reject Request"}
+              </h2>
+
+              <div className="modal-body">
+                <label>
+                  {modalAction === "approve"
+                    ? "Approval Comments"
+                    : "Rejection Reason"}
+                  {modalAction === "reject" && (
+                    <span className="required">*</span>
+                  )}
+                </label>
+                <textarea
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  placeholder={
+                    modalAction === "approve"
+                      ? "Enter any additional comments (optional)..."
+                      : "Please explain why this request is being rejected..."
+                  }
+                  className="modal-textarea"
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  className="btn btn-cancel"
+                  onClick={() => setShowRemarksModal(false)}
+                  disabled={actionLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  className={`btn ${
+                    modalAction === "approve" ? "btn-approve" : "btn-reject"
+                  }`}
+                  onClick={modalAction === "approve" ? handleApprove : handleReject}
+                  disabled={
+                    actionLoading ||
+                    (modalAction === "reject" && !remarks.trim())
+                  }
+                >
+                  {actionLoading
+                    ? "Processing..."
+                    : modalAction === "approve"
+                    ? "✅ Approve"
+                    : "❌ Reject"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

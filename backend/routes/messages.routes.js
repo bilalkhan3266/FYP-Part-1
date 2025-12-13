@@ -6,7 +6,7 @@ const verifyToken = require("../verifyToken");
 // ====== GET ALL MESSAGES FOR A STUDENT ======
 router.get("/my-messages", verifyToken, async (req, res) => {
   try {
-    const sapid = req.user.sapid || req.user.sap_id;
+    const sapid = req.user.sapid || req.user.sap_id || req.user.sap; // ✅ SUPPORT ALL FIELD NAMES
 
     if (!sapid) {
       return res.status(400).json({
@@ -15,42 +15,21 @@ router.get("/my-messages", verifyToken, async (req, res) => {
       });
     }
 
-    // Fetch all messages for this student (both sent and received)
-    const messages = await Message.find({
-      $or: [
-        { sender_sapid: sapid },
-        { recipient_sapid: sapid }
-      ]
-    }).sort({ createdAt: -1 });
+    console.log(`📨 Fetching messages for SAP ID: ${sapid}`);
 
-    // Group by conversation_id or create unique conversations
-    const messageMap = {};
-    messages.forEach(msg => {
-      const convId = msg.conversation_id || msg._id.toString();
-      if (!messageMap[convId]) {
-        messageMap[convId] = {
-          conversation_id: convId,
-          subject: msg.subject,
-          recipient_department: msg.recipient_department,
-          last_message: msg.message,
-          createdAt: msg.createdAt,
-          messages: []
-        };
-      }
-      messageMap[convId].messages.push({
-        _id: msg._id,
-        message: msg.message,
-        subject: msg.subject,
-        sender_role: msg.sender_role,
-        sender_name: msg.sender_name,
-        createdAt: msg.createdAt,
-        is_read: msg.is_read
-      });
-    });
+    // ✅ QUERY BY RECIPIENT_SAPID FOR MESSAGES SENT TO THIS STUDENT
+    const messages = await Message.find({
+      recipientSapId: sapid  // ✅ FIXED: Use proper query field
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    console.log(`✅ Found ${messages.length} messages`);
 
     res.json({
       success: true,
-      data: Object.values(messageMap)
+      data: messages || [],
+      count: messages.length
     });
   } catch (err) {
     console.error("Get Messages Error:", err);
@@ -73,7 +52,7 @@ router.post("/send", verifyToken, async (req, res) => {
       });
     }
 
-    const sapid = req.user.sapid || req.user.sap_id;
+    const sapid = req.user.sapid || req.user.sap_id || req.user.sap; // ✅ SUPPORT ALL FIELD NAMES
     const conversationId = `${sapid}-${recipientRole}-${Date.now()}`;
 
     const newMessage = new Message({
@@ -83,7 +62,7 @@ router.post("/send", verifyToken, async (req, res) => {
       sender_role: req.user.role || "Student",
       sender_sapid: sapid,
       recipient_department: recipientRole,
-      recipient_sapid: sapid, // Self for now, department staff will have their own
+      recipient_sapid: sapid,
       subject,
       message,
       message_type: "question",
@@ -92,6 +71,8 @@ router.post("/send", verifyToken, async (req, res) => {
     });
 
     await newMessage.save();
+
+    console.log(`✅ Message sent successfully to ${recipientRole}`);
 
     res.json({
       success: true,
@@ -135,17 +116,19 @@ router.post("/reply/:messageId", verifyToken, async (req, res) => {
       sender_id: req.user._id || req.user.id,
       sender_name: req.user.full_name || req.user.name,
       sender_role: req.user.role || "Student",
-      sender_sapid: req.user.sapid || req.user.sap_id,
+      sender_sapid: req.user.sapid || req.user.sap_id || req.user.sap,
       recipient_department: originalMessage.recipient_department,
       recipient_sapid: originalMessage.sender_sapid,
       subject: `Re: ${originalMessage.subject}`,
       message,
       message_type: "reply",
       parent_message_id: messageId,
-      studentId: req.user.sapid || req.user.sap_id
+      studentId: req.user.sapid || req.user.sap_id || req.user.sap
     });
 
     await replyMessage.save();
+
+    console.log(`✅ Reply sent successfully`);
 
     res.json({
       success: true,
@@ -164,10 +147,17 @@ router.post("/reply/:messageId", verifyToken, async (req, res) => {
 // ====== GET UNREAD MESSAGE COUNT ======
 router.get("/unread-count", verifyToken, async (req, res) => {
   try {
-    const sapid = req.user.sapid || req.user.sap_id;
+    const sapid = req.user.sapid || req.user.sap_id || req.user.sap; // ✅ SUPPORT ALL FIELD NAMES
+
+    if (!sapid) {
+      return res.status(400).json({
+        success: false,
+        message: "Student SAP ID not found"
+      });
+    }
 
     const unreadCount = await Message.countDocuments({
-      recipient_sapid: sapid,
+      recipientSapId: sapid,
       is_read: false
     });
 
@@ -180,6 +170,43 @@ router.get("/unread-count", verifyToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch unread count"
+    });
+  }
+});
+
+// ====== MARK MESSAGE AS READ ======
+router.put("/mark-read/:messageId", verifyToken, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+
+    const updatedMessage = await Message.findByIdAndUpdate(
+      messageId,
+      {
+        is_read: true,
+        read_at: new Date()
+      },
+      { new: true }
+    );
+
+    if (!updatedMessage) {
+      return res.status(404).json({
+        success: false,
+        message: "Message not found"
+      });
+    }
+
+    console.log(`✅ Message marked as read`);
+
+    res.json({
+      success: true,
+      message: "Message marked as read",
+      data: updatedMessage
+    });
+  } catch (err) {
+    console.error("Mark Read Error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to mark message as read"
     });
   }
 });

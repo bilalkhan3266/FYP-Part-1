@@ -164,6 +164,29 @@
   box-shadow: 0 10px 22px rgba(107, 114, 128, 0.35);
 }
 
+/* ==================== Alert Messages ==================== */
+.alert {
+  padding: 14px 18px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  border-left: 4px solid;
+}
+
+.alert-error {
+  background-color: #fee;
+  color: #c33;
+  border-left-color: #c33;
+}
+
+.alert-success {
+  background-color: #efe;
+  color: #3c3;
+  border-left-color: #3c3;
+}
+
 /* ==================== Responsive ==================== */
 @media (max-width: 1200px) {
   .edit-form {

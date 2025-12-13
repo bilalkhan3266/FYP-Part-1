@@ -32,6 +32,8 @@ import FeeDepartmentDashboard from "./components/FeeDepartment/FeeDepartmentDash
 
 /* Coordination */
 import CoordinationDashboard from "./components/CoordinationOffice/CoordinationDashboard";
+import CoordinationMessages from "./components/CoordinationOffice/CoordinationMessages";
+import CoordinationEditProfile from "./components/CoordinationOffice/CoordinationEditProfile";
 
 /* HOD */
 import HODDashboard from "./components/Hod/HODDashboard";
@@ -39,7 +41,7 @@ import HODDashboard from "./components/Hod/HODDashboard";
 /* Student Pages */
 import ClearanceRequest from "./components/Student/ClearanceRequest";
 import ClearanceStatus from "./components/Student/ClearanceStatus";
-import Messages from "./components/Student/Messages";
+import Messages from "./components/Student/StudentMessages"; // ✅ UPDATED: Use StudentMessages
 import EditProfile from "./components/Student/EditProfile";
 
 import "./App.css";
@@ -185,6 +187,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["coordination"]}>
             <CoordinationDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/coordination-messages"
+        element={
+          <ProtectedRoute allowedRoles={["coordination"]}>
+            <CoordinationMessages />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/coordination-edit-profile"
+        element={
+          <ProtectedRoute allowedRoles={["coordination"]}>
+            <CoordinationEditProfile />
           </ProtectedRoute>
         }
       />

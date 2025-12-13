@@ -28,11 +28,11 @@ export default function LibraryDashboard() {
 
       let endpoint = "";
       if (activeTab === "pending") {
-        endpoint = "/api/library/pending-messages";
+        endpoint = "/api/library/pending-requests";
       } else if (activeTab === "approved") {
-        endpoint = "/api/library/approved-messages";
+        endpoint = "/api/library/approved-requests";
       } else if (activeTab === "rejected") {
-        endpoint = "/api/library/rejected-messages";
+        endpoint = "/api/library/rejected-requests";
       }
 
       const response = await axios.get(apiUrl + endpoint, {
@@ -74,7 +74,7 @@ export default function LibraryDashboard() {
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
       const response = await axios.put(
-        apiUrl + `/api/library/messages/${modalRequestId}/approve`,
+        apiUrl + `/api/library/requests/${modalRequestId}/approve`,
         { remarks: remarks.trim() },
         {
           headers: {
@@ -113,7 +113,7 @@ export default function LibraryDashboard() {
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
       const response = await axios.put(
-        apiUrl + `/api/library/messages/${modalRequestId}/reject`,
+        apiUrl + `/api/library/requests/${modalRequestId}/reject`,
         { remarks: remarks.trim() },
         {
           headers: {

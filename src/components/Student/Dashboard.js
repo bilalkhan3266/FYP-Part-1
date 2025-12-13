@@ -1,57 +1,116 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import axios from "axios";
 import "./Dashboard.css";
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuthContext();
 
-  const [departments, setDepartments] = useState([
-    { key: "fee", label: "Fee & Dues", status: "Pending", remarks: "" },
-    { key: "library", label: "Library", status: "Cleared", remarks: "" },
-    { key: "studentServices", label: "Student Services", status: "Cleared", remarks: "" },
-    { key: "laboratory", label: "Laboratory (if required)", status: "Pending", remarks: "" },
-    { key: "coordination", label: "Coordination Office", status: "Cleared", remarks: "" },
-    { key: "transport", label: "Transport", status: "Not Applicable", remarks: "" },
-    { key: "hostel", label: "Hostel Mess", status: "Cleared", remarks: "" }
-  ]);
+  const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // ====== STUDENT INFO ======
   const displayName = user?.full_name || "Student";
   const displaySap = user?.sap || "N/A";
   const displayDept = user?.department || "N/A";
 
-  // ====== UNREAD MESSAGES LOGIC (added) ======
-  const [unreadCount, setUnreadCount] = useState(0);
-  const pollRef = useRef(null);
-
-  const fetchUnreadCount = async () => {
+  // ====== FETCH CLEARANCE STATUS ======
+  const fetchClearanceStatus = async () => {
     try {
-      const studentId = displaySap;
-      if (!studentId || studentId === "N/A") return;
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-      const res = await fetch(
-        `http://localhost:5000/api/messages/unread-count?studentId=${encodeURIComponent(studentId)}`
-      );
+      const response = await axios.get(apiUrl + "/api/clearance-status", {
+        headers: {
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json",
+        },
+      });
 
-      if (!res.ok) return;
+      if (response.data.success && Array.isArray(response.data.data)) {
+        const statuses = response.data.data;
+        
+        // Convert API response to department cards format
+        const deptMap = {
+          "Library": { key: "library", label: "Library" },
+          "Fee Department": { key: "fee", label: "Fee & Dues" },
+          "Transport": { key: "transport", label: "Transport" },
+          "Laboratory": { key: "laboratory", label: "Laboratory (if required)" },
+          "Student Service": { key: "studentServices", label: "Student Services" },
+          "Coordination": { key: "coordination", label: "Coordination Office" },
+          "HOD": { key: "hod", label: "HOD Office" },
+          "Hostel": { key: "hostel", label: "Hostel Mess" }
+        };
 
-      const data = await res.json();
-      setUnreadCount(data.unread || 0);
+        const deptList = statuses.map(status => ({
+          key: deptMap[status.department_name]?.key || status.department_name.toLowerCase(),
+          label: deptMap[status.department_name]?.label || status.department_name,
+          status: status.status || "Pending",
+          remarks: status.remarks || ""
+        }));
+
+        setDepartments(deptList);
+        setError("");
+      } else {
+        console.warn("No clearance status data received");
+        setError("");
+      }
     } catch (err) {
-      console.error("Unread fetch error:", err);
+      console.error("Fetch Clearance Status Error:", err);
+      setError(err.response?.data?.message || "Failed to load clearance status");
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchUnreadCount(); // Load once
+  // ====== FETCH UNREAD COUNT ======
+  const fetchUnreadCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-    pollRef.current = setInterval(fetchUnreadCount, 30000); // Poll every 30s
+      if (!token) return;
+
+      const response = await axios.get(apiUrl + "/api/unread-count", {
+        headers: {
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.data.success) {
+        setUnreadCount(response.data.unreadCount || 0);
+      }
+    } catch (err) {
+      console.error("Unread count fetch error:", err);
+    }
+  };
+
+  // ====== AUTO-REFRESH ON MOUNT ======
+  useEffect(() => {
+    fetchClearanceStatus();
+    fetchUnreadCount();
+    
+    // Refresh clearance status every 5 seconds
+    const statusInterval = setInterval(() => {
+      console.log("🔄 Auto-refreshing clearance status...");
+      fetchClearanceStatus();
+    }, 5000);
+
+    // Refresh unread count every 30 seconds
+    const unreadInterval = setInterval(() => {
+      fetchUnreadCount();
+    }, 30000);
+
     return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
+      clearInterval(statusInterval);
+      clearInterval(unreadInterval);
     };
-  }, [displaySap]);
+  }, []);
 
   // ====== PROGRESS CALC ======
   const progress = useMemo(() => {
@@ -151,7 +210,32 @@ export default function StudentDashboard() {
           </div>
         </header>
 
-        {/* OVERVIEW */}
+        {loading && (
+          <div style={{ textAlign: "center", padding: "20px", color: "#666" }}>
+            ⏳ Loading clearance status...
+          </div>
+        )}
+
+        {error && (
+          <div style={{
+            backgroundColor: "#fee2e2",
+            color: "#991b1b",
+            padding: "12px",
+            borderRadius: "6px",
+            marginBottom: "20px",
+            border: "1px solid #fecaca"
+          }}>
+            {error}
+          </div>
+        )}
+
+        {!loading && departments.length === 0 && !error && (
+          <div style={{ textAlign: "center", padding: "40px", color: "#999" }}>
+            <p>📋 No clearance data available. Please submit a clearance request.</p>
+          </div>
+        )}
+
+        {!loading && departments.length > 0 && (
         <section className="sd-overview">
           <div className="sd-progress-card">
             <div className="sd-progress-circle">
@@ -194,8 +278,10 @@ export default function StudentDashboard() {
             </div>
           </div>
         </section>
+        )}
 
         {/* DEPARTMENT CARDS */}
+        {departments.length > 0 && (
         <section className="sd-cards">
           {departments.map((d) => (
             <article key={d.key} className="sd-card">
@@ -218,6 +304,7 @@ export default function StudentDashboard() {
             </article>
           ))}
         </section>
+        )}
 
         {/* CERTIFICATE */}
         {allCleared && (

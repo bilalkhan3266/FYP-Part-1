@@ -92,6 +92,14 @@ app.post('/api/signup', async (req, res) => {
   try {
     const { full_name, email, password, role, sap, department } = req.body;
 
+    console.log('📝 Signup Request:', {
+      full_name,
+      email,
+      role,
+      has_sap: !!sap,
+      has_department: !!department
+    });
+
     // Validation
     if (!full_name || !email || !password || !role) {
       return res.status(400).json({ 
@@ -131,6 +139,8 @@ app.post('/api/signup', async (req, res) => {
 
     await newUser.save();
 
+    console.log('✅ User created successfully:', newUser._id);
+
     // Generate token
     const token = jwt.sign(
       { id: newUser._id, email: newUser.email, full_name: newUser.full_name, role: newUser.role, sap: newUser.sap, department: newUser.department },
@@ -155,10 +165,15 @@ app.post('/api/signup', async (req, res) => {
       user: userResponse
     });
   } catch (err) {
-    console.error('Signup Error:', err);
+    console.error('❌ Signup Error:', err.message);
+    console.error('Error Details:', {
+      name: err.name,
+      code: err.code,
+      message: err.message
+    });
     res.status(500).json({ 
       success: false, 
-      message: 'Registration failed' 
+      message: 'Registration failed: ' + err.message 
     });
   }
 });
@@ -167,6 +182,8 @@ app.post('/api/signup', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    console.log('🔐 Login Request:', { email });
 
     if (!email || !password) {
       return res.status(400).json({ 
@@ -178,6 +195,7 @@ app.post('/api/login', async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
+      console.log('❌ User not found:', email);
       return res.status(401).json({ 
         success: false, 
         message: 'Invalid email or password' 
@@ -188,11 +206,14 @@ app.post('/api/login', async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
+      console.log('❌ Invalid password for user:', email);
       return res.status(401).json({ 
         success: false, 
         message: 'Invalid email or password' 
       });
     }
+
+    console.log('✅ Login successful for user:', email);
 
     const token = jwt.sign(
       { id: user._id, email: user.email, full_name: user.full_name, role: user.role, sap: user.sap, department: user.department },
@@ -217,10 +238,83 @@ app.post('/api/login', async (req, res) => {
       error: null
     });
   } catch (err) {
-    console.error('Login Error:', err);
+    console.error('❌ Login Error:', err.message);
     res.status(500).json({ 
       success: false, 
-      message: 'Login failed' 
+      message: 'Login failed: ' + err.message 
+    });
+  }
+});
+
+// Update User Profile
+app.put('/api/update-profile', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.user;
+    const { full_name, email, password } = req.body;
+
+    console.log('📝 Update Profile Request for user:', id);
+    console.log('   Full Name:', full_name);
+    console.log('   Email:', email);
+    console.log('   Password Changed:', !!password);
+
+    if (!full_name || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Full name and email are required'
+      });
+    }
+
+    // Check if email is already in use by another user
+    const existingUser = await User.findOne({ email, _id: { $ne: id } });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already in use'
+      });
+    }
+
+    const updateData = {
+      full_name: full_name.trim(),
+      email: email.trim()
+    };
+
+    if (password) {
+      if (password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'Password must be at least 6 characters'
+        });
+      }
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    ).select('-password');
+
+    console.log('✅ Profile updated successfully for:', email);
+
+    const userResponse = {
+      id: updatedUser._id,
+      full_name: updatedUser.full_name,
+      email: updatedUser.email,
+      role: updatedUser.role.toLowerCase(),
+      sap: updatedUser.sap,
+      department: updatedUser.department
+    };
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: userResponse
+    });
+  } catch (err) {
+    console.error('❌ Update Profile Error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update profile: ' + err.message
     });
   }
 });
@@ -246,6 +340,7 @@ app.post('/api/forgot-password-request', async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
+      // Don't reveal if email exists (security best practice)
       return res.json({
         success: true,
         message: 'If email exists, reset code has been sent'
@@ -262,11 +357,24 @@ app.post('/api/forgot-password-request', async (req, res) => {
       userId: user._id
     });
 
-    console.log(`Reset code for ${email}: ${resetCode}`);
+    console.log(`📧 Reset code for ${email}: ${resetCode}`);
+    console.log(`⏱️ Code expires in 15 minutes`);
+
+    // TODO: In production, send this code via email using nodemailer or similar
+    // For now, log it for testing
+    // Example implementation:
+    // const transporter = nodemailer.createTransport({...});
+    // await transporter.sendMail({
+    //   to: email,
+    //   subject: 'Password Reset Code',
+    //   html: `Your password reset code is: ${resetCode}. It expires in 15 minutes.`
+    // });
 
     res.json({
       success: true,
-      message: 'Verification code sent to your email'
+      message: 'Verification code sent to your email',
+      // Remove this in production - only for development/testing:
+      _testCode: process.env.NODE_ENV === 'development' ? resetCode : undefined
     });
   } catch (err) {
     console.error('Forgot Password Error:', err);
@@ -398,29 +506,83 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
   try {
     const { student_name, sapid, registration_no, father_name, program, semester, degree_status, department } = req.body;
 
-    // Validation
-    if (!student_name || !sapid || !registration_no || !father_name || !program || !semester || !degree_status) {
+    console.log('📝 Clearance Request Received:');
+    console.log('  - Student Name:', student_name);
+    console.log('  - SAP ID:', sapid);
+    console.log('  - Registration No:', registration_no);
+    console.log('  - Father Name:', father_name);
+    console.log('  - Program:', program);
+    console.log('  - Semester:', semester);
+    console.log('  - Degree Status:', degree_status);
+    console.log('  - User ID:', req.user.id);
+
+    // Validation with specific error messages
+    if (!student_name || student_name.toString().trim() === '') {
       return res.status(400).json({ 
         success: false, 
-        message: 'All fields are required' 
+        message: 'Student name is required' 
+      });
+    }
+
+    if (!sapid || sapid.toString().trim() === '') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'SAP ID is required' 
+      });
+    }
+
+    if (!registration_no || registration_no.toString().trim() === '') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Registration number is required' 
+      });
+    }
+
+    if (!father_name || father_name.toString().trim() === '') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Father name is required' 
+      });
+    }
+
+    if (!program || program.toString().trim() === '') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Program is required' 
+      });
+    }
+
+    if (!semester || semester.toString().trim() === '') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Semester is required' 
+      });
+    }
+
+    if (!degree_status || degree_status.toString().trim() === '') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Degree status is required' 
       });
     }
 
     // Create main clearance request
     const clearanceRequest = new ClearanceRequest({
       student_id: req.user.id,
-      student_name,
-      sapid,
-      registration_no,
-      father_name,
-      program,
-      semester,
-      degree_status,
-      department,
+      student_name: student_name.toString().trim(),
+      sapid: sapid.toString().trim(),
+      registration_no: registration_no.toString().trim(),
+      father_name: father_name.toString().trim(),
+      program: program.toString().trim(),
+      semester: semester.toString().trim(),
+      degree_status: degree_status.toString().trim(),
+      department: department || '',
       status: 'Pending'
     });
 
+    console.log('💾 Saving main clearance request...');
     const mainRequest = await clearanceRequest.save();
+    console.log('✅ Main request saved:', mainRequest._id);
 
     const departments = [
       'Library',
@@ -436,30 +598,42 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
     const departmentRecords = departments.map(dept => ({
       clearance_request_id: mainRequest._id,
       student_id: req.user.id,
-      sapid,
-      student_name,
-      registration_no,
-      father_name,
-      program,
-      semester,
-      degree_status,
+      sapid: sapid.toString().trim(),
+      student_name: student_name.toString().trim(),
+      registration_no: registration_no.toString().trim(),
+      father_name: father_name.toString().trim(),
+      program: program.toString().trim(),
+      semester: semester.toString().trim(),
+      degree_status: degree_status.toString().trim(),
       department_name: dept,
       status: 'Pending',
       createdAt: new Date()
     }));
 
+    console.log('💾 Saving department clearance records...');
     await DepartmentClearance.insertMany(departmentRecords);
+    console.log(`✅ Saved ${departmentRecords.length} department records`);
 
     res.status(201).json({
       success: true,
       message: 'Clearance request submitted successfully to all departments',
-      requestId: mainRequest._id
+      requestId: mainRequest._id,
+      details: {
+        student: sapid,
+        departments: departments.length,
+        timestamp: new Date()
+      }
     });
   } catch (err) {
-    console.error('Clearance Request Error:', err);
+    console.error('❌ Clearance Request Error:', err);
+    console.error('Error Details:', {
+      message: err.message,
+      stack: err.stack,
+      name: err.name
+    });
     res.status(500).json({ 
       success: false, 
-      message: 'Failed to submit clearance request' 
+      message: 'Failed to submit clearance request: ' + err.message
     });
   }
 });
@@ -687,20 +861,80 @@ app.put('/api/update-profile', verifyToken, async (req, res) => {
 // --------------------
 // MESSAGE ROUTES (Two-way conversation)
 // --------------------
-// Send initial message to department
+// Send initial message to department OR library to student
 app.post('/api/send-message', verifyToken, async (req, res) => {
   try {
     const senderId = req.user.id;
     const senderName = req.user.full_name;
     const senderRole = req.user.role;
     const senderSapid = req.user.sap;
-    const { recipient_department, subject, message, message_type } = req.body;
+    const { recipient_department, recipient_sapid, subject, message, message_type } = req.body;
+
+    console.log('📨 Message Received:');
+    console.log('  - Full Body:', JSON.stringify(req.body));
+    console.log('  - Recipient Department:', recipient_department);
+    console.log('  - Recipient SAP ID:', recipient_sapid);
+    console.log('  - Subject:', subject);
+    console.log('  - Message:', message);
+    console.log('  - Sender:', senderName, '(' + senderSapid + ')');
 
     // Validation
-    if (!recipient_department || !subject || !message) {
+    if (!subject || !message) {
+      console.log('❌ Validation Failed - Missing fields');
       return res.status(400).json({
         success: false,
-        message: '❌ Department, subject, and message are required'
+        message: '❌ Subject and message are required'
+      });
+    }
+
+    // CASE 1: Library staff sending to student (using recipient_sapid)
+    if (recipient_sapid) {
+      const messageHelper = require('./utils/messageHelper');
+      
+      // Find student by SAP ID
+      const student = await messageHelper.findStudentBySapId(recipient_sapid);
+      
+      if (!student) {
+        return res.status(404).json({
+          success: false,
+          message: `❌ Student with SAP ID ${recipient_sapid} not found`
+        });
+      }
+
+      const newMessage = new Message({
+        sender_id: senderId,
+        sender_name: senderName,
+        sender_role: senderRole,
+        sender_sapid: senderSapid,
+        recipient_id: student._id,
+        recipient_sapid: recipient_sapid.trim(),
+        recipient_department: 'Library',
+        subject: subject.trim(),
+        message: message.trim(),
+        message_type: message_type || 'info',
+        is_read: false,
+        createdAt: new Date()
+      });
+
+      await newMessage.save();
+
+      console.log(`✅ Message sent successfully to ${student.full_name}`);
+      
+      return res.status(201).json({
+        success: true,
+        message: '✅ Message sent successfully!',
+        data: { 
+          id: newMessage._id,
+          recipient: student.full_name
+        }
+      });
+    }
+
+    // CASE 2: Student sending to department (using recipient_department)
+    if (!recipient_department) {
+      return res.status(400).json({
+        success: false,
+        message: '❌ Department and message are required'
       });
     }
 
@@ -797,6 +1031,72 @@ app.post('/api/messages/:conversation_id/reply', verifyToken, async (req, res) =
   }
 });
 
+// --------------------
+// DEPARTMENT STAFF - SEND MESSAGE TO STUDENT
+// --------------------
+// This endpoint allows department staff (library, etc.) to send messages to students
+app.post('/api/department/send-message', verifyToken, async (req, res) => {
+  try {
+    const senderId = req.user.id;
+    const senderName = req.user.full_name;
+    const senderRole = req.user.role;
+    const senderDept = req.user.department; // Department name (e.g., "Library")
+    const { student_sapid, subject, message } = req.body;
+
+    // Validation
+    if (!student_sapid || !subject || !message) {
+      return res.status(400).json({
+        success: false,
+        message: '❌ Student SAP ID, subject, and message are required'
+      });
+    }
+
+    // Find the student
+    const student = await User.findOne({ sap: student_sapid });
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: '❌ Student not found'
+      });
+    }
+
+    // Create unique conversation ID
+    const conversation_id = `${student_sapid}-${senderDept}-${Date.now()}`;
+
+    // Create message
+    const newMessage = new Message({
+      conversation_id,
+      sender_id: senderId,
+      sender_name: senderName,
+      sender_role: senderRole,
+      sender_sapid: senderRole === 'student' ? req.user.sap : null,
+      recipient_sapid: student_sapid,
+      recipient_id: student._id,
+      recipient_department: senderDept,
+      subject,
+      message,
+      message_type: 'department_notification'
+    });
+
+    await newMessage.save();
+
+    console.log(`📬 Department message sent from ${senderName} (${senderDept}) to student ${student_sapid}`);
+
+    res.status(201).json({
+      success: true,
+      message: `✅ Message sent to student`,
+      messageId: newMessage._id,
+      conversation_id
+    });
+  } catch (err) {
+    console.error('Department Message Error:', err);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to send message'
+    });
+  }
+});
+
 // Get all conversations for a student (by SAPID)
 app.get('/api/conversations', verifyToken, async (req, res) => {
   try {
@@ -819,13 +1119,22 @@ app.get('/api/conversations', verifyToken, async (req, res) => {
     const uniqueConversations = {};
     conversations.forEach(msg => {
       if (!uniqueConversations[msg.conversation_id]) {
-        uniqueConversations[msg.conversation_id] = msg;
+        uniqueConversations[msg.conversation_id] = {
+          conversation_id: msg.conversation_id,
+          subject: msg.subject,
+          sender_name: msg.sender_name,
+          sender_sapid: msg.sender_sapid,
+          recipient_department: msg.recipient_department,
+          createdAt: msg.createdAt || new Date()
+        };
       }
     });
 
+    const conversationsList = Object.values(uniqueConversations);
+
     res.status(200).json({
       success: true,
-      data: Object.values(uniqueConversations)
+      data: conversationsList
     });
   } catch (err) {
     console.error('Get Conversations Error:', err);
@@ -939,21 +1248,27 @@ app.delete('/api/messages/:id', verifyToken, async (req, res) => {
 app.get('/api/library/pending-requests', verifyToken, async (req, res) => {
   try {
     const user = req.user;
-    if (user.role !== 'library') {
+    if ((user.role || '').toLowerCase() !== 'library') {
       return res.status(403).json({
         success: false,
         message: '❌ Access denied'
       });
     }
 
-    const clearanceRequests = await ClearanceRequest.find({
-      department: 'Library',
+    // Fetch pending requests from DepartmentClearance for Library department
+    const pendingRequests = await DepartmentClearance.find({
+      department_name: 'Library',
       status: 'Pending'
-    }).sort({ createdAt: -1 });
+    })
+      .populate('clearance_request_id')
+      .populate('student_id', 'full_name email sap')
+      .sort({ createdAt: -1 });
+
+    console.log(`📚 Library - Fetching pending requests: Found ${pendingRequests.length} records`);
 
     res.status(200).json({
       success: true,
-      data: clearanceRequests || []
+      data: pendingRequests || []
     });
   } catch (error) {
     console.error('Error:', error);
@@ -970,21 +1285,27 @@ app.get('/api/library/pending-requests', verifyToken, async (req, res) => {
 app.get('/api/library/approved-requests', verifyToken, async (req, res) => {
   try {
     const user = req.user;
-    if (user.role !== 'library') {
+    if ((user.role || '').toLowerCase() !== 'library') {
       return res.status(403).json({
         success: false,
         message: '❌ Access denied'
       });
     }
 
-    const clearanceRequests = await ClearanceRequest.find({
-      department: 'Library',
+    // Fetch approved requests from DepartmentClearance for Library department
+    const approvedRequests = await DepartmentClearance.find({
+      department_name: 'Library',
       status: 'Approved'
-    }).sort({ updatedAt: -1 });
+    })
+      .populate('clearance_request_id')
+      .populate('student_id', 'full_name email sap')
+      .sort({ approved_at: -1 });
+
+    console.log(`📚 Library - Fetching approved requests: Found ${approvedRequests.length} records`);
 
     res.status(200).json({
       success: true,
-      data: clearanceRequests || []
+      data: approvedRequests || []
     });
   } catch (error) {
     console.error('Error:', error);
@@ -1001,27 +1322,83 @@ app.get('/api/library/approved-requests', verifyToken, async (req, res) => {
 app.get('/api/library/rejected-requests', verifyToken, async (req, res) => {
   try {
     const user = req.user;
-    if (user.role !== 'library') {
+    if ((user.role || '').toLowerCase() !== 'library') {
       return res.status(403).json({
         success: false,
         message: '❌ Access denied'
       });
     }
 
-    const clearanceRequests = await ClearanceRequest.find({
-      department: 'Library',
-      rejectionStatus: 'Rejected'
-    }).sort({ updatedAt: -1 });
+    // Fetch rejected requests from DepartmentClearance for Library department
+    const rejectedRequests = await DepartmentClearance.find({
+      department_name: 'Library',
+      status: 'Rejected'
+    })
+      .populate('clearance_request_id')
+      .populate('student_id', 'full_name email sap')
+      .sort({ approved_at: -1 });
+
+    console.log(`📚 Library - Fetching rejected requests: Found ${rejectedRequests.length} records`);
 
     res.status(200).json({
       success: true,
-      data: clearanceRequests || []
+      data: rejectedRequests || []
     });
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({
       success: false,
       message: '❌ Failed to fetch rejected requests'
+    });
+  }
+});
+
+// ============================================
+// DEPARTMENT - SEARCH STUDENT BY SAP ID
+// ============================================
+app.get('/api/department/search-student/:sapid', verifyToken, async (req, res) => {
+  try {
+    const { sapid } = req.params;
+    const departmentName = req.user.department;
+
+    if (!departmentName) {
+      return res.status(403).json({
+        success: false,
+        message: '❌ User is not assigned to a department'
+      });
+    }
+
+    console.log(`🔍 Searching for student SAP ID: ${sapid} in ${departmentName}`);
+
+    // Find all clearance records for this student in this department
+    const studentRequests = await DepartmentClearance.find({
+      sapid: sapid.trim().toUpperCase(),
+      department_name: departmentName
+    })
+      .populate('student_id', 'full_name email sap')
+      .populate('clearance_request_id')
+      .sort({ createdAt: -1 });
+
+    if (studentRequests.length === 0) {
+      return res.status(404).json({
+        success: true,
+        data: [],
+        message: `No requests found for student SAP ID: ${sapid}`
+      });
+    }
+
+    console.log(`✅ Found ${studentRequests.length} record(s) for student ${sapid}`);
+
+    res.status(200).json({
+      success: true,
+      data: studentRequests,
+      message: `Found ${studentRequests.length} request(s) for student ${sapid}`
+    });
+  } catch (error) {
+    console.error('Search Student Error:', error);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to search for student'
     });
   }
 });
@@ -1034,37 +1411,50 @@ app.put('/api/library/requests/:id/approve', verifyToken, async (req, res) => {
     const { id } = req.params;
     const { remarks } = req.body;
     const librarianId = req.user.id;
+    const librarianName = req.user.full_name;
 
-    const clearanceRequest = await ClearanceRequest.findByIdAndUpdate(
+    // Update DepartmentClearance record
+    const departmentClearance = await DepartmentClearance.findByIdAndUpdate(
       id,
       {
         status: 'Approved',
-        libraryApprovedBy: librarianId,
-        libraryRemarks: remarks || '',
-        libraryApprovedAt: new Date()
+        approved_by: librarianName,
+        approved_at: new Date(),
+        remarks: remarks || ''
       },
       { new: true }
-    );
+    ).populate('clearance_request_id').populate('student_id', 'full_name sap');
 
-    if (!clearanceRequest) {
+    if (!departmentClearance) {
       return res.status(404).json({
         success: false,
         message: '❌ Request not found'
       });
     }
 
-    // Send message to student
-    const message = new Message({
-      senderId: librarianId,
-      senderRole: 'library',
-      recipientSapid: clearanceRequest.sapid,
-      subject: 'Library Clearance Approved',
-      message: `Your library clearance has been approved. ${remarks ? `Comment: ${remarks}` : ''}`,
-      messageType: 'success',
-      isRead: false
+    console.log(`✅ Library approved clearance`);
+    console.log(`   Student: ${departmentClearance.student_name} (SAP ID: ${departmentClearance.sapid})`);
+    console.log(`   Approved by: ${librarianName}`);
+    console.log(`   Remarks: ${remarks || 'None'}`);
+
+
+    // Create approval message in conversation
+    const conversationId = `${departmentClearance.sapid}-Library-approval-${Date.now()}`;
+    const approvalMessage = new Message({
+      conversation_id: conversationId,
+      sender_id: librarianId,
+      sender_name: librarianName,
+      sender_role: 'library',
+      sender_sapid: req.user.sap,
+      recipient_sapid: departmentClearance.sapid,
+      recipient_id: departmentClearance.student_id,
+      recipient_department: 'Library',
+      subject: '✅ Library Clearance Approved',
+      message: `Your library clearance has been approved. ${remarks ? `Comment: ${remarks}` : 'No additional remarks.'}`,
+      message_type: 'notification'
     });
 
-    await message.save();
+    await approvalMessage.save();
 
     res.status(200).json({
       success: true,
@@ -1087,6 +1477,7 @@ app.put('/api/library/requests/:id/reject', verifyToken, async (req, res) => {
     const { id } = req.params;
     const { remarks } = req.body;
     const librarianId = req.user.id;
+    const librarianName = req.user.full_name;
 
     if (!remarks || remarks.trim().length === 0) {
       return res.status(400).json({
@@ -1095,37 +1486,281 @@ app.put('/api/library/requests/:id/reject', verifyToken, async (req, res) => {
       });
     }
 
-    const clearanceRequest = await ClearanceRequest.findByIdAndUpdate(
+    // Update DepartmentClearance record
+    const departmentClearance = await DepartmentClearance.findByIdAndUpdate(
       id,
       {
-        rejectionStatus: 'Rejected',
         status: 'Rejected',
-        libraryApprovedBy: librarianId,
-        libraryRemarks: remarks.trim(),
-        libraryApprovedAt: new Date()
+        approved_by: librarianName,
+        approved_at: new Date(),
+        remarks: remarks.trim()
       },
       { new: true }
-    );
+    ).populate('clearance_request_id').populate('student_id', 'full_name sap');
 
-    if (!clearanceRequest) {
+    if (!departmentClearance) {
       return res.status(404).json({
         success: false,
         message: '❌ Request not found'
       });
     }
 
-    // Send rejection message to student
-    const message = new Message({
-      senderId: librarianId,
-      senderRole: 'library',
-      recipientSapid: clearanceRequest.sapid,
-      subject: 'Library Clearance Rejected',
-      message: `Your library clearance has been rejected. Reason: ${remarks.trim()}`,
-      messageType: 'error',
-      isRead: false
+    console.log(`❌ Library rejected clearance`);
+    console.log(`   Student: ${departmentClearance.student_name} (SAP ID: ${departmentClearance.sapid})`);
+    console.log(`   Rejected by: ${librarianName}`);
+    console.log(`   Reason: ${remarks}`);
+
+    // Create rejection message in conversation
+    const conversationId = `${departmentClearance.sapid}-Library-rejection-${Date.now()}`;
+    const rejectionMessage = new Message({
+      conversation_id: conversationId,
+      sender_id: librarianId,
+      sender_name: librarianName,
+      sender_role: 'library',
+      sender_sapid: req.user.sap,
+      recipient_sapid: departmentClearance.sapid,
+      recipient_id: departmentClearance.student_id,
+      recipient_department: 'Library',
+      subject: '❌ Library Clearance Rejected',
+      message: `Your library clearance has been rejected. Reason: ${remarks}`,
+      message_type: 'notification'
     });
 
-    await message.save();
+    await rejectionMessage.save();
+
+    res.status(200).json({
+      success: true,
+      message: '✅ Request rejected and student notified'
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to reject request'
+    });
+  }
+});
+
+// ============================================
+// FEE DEPARTMENT ENDPOINTS
+// ============================================
+// GET PENDING REQUESTS
+app.get('/api/fee/pending-requests', verifyToken, async (req, res) => {
+  try {
+    const user = req.user;
+    if (user.role !== 'feedepartment') {
+      return res.status(403).json({
+        success: false,
+        message: '❌ Access denied'
+      });
+    }
+
+    const pendingRequests = await DepartmentClearance.find({
+      department_name: 'Fee Department',
+      status: 'Pending'
+    })
+      .populate('clearance_request_id')
+      .populate('student_id', 'full_name email sap')
+      .sort({ createdAt: -1 });
+
+    console.log(`💰 Fee Department - Fetching pending requests: Found ${pendingRequests.length} records`);
+
+    res.status(200).json({
+      success: true,
+      data: pendingRequests || []
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to fetch pending requests'
+    });
+  }
+});
+
+// GET APPROVED REQUESTS
+app.get('/api/fee/approved-requests', verifyToken, async (req, res) => {
+  try {
+    const user = req.user;
+    if (user.role !== 'feedepartment') {
+      return res.status(403).json({
+        success: false,
+        message: '❌ Access denied'
+      });
+    }
+
+    const approvedRequests = await DepartmentClearance.find({
+      department_name: 'Fee Department',
+      status: 'Approved'
+    })
+      .populate('clearance_request_id')
+      .populate('student_id', 'full_name email sap')
+      .sort({ approved_at: -1 });
+
+    console.log(`💰 Fee Department - Fetching approved requests: Found ${approvedRequests.length} records`);
+
+    res.status(200).json({
+      success: true,
+      data: approvedRequests || []
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to fetch approved requests'
+    });
+  }
+});
+
+// GET REJECTED REQUESTS
+app.get('/api/fee/rejected-requests', verifyToken, async (req, res) => {
+  try {
+    const user = req.user;
+    if (user.role !== 'feedepartment') {
+      return res.status(403).json({
+        success: false,
+        message: '❌ Access denied'
+      });
+    }
+
+    const rejectedRequests = await DepartmentClearance.find({
+      department_name: 'Fee Department',
+      status: 'Rejected'
+    })
+      .populate('clearance_request_id')
+      .populate('student_id', 'full_name email sap')
+      .sort({ approved_at: -1 });
+
+    console.log(`💰 Fee Department - Fetching rejected requests: Found ${rejectedRequests.length} records`);
+
+    res.status(200).json({
+      success: true,
+      data: rejectedRequests || []
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to fetch rejected requests'
+    });
+  }
+});
+
+// APPROVE REQUEST
+app.put('/api/fee/requests/:id/approve', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const staffId = req.user.id;
+    const staffName = req.user.full_name;
+
+    const departmentClearance = await DepartmentClearance.findByIdAndUpdate(
+      id,
+      {
+        status: 'Approved',
+        approved_by: staffName,
+        approved_at: new Date(),
+        remarks: remarks || ''
+      },
+      { new: true }
+    ).populate('clearance_request_id').populate('student_id', 'full_name sap');
+
+    if (!departmentClearance) {
+      return res.status(404).json({
+        success: false,
+        message: '❌ Request not found'
+      });
+    }
+
+    console.log(`✅ Fee Department approved clearance`);
+    console.log(`   Student: ${departmentClearance.student_name} (SAP ID: ${departmentClearance.sapid})`);
+    console.log(`   Approved by: ${staffName}`);
+    console.log(`   Remarks: ${remarks || 'None'}`);
+
+    const conversationId = `${departmentClearance.sapid}-FeeApproval-${Date.now()}`;
+    const approvalMessage = new Message({
+      conversation_id: conversationId,
+      sender_id: staffId,
+      sender_name: staffName,
+      sender_role: 'feedepartment',
+      sender_sapid: req.user.sap,
+      recipient_sapid: departmentClearance.sapid,
+      recipient_id: departmentClearance.student_id,
+      recipient_department: 'Fee Department',
+      subject: '✅ Fee Clearance Approved',
+      message: `Your fee clearance has been approved. ${remarks ? `Comment: ${remarks}` : 'No additional remarks.'}`,
+      message_type: 'notification'
+    });
+
+    await approvalMessage.save();
+
+    res.status(200).json({
+      success: true,
+      message: '✅ Request approved and student notified'
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to approve request'
+    });
+  }
+});
+
+// REJECT REQUEST
+app.put('/api/fee/requests/:id/reject', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const staffId = req.user.id;
+    const staffName = req.user.full_name;
+
+    if (!remarks || remarks.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '❌ Rejection remarks are required'
+      });
+    }
+
+    const departmentClearance = await DepartmentClearance.findByIdAndUpdate(
+      id,
+      {
+        status: 'Rejected',
+        approved_by: staffName,
+        approved_at: new Date(),
+        remarks: remarks.trim()
+      },
+      { new: true }
+    ).populate('clearance_request_id').populate('student_id', 'full_name sap');
+
+    if (!departmentClearance) {
+      return res.status(404).json({
+        success: false,
+        message: '❌ Request not found'
+      });
+    }
+
+    console.log(`❌ Fee Department rejected clearance`);
+    console.log(`   Student: ${departmentClearance.student_name} (SAP ID: ${departmentClearance.sapid})`);
+    console.log(`   Rejected by: ${staffName}`);
+    console.log(`   Reason: ${remarks}`);
+
+    const conversationId = `${departmentClearance.sapid}-FeeRejection-${Date.now()}`;
+    const rejectionMessage = new Message({
+      conversation_id: conversationId,
+      sender_id: staffId,
+      sender_name: staffName,
+      sender_role: 'feedepartment',
+      sender_sapid: req.user.sap,
+      recipient_sapid: departmentClearance.sapid,
+      recipient_id: departmentClearance.student_id,
+      recipient_department: 'Fee Department',
+      subject: '❌ Fee Clearance Rejected',
+      message: `Your fee clearance has been rejected. Reason: ${remarks}`,
+      message_type: 'notification'
+    });
+
+    await rejectionMessage.save();
 
     res.status(200).json({
       success: true,
@@ -1164,6 +1799,381 @@ app.use((err, req, res, next) => {
 });
 
 // --------------------
+// ============================================
+// TRANSPORT DEPARTMENT ENDPOINTS
+// ============================================
+app.get('/api/transport/pending-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'transport') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'Transport', status: 'Pending' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ createdAt: -1 });
+    console.log(`🚌 Transport - Found ${requests.length} pending requests`);
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    console.error('Transport Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to fetch pending requests' });
+  }
+});
+
+app.get('/api/transport/approved-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'transport') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'Transport', status: 'Approved' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ approved_at: -1 });
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '❌ Failed to fetch approved requests' });
+  }
+});
+
+app.get('/api/transport/rejected-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'transport') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'Transport', status: 'Rejected' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ approved_at: -1 });
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '❌ Failed to fetch rejected requests' });
+  }
+});
+
+app.put('/api/transport/requests/:id/approve', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const staffId = req.user.id;
+    const staffName = req.user.full_name;
+    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Approved', approved_by: staffName, approved_at: new Date(), remarks: remarks || '' }, { new: true })
+      .populate('clearance_request_id').populate('student_id', 'full_name sap');
+    if (!record) return res.status(404).json({ success: false, message: '❌ Request not found' });
+    const message = new Message({ conversation_id: `${record.sapid}-Transport-approval-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'transport', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'Transport', subject: '✅ Transport Clearance Approved', message: `Your transport clearance has been approved. ${remarks ? `Comment: ${remarks}` : 'No additional remarks.'}`, message_type: 'notification' });
+    await message.save();
+    res.status(200).json({ success: true, message: '✅ Request approved and student notified' });
+  } catch (error) {
+    console.error('Transport Approve Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to approve request' });
+  }
+});
+
+app.put('/api/transport/requests/:id/reject', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const staffId = req.user.id;
+    const staffName = req.user.full_name;
+    if (!remarks || remarks.trim().length === 0) return res.status(400).json({ success: false, message: '❌ Rejection remarks are required' });
+    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Rejected', approved_by: staffName, approved_at: new Date(), remarks: remarks.trim() }, { new: true })
+      .populate('clearance_request_id').populate('student_id', 'full_name sap');
+    if (!record) return res.status(404).json({ success: false, message: '❌ Request not found' });
+    const message = new Message({ conversation_id: `${record.sapid}-Transport-rejection-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'transport', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'Transport', subject: '❌ Transport Clearance Rejected', message: `Your transport clearance has been rejected. Reason: ${remarks}`, message_type: 'notification' });
+    await message.save();
+    res.status(200).json({ success: true, message: '✅ Request rejected and student notified' });
+  } catch (error) {
+    console.error('Transport Reject Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to reject request' });
+  }
+});
+
+// ============================================
+// LABORATORY DEPARTMENT ENDPOINTS
+// ============================================
+app.get('/api/laboratory/pending-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'laboratory') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'Laboratory', status: 'Pending' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ createdAt: -1 });
+    console.log(`🧪 Laboratory - Found ${requests.length} pending requests`);
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    console.error('Laboratory Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to fetch pending requests' });
+  }
+});
+
+app.get('/api/laboratory/approved-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'laboratory') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'Laboratory', status: 'Approved' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ approved_at: -1 });
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '❌ Failed to fetch approved requests' });
+  }
+});
+
+app.get('/api/laboratory/rejected-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'laboratory') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'Laboratory', status: 'Rejected' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ approved_at: -1 });
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '❌ Failed to fetch rejected requests' });
+  }
+});
+
+app.put('/api/laboratory/requests/:id/approve', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const staffId = req.user.id;
+    const staffName = req.user.full_name;
+    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Approved', approved_by: staffName, approved_at: new Date(), remarks: remarks || '' }, { new: true })
+      .populate('clearance_request_id').populate('student_id', 'full_name sap');
+    if (!record) return res.status(404).json({ success: false, message: '❌ Request not found' });
+    const message = new Message({ conversation_id: `${record.sapid}-Laboratory-approval-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'laboratory', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'Laboratory', subject: '✅ Laboratory Clearance Approved', message: `Your laboratory clearance has been approved. ${remarks ? `Comment: ${remarks}` : 'No additional remarks.'}`, message_type: 'notification' });
+    await message.save();
+    res.status(200).json({ success: true, message: '✅ Request approved and student notified' });
+  } catch (error) {
+    console.error('Laboratory Approve Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to approve request' });
+  }
+});
+
+app.put('/api/laboratory/requests/:id/reject', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const staffId = req.user.id;
+    const staffName = req.user.full_name;
+    if (!remarks || remarks.trim().length === 0) return res.status(400).json({ success: false, message: '❌ Rejection remarks are required' });
+    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Rejected', approved_by: staffName, approved_at: new Date(), remarks: remarks.trim() }, { new: true })
+      .populate('clearance_request_id').populate('student_id', 'full_name sap');
+    if (!record) return res.status(404).json({ success: false, message: '❌ Request not found' });
+    const message = new Message({ conversation_id: `${record.sapid}-Laboratory-rejection-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'laboratory', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'Laboratory', subject: '❌ Laboratory Clearance Rejected', message: `Your laboratory clearance has been rejected. Reason: ${remarks}`, message_type: 'notification' });
+    await message.save();
+    res.status(200).json({ success: true, message: '✅ Request rejected and student notified' });
+  } catch (error) {
+    console.error('Laboratory Reject Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to reject request' });
+  }
+});
+
+// ============================================
+// STUDENT SERVICE DEPARTMENT ENDPOINTS
+// ============================================
+app.get('/api/studentservice/pending-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'studentservice') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'Student Service', status: 'Pending' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ createdAt: -1 });
+    console.log(`👥 Student Service - Found ${requests.length} pending requests`);
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    console.error('Student Service Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to fetch pending requests' });
+  }
+});
+
+app.get('/api/studentservice/approved-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'studentservice') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'Student Service', status: 'Approved' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ approved_at: -1 });
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '❌ Failed to fetch approved requests' });
+  }
+});
+
+app.get('/api/studentservice/rejected-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'studentservice') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'Student Service', status: 'Rejected' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ approved_at: -1 });
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '❌ Failed to fetch rejected requests' });
+  }
+});
+
+app.put('/api/studentservice/requests/:id/approve', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const staffId = req.user.id;
+    const staffName = req.user.full_name;
+    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Approved', approved_by: staffName, approved_at: new Date(), remarks: remarks || '' }, { new: true })
+      .populate('clearance_request_id').populate('student_id', 'full_name sap');
+    if (!record) return res.status(404).json({ success: false, message: '❌ Request not found' });
+    const message = new Message({ conversation_id: `${record.sapid}-StudentService-approval-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'studentservice', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'Student Service', subject: '✅ Student Service Clearance Approved', message: `Your student service clearance has been approved. ${remarks ? `Comment: ${remarks}` : 'No additional remarks.'}`, message_type: 'notification' });
+    await message.save();
+    res.status(200).json({ success: true, message: '✅ Request approved and student notified' });
+  } catch (error) {
+    console.error('Student Service Approve Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to approve request' });
+  }
+});
+
+app.put('/api/studentservice/requests/:id/reject', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const staffId = req.user.id;
+    const staffName = req.user.full_name;
+    if (!remarks || remarks.trim().length === 0) return res.status(400).json({ success: false, message: '❌ Rejection remarks are required' });
+    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Rejected', approved_by: staffName, approved_at: new Date(), remarks: remarks.trim() }, { new: true })
+      .populate('clearance_request_id').populate('student_id', 'full_name sap');
+    if (!record) return res.status(404).json({ success: false, message: '❌ Request not found' });
+    const message = new Message({ conversation_id: `${record.sapid}-StudentService-rejection-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'studentservice', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'Student Service', subject: '❌ Student Service Clearance Rejected', message: `Your student service clearance has been rejected. Reason: ${remarks}`, message_type: 'notification' });
+    await message.save();
+    res.status(200).json({ success: true, message: '✅ Request rejected and student notified' });
+  } catch (error) {
+    console.error('Student Service Reject Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to reject request' });
+  }
+});
+
+// ============================================
+// COORDINATION OFFICE ENDPOINTS
+// ============================================
+app.get('/api/coordination/pending-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'coordination') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'Coordination', status: 'Pending' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ createdAt: -1 });
+    console.log(`📋 Coordination - Found ${requests.length} pending requests`);
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    console.error('Coordination Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to fetch pending requests' });
+  }
+});
+
+app.get('/api/coordination/approved-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'coordination') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'Coordination', status: 'Approved' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ approved_at: -1 });
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '❌ Failed to fetch approved requests' });
+  }
+});
+
+app.get('/api/coordination/rejected-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'coordination') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'Coordination', status: 'Rejected' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ approved_at: -1 });
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '❌ Failed to fetch rejected requests' });
+  }
+});
+
+app.put('/api/coordination/requests/:id/approve', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const staffId = req.user.id;
+    const staffName = req.user.full_name;
+    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Approved', approved_by: staffName, approved_at: new Date(), remarks: remarks || '' }, { new: true })
+      .populate('clearance_request_id').populate('student_id', 'full_name sap');
+    if (!record) return res.status(404).json({ success: false, message: '❌ Request not found' });
+    const message = new Message({ conversation_id: `${record.sapid}-Coordination-approval-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'coordination', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'Coordination', subject: '✅ Coordination Clearance Approved', message: `Your coordination clearance has been approved. ${remarks ? `Comment: ${remarks}` : 'No additional remarks.'}`, message_type: 'notification' });
+    await message.save();
+    res.status(200).json({ success: true, message: '✅ Request approved and student notified' });
+  } catch (error) {
+    console.error('Coordination Approve Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to approve request' });
+  }
+});
+
+app.put('/api/coordination/requests/:id/reject', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const staffId = req.user.id;
+    const staffName = req.user.full_name;
+    if (!remarks || remarks.trim().length === 0) return res.status(400).json({ success: false, message: '❌ Rejection remarks are required' });
+    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Rejected', approved_by: staffName, approved_at: new Date(), remarks: remarks.trim() }, { new: true })
+      .populate('clearance_request_id').populate('student_id', 'full_name sap');
+    if (!record) return res.status(404).json({ success: false, message: '❌ Request not found' });
+    const message = new Message({ conversation_id: `${record.sapid}-Coordination-rejection-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'coordination', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'Coordination', subject: '❌ Coordination Clearance Rejected', message: `Your coordination clearance has been rejected. Reason: ${remarks}`, message_type: 'notification' });
+    await message.save();
+    res.status(200).json({ success: true, message: '✅ Request rejected and student notified' });
+  } catch (error) {
+    console.error('Coordination Reject Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to reject request' });
+  }
+});
+
+// ============================================
+// HOD DEPARTMENT ENDPOINTS
+// ============================================
+app.get('/api/hod/pending-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'hod') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'HOD', status: 'Pending' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ createdAt: -1 });
+    console.log(`👨‍🎓 HOD - Found ${requests.length} pending requests`);
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    console.error('HOD Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to fetch pending requests' });
+  }
+});
+
+app.get('/api/hod/approved-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'hod') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'HOD', status: 'Approved' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ approved_at: -1 });
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '❌ Failed to fetch approved requests' });
+  }
+});
+
+app.get('/api/hod/rejected-requests', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'hod') return res.status(403).json({ success: false, message: '❌ Access denied' });
+    const requests = await DepartmentClearance.find({ department_name: 'HOD', status: 'Rejected' })
+      .populate('clearance_request_id').populate('student_id', 'full_name email sap').sort({ approved_at: -1 });
+    res.status(200).json({ success: true, data: requests || [] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '❌ Failed to fetch rejected requests' });
+  }
+});
+
+app.put('/api/hod/requests/:id/approve', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const staffId = req.user.id;
+    const staffName = req.user.full_name;
+    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Approved', approved_by: staffName, approved_at: new Date(), remarks: remarks || '' }, { new: true })
+      .populate('clearance_request_id').populate('student_id', 'full_name sap');
+    if (!record) return res.status(404).json({ success: false, message: '❌ Request not found' });
+    const message = new Message({ conversation_id: `${record.sapid}-HOD-approval-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'hod', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'HOD', subject: '✅ HOD Clearance Approved', message: `Your HOD clearance has been approved. ${remarks ? `Comment: ${remarks}` : 'No additional remarks.'}`, message_type: 'notification' });
+    await message.save();
+    res.status(200).json({ success: true, message: '✅ Request approved and student notified' });
+  } catch (error) {
+    console.error('HOD Approve Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to approve request' });
+  }
+});
+
+app.put('/api/hod/requests/:id/reject', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { remarks } = req.body;
+    const staffId = req.user.id;
+    const staffName = req.user.full_name;
+    if (!remarks || remarks.trim().length === 0) return res.status(400).json({ success: false, message: '❌ Rejection remarks are required' });
+    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Rejected', approved_by: staffName, approved_at: new Date(), remarks: remarks.trim() }, { new: true })
+      .populate('clearance_request_id').populate('student_id', 'full_name sap');
+    if (!record) return res.status(404).json({ success: false, message: '❌ Request not found' });
+    const message = new Message({ conversation_id: `${record.sapid}-HOD-rejection-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'hod', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'HOD', subject: '❌ HOD Clearance Rejected', message: `Your HOD clearance has been rejected. Reason: ${remarks}`, message_type: 'notification' });
+    await message.save();
+    res.status(200).json({ success: true, message: '✅ Request rejected and student notified' });
+  } catch (error) {
+    console.error('HOD Reject Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to reject request' });
+  }
+});
+
 // Start Server
 // --------------------
 const PORT = process.env.PORT || 5000;

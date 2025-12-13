@@ -1,70 +1,108 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./FeeEditProfile.css";                         
+import { useAuthContext } from "../../contexts/AuthContext";
+import axios from "axios";
+import "./FeeEditProfile.css";
 
 export default function FeeEditProfile() {
-  const navigate = useNavigate(); 
-
-  // Load fee user data from localStorage
-  const storedFeeUser = JSON.parse(localStorage.getItem("feeUser")) || {};
+  const { user, setUser } = useAuthContext();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    name: "",
-    sap: "",
-    department: "",
+    full_name: "",
     email: "",
     password: "",
-    confirmPassword: "",
+    confirmPassword: ""
   });
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
   useEffect(() => {
-    setForm({
-      name: storedFeeUser.name || "",
-      sap: storedFeeUser.sap || "",
-      department: storedFeeUser.department || "",
-      email: storedFeeUser.email || "",
-      password: "",
-      confirmPassword: "",
-    });
-  }, []);
+    if (user) {
+      setForm({
+        full_name: user.full_name || "",
+        email: user.email || "",
+        password: "",
+        confirmPassword: ""
+      });
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.password && form.password !== form.confirmPassword) {
-      alert("Passwords do not match!");
+    setError("");
+    setSuccess("");
+
+    // Validation
+    if (!form.full_name || !form.email) {
+      setError("❌ Full name and email are required");
       return;
     }
 
+    if (form.password && form.password.length < 6) {
+      setError("❌ Password must be at least 6 characters");
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setError("❌ Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      // Save to localStorage (or API call)
-      localStorage.setItem(
-        "feeUser",
-        JSON.stringify({
-          ...storedFeeUser,
-          name: form.name,
-          sap: form.sap,
-          department: form.department,
-          email: form.email,
-        })
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      const updateData = {
+        full_name: form.full_name.trim(),
+        email: form.email.trim()
+      };
+
+      if (form.password) {
+        updateData.password = form.password;
+      }
+
+      const response = await axios.put(
+        apiUrl + "/api/update-profile",
+        updateData,
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
       );
 
-      alert("Fee Profile updated successfully!");
-      navigate("/fee-dashboard");
-    } catch (error) {
-      console.error("Error updating Fee Profile:", error);
-      alert("Failed to update Fee Profile.");
-    }
-  };
+      if (response.data.success) {
+        setSuccess("✅ Profile updated successfully!");
+        
+        // Update user in context
+        const updatedUser = response.data.user;
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
 
-  const handleCopyData = () => {
-    const data = `Name: ${form.name}\nSAP: ${form.sap}\nDepartment: ${form.department}\nEmail: ${form.email}`;
-    navigator.clipboard.writeText(data);
-    alert("Profile data copied to clipboard!");
+        setTimeout(() => {
+          navigate("/fee-dashboard");
+        }, 1500);
+      } else {
+        setError(response.data.message || "❌ Failed to update profile");
+      }
+    } catch (err) {
+      console.error("Update Profile Error:", err);
+      setError(err.response?.data?.message || "❌ Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -72,21 +110,29 @@ export default function FeeEditProfile() {
       {/* SIDEBAR */}
       <aside className="sd-sidebar">
         <div className="sd-profile">
-          <div className="sd-avatar">{storedFeeUser.name ? storedFeeUser.name.charAt(0).toUpperCase() : "F"}</div>
+          <div className="sd-avatar">
+            {user?.full_name ? user.full_name.charAt(0).toUpperCase() : "F"}
+          </div>
           <div>
-            <h3 className="sd-name">{storedFeeUser.name || "Fee Dept"}</h3>
-            <p className="sd-small">{storedFeeUser.sap || "N/A"} • {storedFeeUser.department || "N/A"}</p>
+            <h3 className="sd-name">{user?.full_name || "Fee Department"}</h3>
+            <p className="sd-small">
+              {user?.sap || "N/A"} • {user?.department || "Fee Department"}
+            </p>
             <p className="sd-small">Riphah International University</p>
           </div>
         </div>
 
         <nav className="sd-nav">
-          <button className="sd-nav-btn" onClick={() => navigate("/fee-dashboard")}>🏠 Dashboard</button>
+          <button className="sd-nav-btn" onClick={() => navigate("/fee-dashboard")}>
+            🏠 Dashboard
+          </button>
           <button className="sd-nav-btn active">📝 Edit Profile</button>
-          <button className="sd-nav-btn" onClick={() => navigate("/fee-requests")}>📄 Requests</button>
-          <button className="sd-nav-btn" onClick={() => navigate("/fee-approved")}>✅ Approved Requests</button>
-          <button className="sd-nav-btn" onClick={() => navigate("/fee-rejected")}>❌ Rejected Requests</button>
-          <button className="sd-nav-btn" onClick={() => navigate("/login")}>🚪 Logout</button>
+          <button className="sd-nav-btn" onClick={() => navigate("/fee-messages")}>
+            💬 Messages
+          </button>
+          <button className="sd-nav-btn" onClick={() => navigate("/fee-dashboard")}>
+            🚪 Back
+          </button>
         </nav>
 
         <footer className="sd-footer">© 2025 Riphah</footer>
@@ -95,31 +141,60 @@ export default function FeeEditProfile() {
       {/* MAIN CONTENT */}
       <main className="edit-form-main">
         <form className="edit-form" onSubmit={handleSubmit}>
-          <img src="/mnt/data/27ea833f-8d9a-41e7-9536-fe6207c75f8b.png" alt="Riphah Monogram" className="riphah-logo" />
-          <h1>Edit Fee Profile</h1>
+          <h1>Edit Profile</h1>
 
-          <label>Full Name</label>
-          <input type="text" name="name" value={form.name} onChange={handleChange} required />
+          {error && <div className="alert alert-error">{error}</div>}
+          {success && <div className="alert alert-success">{success}</div>}
 
-          <label>SAP ID</label>
-          <input type="text" name="sap" value={form.sap} onChange={handleChange} required />
+          <label>Full Name *</label>
+          <input
+            type="text"
+            name="full_name"
+            value={form.full_name}
+            onChange={handleChange}
+            placeholder="Enter your full name"
+            required
+          />
 
-          <label>Department</label>
-          <input type="text" name="department" value={form.department} onChange={handleChange} required />
+          <label>Email *</label>
+          <input
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            placeholder="Enter your email"
+            required
+          />
 
-          <label>Email</label>
-          <input type="email" name="email" value={form.email} onChange={handleChange} required />
-
-          <label>New Password</label>
-          <input type="password" name="password" placeholder="Leave blank to keep same password" value={form.password} onChange={handleChange} />
+          <label>New Password (leave blank to keep current)</label>
+          <input
+            type="password"
+            name="password"
+            value={form.password}
+            onChange={handleChange}
+            placeholder="Enter new password"
+          />
 
           <label>Confirm Password</label>
-          <input type="password" name="confirmPassword" value={form.confirmPassword} onChange={handleChange} />
+          <input
+            type="password"
+            name="confirmPassword"
+            value={form.confirmPassword}
+            onChange={handleChange}
+            placeholder="Confirm new password"
+          />
 
           <div className="form-buttons">
-            <button type="submit" className="save-btn">Save Changes</button>
-            <button type="button" className="cancel-btn" onClick={() => navigate("/fee-dashboard")}>Cancel</button>
-            <button type="button" className="copy-btn" onClick={handleCopyData}>Copy Data</button>
+            <button type="submit" className="save-btn" disabled={loading}>
+              {loading ? "Saving..." : "💾 Save Changes"}
+            </button>
+            <button
+              type="button"
+              className="cancel-btn"
+              onClick={() => navigate("/fee-dashboard")}
+            >
+              Cancel
+            </button>
           </div>
         </form>
       </main>
