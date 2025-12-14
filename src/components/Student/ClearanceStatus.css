@@ -542,3 +542,201 @@ body {
 .status-card:nth-child(7) {
   animation-delay: 0.6s;
 }
+
+/* ---- Status Info Section ---- */
+.status-info {
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 40px;
+  margin-top: 40px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.08);
+  animation: slideInDown 0.5s ease-out;
+}
+
+.status-info-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.status-info-header h3 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+}
+
+.status-info-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* ---- Info Cards Grid ---- */
+.status-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.info-card {
+  background: white;
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-left: 5px solid #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.info-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.info-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+.pending-card {
+  border-left-color: #f59e0b;
+  background: linear-gradient(135deg, #fffbf0 0%, #fef9e7 100%);
+}
+
+.pending-card:hover {
+  border-left-color: #d97706;
+  box-shadow: 0 12px 24px rgba(245, 158, 11, 0.15);
+}
+
+.approved-card {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+}
+
+.approved-card:hover {
+  border-left-color: #059669;
+  box-shadow: 0 12px 24px rgba(16, 185, 129, 0.15);
+}
+
+.rejected-card {
+  border-left-color: #ef4444;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.rejected-card:hover {
+  border-left-color: #dc2626;
+  box-shadow: 0 12px 24px rgba(239, 68, 68, 0.15);
+}
+
+.info-icon {
+  font-size: 32px;
+  line-height: 1;
+  text-align: center;
+  animation: slideInDown 0.5s ease-out 0.1s backwards;
+}
+
+.info-content {
+  position: relative;
+  z-index: 1;
+  animation: slideInDown 0.5s ease-out 0.15s backwards;
+}
+
+.info-content h4 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  letter-spacing: -0.2px;
+}
+
+.info-content p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ---- Status Info Footer ---- */
+.status-info-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 100%);
+  border-radius: 12px;
+  border: 1px solid #bfdbfe;
+}
+
+.update-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0369a1;
+  animation: slideInDown 0.5s ease-out;
+}
+
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* ---- Responsive Design ---- */
+@media (max-width: 768px) {
+  .status-info {
+    padding: 28px 20px;
+  }
+
+  .status-info-header h3 {
+    font-size: 22px;
+  }
+
+  .status-info-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .info-card {
+    padding: 20px;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .info-icon {
+    font-size: 28px;
+    min-width: 40px;
+  }
+
+  .update-badge {
+    font-size: 12px;
+  }
+}

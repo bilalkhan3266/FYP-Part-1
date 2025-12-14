@@ -271,19 +271,47 @@ export default function ClearanceStatus() {
         )}
 
         <div className="status-info">
-          <h3>📊 Status Information</h3>
-          <ul>
-            <li>
-              <strong>⏳ Pending:</strong> Waiting for department review
-            </li>
-            <li>
-              <strong>✅ Approved:</strong> Department has approved your request
-            </li>
-            <li>
-              <strong>❌ Rejected:</strong> Department has rejected your request
-            </li>
-          </ul>
-          <p>Status updates automatically every 3 seconds. Updates immediately when you switch to this tab.</p>
+          <div className="status-info-header">
+            <h3>📊 Status Information</h3>
+            <p className="status-info-subtitle">How clearance requests are processed</p>
+          </div>
+          
+          <div className="status-info-grid">
+            <div className="info-card pending-card">
+              <div className="info-icon">⏳</div>
+              <div className="info-content">
+                <h4>Pending</h4>
+                <p>Your request is being reviewed by the department. This typically takes 1-3 business days.</p>
+              </div>
+            </div>
+
+            <div className="info-card approved-card">
+              <div className="info-icon">✅</div>
+              <div className="info-content">
+                <h4>Approved</h4>
+                <p>Department has approved your clearance. You can now proceed to the next stage.</p>
+              </div>
+            </div>
+
+            <div className="info-card rejected-card">
+              <div className="info-icon">❌</div>
+              <div className="info-content">
+                <h4>Rejected</h4>
+                <p>Department has rejected your request. Contact the department for more details.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="status-info-footer">
+            <div className="update-badge">
+              <span className="badge-dot"></span>
+              <span>Status updates automatically every 3 seconds</span>
+            </div>
+            <div className="update-badge">
+              <span className="badge-dot"></span>
+              <span>Updates immediately when you switch to this tab</span>
+            </div>
+          </div>
         </div>
       </main>
     </div>
