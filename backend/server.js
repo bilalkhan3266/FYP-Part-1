@@ -9,12 +9,15 @@ const crypto = require("crypto");
 
 // Import Routes
 const libraryRoutes = require("./routes/libraryRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 // Import Models
 const User = require("./models/User");
 const ClearanceRequest = require("./models/ClearanceRequest");
 const DepartmentClearance = require("./models/DepartmentClearance");
 const Message = require("./models/Message");
+const AdminMessage = require("./models/AdminMessage");
+const DepartmentStats = require("./models/DepartmentStats");
 
 // --------------------
 // Express app
@@ -2281,6 +2284,11 @@ app.put('/api/hod/requests/:id/reject', verifyToken, async (req, res) => {
     res.status(500).json({ success: false, message: '❌ Failed to reject request' });
   }
 });
+
+// ============================================
+// ADMIN PANEL ROUTES
+// ============================================
+app.use('/api/admin', adminRoutes);
 
 // Start Server
 // --------------------

@@ -1,11 +1,39 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import "./AdminDashboard.css";
 
+// Helper function to get department icon
+const getDepartmentIcon = (departmentName) => {
+  const icons = {
+    Library: "📚",
+    Transport: "🚌",
+    Laboratory: "🔬",
+    "Fee Department": "💰",
+    Coordination: "🎯",
+    "Student Services": "🎓"
+  };
+  return icons[departmentName] || "📍";
+};
+
+// Helper function to get department color
+const getDepartmentColor = (departmentName) => {
+  const colors = {
+    Library: "#3b82f6",
+    Transport: "#10b981",
+    Laboratory: "#f59e0b",
+    "Fee Department": "#ef4444",
+    Coordination: "#8b5cf6",
+    "Student Services": "#ec4899"
+  };
+  return colors[departmentName] || "#6b7280";
+};
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuthContext();
+  const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
   const axiosConfig = { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } };
 
   const [departments, setDepartments] = useState([]);
@@ -18,100 +46,58 @@ export default function AdminDashboard() {
     totalPending: 0
   });
 
-  // Mock department data - Replace with real API calls
+  // Fetch real department statistics
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    const config = { headers: { Authorization: `Bearer ${token}` } };
+    
     const fetchDepartmentStats = async () => {
       setLoading(true);
       setError("");
       try {
-        // Mock data - In production, this would be from actual API
-        const mockData = [
-          {
-            id: 1,
-            name: "Library",
-            icon: "📚",
-            totalRequests: 145,
-            approved: 98,
-            rejected: 32,
-            pending: 15,
-            color: "#3b82f6"
-          },
-          {
-            id: 2,
-            name: "Transport",
-            icon: "🚌",
-            totalRequests: 87,
-            approved: 62,
-            rejected: 18,
-            pending: 7,
-            color: "#10b981"
-          },
-          {
-            id: 3,
-            name: "Laboratory",
-            icon: "🔬",
-            totalRequests: 56,
-            approved: 42,
-            rejected: 10,
-            pending: 4,
-            color: "#f59e0b"
-          },
-          {
-            id: 4,
-            name: "Fee Department",
-            icon: "💰",
-            totalRequests: 203,
-            approved: 178,
-            rejected: 15,
-            pending: 10,
-            color: "#ef4444"
-          },
-          {
-            id: 5,
-            name: "Coordination",
-            icon: "🎯",
-            totalRequests: 92,
-            approved: 76,
-            rejected: 12,
-            pending: 4,
-            color: "#8b5cf6"
-          },
-          {
-            id: 6,
-            name: "Student Services",
-            icon: "🎓",
-            totalRequests: 134,
-            approved: 110,
-            rejected: 18,
-            pending: 6,
-            color: "#ec4899"
-          }
-        ];
+        const response = await axios.get(
+          `${apiUrl}/api/admin/department-stats`,
+          config
+        );
 
-        setDepartments(mockData);
+        if (response.data.success) {
+          const { overall, departments } = response.data.data;
 
-        // Calculate total stats
-        const totalRequests = mockData.reduce((sum, d) => sum + d.totalRequests, 0);
-        const totalApproved = mockData.reduce((sum, d) => sum + d.approved, 0);
-        const totalRejected = mockData.reduce((sum, d) => sum + d.rejected, 0);
-        const totalPending = mockData.reduce((sum, d) => sum + d.pending, 0);
+          // Transform departments data to match our display format
+          const formattedDepts = departments.map(dept => ({
+            id: dept.id,
+            name: dept.departmentName,
+            icon: getDepartmentIcon(dept.departmentName),
+            totalRequests: dept.totalRequests,
+            approved: dept.approved,
+            rejected: dept.rejected,
+            pending: dept.pending,
+            color: getDepartmentColor(dept.departmentName)
+          }));
 
-        setStats({
-          totalRequests,
-          totalApproved,
-          totalRejected,
-          totalPending
-        });
+          setDepartments(formattedDepts);
+          setStats({
+            totalRequests: overall.totalRequests,
+            totalApproved: overall.totalApproved,
+            totalRejected: overall.totalRejected,
+            totalPending: overall.totalPending
+          });
+        }
       } catch (err) {
+        console.error("Error fetching department stats:", err);
         setError("Failed to load department statistics");
-        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchDepartmentStats();
-  }, []);
+    
+    // Refresh stats every 30 seconds for real-time updates
+    const interval = setInterval(fetchDepartmentStats, 30000);
+    
+    return () => clearInterval(interval);
+  }, [apiUrl]);
 
   const handleLogout = () => {
     logout();
