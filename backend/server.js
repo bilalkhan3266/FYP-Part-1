@@ -1928,6 +1928,34 @@ app.get('/api/health', (req, res) => {
 });
 
 // --------------------
+// GET DEPARTMENTS LIST
+// --------------------
+app.get('/api/departments', (req, res) => {
+  try {
+    const departments = [
+      'Library',
+      'Transport',
+      'Laboratory',
+      'Student Service',
+      'Fee Department',
+      'Coordination',
+      'HOD'
+    ];
+
+    res.status(200).json({
+      success: true,
+      data: departments
+    });
+  } catch (err) {
+    console.error('❌ Error fetching departments:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch departments'
+    });
+  }
+});
+
+// --------------------
 // Error Handling
 // --------------------
 app.use((err, req, res, next) => {

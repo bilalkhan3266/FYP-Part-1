@@ -41,7 +41,7 @@ import HODDashboard from "./components/Hod/HODDashboard";
 /* Student Pages */
 import ClearanceRequest from "./components/Student/ClearanceRequest";
 import ClearanceStatus from "./components/Student/ClearanceStatus";
-import Messages from "./components/Student/StudentMessages"; // ✅ UPDATED: Use StudentMessages
+import Messages from "./components/Student/Messages"; // ✅ Professional messages with full features
 import EditProfile from "./components/Student/EditProfile";
 
 import "./App.css";

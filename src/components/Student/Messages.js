@@ -9,35 +9,75 @@ export default function Messages() {
   const navigate = useNavigate();
   
   const [messages, setMessages] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [sending, setSending] = useState(false);
   const [showNewMessageForm, setShowNewMessageForm] = useState(false);
   const [newMessage, setNewMessage] = useState({
-    recipientDepartment: "Library",
+    recipientDepartment: "",
     subject: "",
     message: ""
   });
 
-  const departments = [
-    "Library",
-    "Transport",
-    "Laboratory",
-    "StudentService",
-    "FeeDepartment",
-    "Coordination",
-    "HOD"
-  ];
-
   // ====== FETCH MESSAGES ON MOUNT ======
   useEffect(() => {
     if (user) {
+      fetchDepartments();
       fetchMessages();
       const interval = setInterval(fetchMessages, 20000);
       return () => clearInterval(interval);
     }
   }, [user]);
+
+  // ✅ FETCH DEPARTMENTS FROM BACKEND
+  const fetchDepartments = async () => {
+    try {
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      const response = await axios.get(apiUrl + "/api/departments");
+
+      if (response.data.success) {
+        console.log('✅ Departments fetched:', response.data.data);
+        setDepartments(response.data.data || []);
+        // Set first department as default
+        if (response.data.data && response.data.data.length > 0) {
+          setNewMessage(prev => ({
+            ...prev,
+            recipientDepartment: response.data.data[0]
+          }));
+        }
+      } else {
+        // Fallback to default departments
+        const defaultDepts = [
+          "Library",
+          "Transport",
+          "Laboratory",
+          "Student Service",
+          "Fee Department",
+          "Coordination",
+          "HOD"
+        ];
+        setDepartments(defaultDepts);
+        setNewMessage(prev => ({ ...prev, recipientDepartment: defaultDepts[0] }));
+      }
+    } catch (err) {
+      console.error("❌ Error fetching departments:", err);
+      // Fallback to default departments
+      const defaultDepts = [
+        "Library",
+        "Transport",
+        "Laboratory",
+        "Student Service",
+        "Fee Department",
+        "Coordination",
+        "HOD"
+      ];
+      setDepartments(defaultDepts);
+      setNewMessage(prev => ({ ...prev, recipientDepartment: defaultDepts[0] }));
+    }
+  };
 
   // ✅ FETCH MESSAGES FROM BACKEND
   const fetchMessages = async () => {
