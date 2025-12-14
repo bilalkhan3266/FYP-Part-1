@@ -643,19 +643,39 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
 // --------------------
 app.get('/api/clearance-status', verifyToken, async (req, res) => {
   try {
+    const studentId = req.user.id;
+    console.log('🔍 Fetching clearance status for student:', studentId);
+
     // Get all department statuses for this student
-    const statuses = await DepartmentClearance.find({ student_id: req.user.id })
-      .sort({ createdAt: -1 });
+    const statuses = await DepartmentClearance.find({ student_id: studentId })
+      .sort({ department_name: 1 });
+
+    console.log(`✅ Found ${statuses.length} department clearance records`);
+    console.log('📋 Statuses:', statuses.map(s => `${s.department_name}: ${s.status}`).join(', '));
+
+    // Calculate progress
+    const clearedCount = statuses.filter(s => s.status === 'Approved' || s.status === 'Cleared').length;
+    const rejectedCount = statuses.filter(s => s.status === 'Rejected').length;
+    const pendingCount = statuses.filter(s => s.status === 'Pending').length;
+    const totalCount = statuses.length;
+    const progressPercentage = totalCount > 0 ? Math.round((clearedCount / totalCount) * 100) : 0;
 
     res.json({
       success: true,
-      data: statuses
+      data: statuses,
+      summary: {
+        total: totalCount,
+        cleared: clearedCount,
+        rejected: rejectedCount,
+        pending: pendingCount,
+        progressPercentage: progressPercentage
+      }
     });
   } catch (err) {
-    console.error('Clearance Status Error:', err);
+    console.error('❌ Clearance Status Error:', err);
     res.status(500).json({ 
       success: false, 
-      message: 'Failed to fetch clearance status' 
+      message: 'Failed to fetch clearance status: ' + err.message
     });
   }
 });

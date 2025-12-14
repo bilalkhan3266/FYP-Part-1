@@ -24,6 +24,7 @@ export default function StudentDashboard() {
       const token = localStorage.getItem("token");
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
+      console.log('🔄 Fetching clearance status...');
       const response = await axios.get(apiUrl + "/api/clearance-status", {
         headers: {
           Authorization: "Bearer " + token,
@@ -33,6 +34,8 @@ export default function StudentDashboard() {
 
       if (response.data.success && Array.isArray(response.data.data)) {
         const statuses = response.data.data;
+        console.log('✅ Clearance status received:', statuses.length, 'departments');
+        console.log('📊 Summary:', response.data.summary);
         
         // Convert API response to department cards format
         const deptMap = {
@@ -46,13 +49,19 @@ export default function StudentDashboard() {
           "Hostel": { key: "hostel", label: "Hostel Mess" }
         };
 
-        const deptList = statuses.map(status => ({
-          key: deptMap[status.department_name]?.key || status.department_name.toLowerCase(),
-          label: deptMap[status.department_name]?.label || status.department_name,
-          status: status.status || "Pending",
-          remarks: status.remarks || ""
-        }));
+        const deptList = statuses.map(status => {
+          const normalizedStatus = status.status === 'Approved' ? 'Cleared' : status.status;
+          return {
+            key: deptMap[status.department_name]?.key || status.department_name.toLowerCase(),
+            label: deptMap[status.department_name]?.label || status.department_name,
+            status: normalizedStatus || "Pending",
+            remarks: status.remarks || "",
+            approved_by: status.approved_by,
+            approved_at: status.approved_at
+          };
+        });
 
+        console.log('📋 Departments:', deptList.map(d => `${d.label}: ${d.status}`).join(', '));
         setDepartments(deptList);
         setError("");
       } else {
@@ -60,7 +69,7 @@ export default function StudentDashboard() {
         setError("");
       }
     } catch (err) {
-      console.error("Fetch Clearance Status Error:", err);
+      console.error("❌ Fetch Clearance Status Error:", err);
       setError(err.response?.data?.message || "Failed to load clearance status");
     } finally {
       setLoading(false);
