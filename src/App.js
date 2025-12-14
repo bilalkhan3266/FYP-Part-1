@@ -25,6 +25,8 @@ import TransportMessages from "./components/Transport/TransportMessages";
 
 /* Laboratory */
 import LaboratoryDashboard from "./components/labortary/LaboratoryDashboard";
+import LaboratoryEditProfile from "./components/labortary/LaboratoryEditProfile";
+import LaboratoryMessages from "./components/labortary/LaboratoryMessages";
 
 /* Student Service */
 import ServiceDashboard from "./components/StudentServiceDepartment/ServiceDashboard";
@@ -177,6 +179,30 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["laboratory"]}>
             <LaboratoryDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/laboratory-edit-profile"
+        element={
+          <ProtectedRoute allowedRoles={["laboratory"]}>
+            <LaboratoryEditProfile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/lab-messages"
+        element={
+          <ProtectedRoute allowedRoles={["laboratory"]}>
+            <LaboratoryMessages />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/laboratory-messages"
+        element={
+          <ProtectedRoute allowedRoles={["laboratory"]}>
+            <LaboratoryMessages />
           </ProtectedRoute>
         }
       />
