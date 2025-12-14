@@ -173,9 +173,10 @@ export default function Messages() {
       console.log('✅ Response received:', response.data);
 
       if (response.data.success) {
-        // Reset form
+        // Reset form with first department from departments array
+        const defaultDept = departments.length > 0 ? departments[0] : "Library";
         setNewMessage({
-          recipientDepartment: "Library",
+          recipientDepartment: defaultDept,
           subject: "",
           message: ""
         });
