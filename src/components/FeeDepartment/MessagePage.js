@@ -8,8 +8,6 @@ export default function FeeMessagePage() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
 
-  const [conversations, setConversations] = useState([]);
-  const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -17,14 +15,14 @@ export default function FeeMessagePage() {
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
 
-  // Fetch conversations
-  const fetchConversations = async () => {
+  // Fetch messages
+  const fetchMessages = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem("token");
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-      // Get all messages for department
-      const response = await axios.get(apiUrl + "/api/conversations", {
+      const response = await axios.get(apiUrl + "/api/my-messages", {
         headers: {
           Authorization: "Bearer " + token,
           "Content-Type": "application/json"
@@ -32,50 +30,30 @@ export default function FeeMessagePage() {
       });
 
       if (response.data.success) {
-        const convos = response.data.data || [];
-        // Filter for Fee Department conversations
-        const feeConvos = convos.filter(c => c.recipient_department === "Fee Department");
-        setConversations(feeConvos);
-      }
-    } catch (err) {
-      console.error("Error fetching conversations:", err);
-    }
-  };
-
-  // Fetch conversation thread
-  const fetchConversationThread = async (conversationId) => {
-    try {
-      const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
-
-      const response = await axios.get(
-        apiUrl + `/api/conversations/${conversationId}`,
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-
-      if (response.data.success) {
-        setMessages(response.data.data);
+        setMessages(response.data.data || []);
+        setError("");
+      } else {
+        setError(response.data.message || "Failed to load messages");
       }
     } catch (err) {
       console.error("Error fetching messages:", err);
+      setError(err.response?.data?.message || "Failed to load messages");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle select conversation
-  const handleSelectConversation = (conversation) => {
-    setSelectedConversation(conversation);
-    fetchConversationThread(conversation.conversation_id);
-  };
+  useEffect(() => {
+    if (user) {
+      fetchMessages();
+      const interval = setInterval(fetchMessages, 20000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
-  // Handle send reply
   const handleSendReply = async () => {
     if (!replyText.trim()) {
-      setError("❌ Please enter a message");
+      setError("Please enter a message");
       return;
     }
 
@@ -85,8 +63,12 @@ export default function FeeMessagePage() {
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
       const response = await axios.post(
-        apiUrl + `/api/messages/${selectedConversation.conversation_id}/reply`,
-        { message: replyText.trim() },
+        apiUrl + "/api/send",
+        {
+          recipientDepartment: "Student Service",
+          subject: "Reply to Message",
+          message: replyText.trim()
+        },
         {
           headers: {
             Authorization: "Bearer " + token,
@@ -98,168 +80,156 @@ export default function FeeMessagePage() {
       if (response.data.success) {
         setSuccess("✅ Reply sent successfully!");
         setReplyText("");
-        fetchConversationThread(selectedConversation.conversation_id);
+        await fetchMessages();
         setTimeout(() => setSuccess(""), 3000);
+      } else {
+        setError(response.data.message || "Failed to send reply");
       }
     } catch (err) {
-      console.error("Send reply error:", err);
-      setError("❌ Failed to send reply");
+      console.error("Error sending reply:", err);
+      setError(err.response?.data?.message || "Failed to send reply");
     } finally {
       setSending(false);
     }
   };
-
-  // Initial load
-  useEffect(() => {
-    setLoading(true);
-    fetchConversations();
-    setLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
+  const displayName = user?.full_name || "Fee Department";
+  const displaySap = user?.sap || "N/A";
+
   return (
-    <div className="fee-message-page">
-      {/* ---------- Sidebar ---------- */}
-      <aside className="sidebar">
-        <h2>💰 Fee Department</h2>
-        <nav>
-          <button onClick={() => navigate("/fee-dashboard")}>🏠 Dashboard</button>
-          <button className="active">💬 Messages</button>
-          <button onClick={() => navigate("/edit-profile")}>📝 Edit Profile</button>
-          <button onClick={handleLogout}>🚪 Logout</button>
+    <div className="student-dashboard-page">
+      <aside className="sd-sidebar">
+        <div className="sd-profile">
+          <div className="sd-avatar">{displayName.charAt(0).toUpperCase()}</div>
+          <div>
+            <h3 className="sd-name">{displayName}</h3>
+            <p className="sd-small">{displaySap} • Fee Department</p>
+            <p className="sd-small">Riphah International University</p>
+          </div>
+        </div>
+
+        <nav className="sd-nav">
+          <button onClick={() => navigate("/fee-dashboard")} className="sd-nav-btn">
+            🏠 Dashboard
+          </button>
+          <button onClick={() => navigate("/fee-messages")} className="sd-nav-btn active">
+            💬 Messages
+          </button>
+          <button onClick={() => navigate("/fee-edit-profile")} className="sd-nav-btn">
+            📝 Edit Profile
+          </button>
+          <button onClick={handleLogout} className="sd-nav-btn logout">
+            🚪 Logout
+          </button>
         </nav>
+
+        <footer className="sd-footer">© 2025 Riphah</footer>
       </aside>
 
-      {/* ---------- Main Content ---------- */}
-      <main className="message-container">
-        <div className="conversations-panel">
-          <h3>Conversations</h3>
-          {loading ? (
-            <p>Loading...</p>
-          ) : conversations.length === 0 ? (
-            <p className="no-conversations">No conversations yet</p>
-          ) : (
-            <div className="conversations-list">
-              {conversations.map((conv) => (
+      <main className="sd-main">
+        <header className="sd-header">
+          <div>
+            <h1>💬 Messages</h1>
+            <p>Communicate with students about fee clearance</p>
+          </div>
+        </header>
+
+        {error && <div className="alert alert-error">{error}</div>}
+        {success && <div className="alert alert-success">{success}</div>}
+
+        {loading ? (
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>⏳ Loading messages...</p>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📭</div>
+            <h2>No messages yet</h2>
+            <p>Messages from students will appear here</p>
+          </div>
+        ) : (
+          <div className="messages-container">
+            <div className="messages-header">
+              <span>{messages.length} message{messages.length !== 1 ? "s" : ""}</span>
+              <span className="unread-count">
+                {messages.filter(m => !m.is_read).length} unread
+              </span>
+            </div>
+
+            <div className="messages-list">
+              {messages.map((msg) => (
                 <div
-                  key={conv.conversation_id}
-                  className={`conversation-item ${
-                    selectedConversation?.conversation_id === conv.conversation_id
-                      ? "active"
-                      : ""
-                  }`}
-                  onClick={() => handleSelectConversation(conv)}
+                  key={msg._id}
+                  className={`message-card ${msg.is_read ? "read" : "unread"}`}
                 >
-                  <h4>{conv.sender_name}</h4>
-                  <p className="conv-subject">{conv.subject}</p>
-                  <small>{new Date(conv.createdAt).toLocaleDateString()}</small>
+                  <div className="message-header">
+                    <div className="message-sender">
+                      <div className="sender-avatar">
+                        {(msg.sender_name || "S").charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h4>{msg.subject}</h4>
+                        <span className="sender-info">
+                          From {msg.sender_name || "Student"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="message-meta">
+                      <span className="time">
+                        {new Date(msg.createdAt).toLocaleDateString([], {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit"
+                        })}
+                      </span>
+                      <span className={`status-badge ${msg.is_read ? "read" : "unread"}`}>
+                        {msg.is_read ? "✓ Read" : "● Unread"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="message-body">
+                    <p>{msg.message}</p>
+                  </div>
+
+                  {msg.remarks && (
+                    <div className="message-remarks">
+                      <strong>💬 Your Reply:</strong> {msg.remarks}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
-          )}
-        </div>
 
-        {/* Messages Panel */}
-        <div className="messages-panel">
-          {error && <div className="alert alert-error">{error}</div>}
-          {success && <div className="alert alert-success">{success}</div>}
-
-          {selectedConversation ? (
-            <>
-              <div className="message-header">
-                <h2>{selectedConversation.subject}</h2>
-                <p>From: {selectedConversation.sender_name}</p>
-              </div>
-
-              <div className="messages-list">
-                {messages.map((msg) => (
-                  <div
-                    key={msg._id}
-                    className={`message ${
-                      msg.sender_role === "feedepartment" ? "sent" : "received"
-                    }`}
-                  >
-                    <div className="message-header-small">
-                      <strong>{msg.sender_name}</strong>
-                      <span className="time">
-                        {new Date(msg.createdAt).toLocaleString()}
-                      </span>
-                    </div>
-                    <p>{msg.message}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="reply-box">
+            <div className="reply-box">
+              <h3>✉️ Send Reply to Student</h3>
+              <div className="form-group">
                 <textarea
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Type your reply..."
-                  rows="3"
+                  placeholder="Type your message here..."
+                  rows="5"
+                  disabled={sending}
                 />
-                <button
-                  onClick={handleSendReply}
-                  disabled={sending || !replyText.trim()}
-                  className="send-btn"
-                >
-                  {sending ? "Sending..." : "📤 Send Reply"}
-                </button>
+                <span className="char-count">{replyText.length} characters</span>
               </div>
-            </>
-          ) : (
-            <div className="no-conversation">
-              <p>Select a conversation to view messages</p>
+              <button
+                onClick={handleSendReply}
+                disabled={sending || !replyText.trim()}
+                className="send-btn"
+              >
+                {sending ? "⟳ Sending..." : "📤 Send Reply"}
+              </button>
             </div>
-          )}
-        </div>
-      </main>
-    </div>
-  );
-}
-        </nav>
-        <footer>© 2025 Fee Portal</footer>
-      </aside>
-
-      {/* ---------- Main Content ---------- */}
-      <main className="main-content">
-        <div className="msg-card">
-          <h1>💬 Message Student</h1>
-          <p>Send fee clearance updates or notices to students</p>
-
-          {/* Chat Input */}
-          <div className="msg-form">
-            <input
-              type="text"
-              placeholder="Type your message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-            />
-            <button onClick={sendMessage}>Send Message</button>
           </div>
-
-          {/* Message History */}
-          <div className="history-box">
-            <h3>Message History</h3>
-            {messages.length === 0 ? (
-              <p className="no-history">No previous messages.</p>
-            ) : (
-              messages.map((msg, i) => (
-                <div className="history-item" key={i}>
-                  <div className="h-top">
-                    <span><strong>From:</strong> {msg.sender}</span>
-                    <small>{msg.date}</small>
-                  </div>
-                  <p>{msg.text}</p>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+        )}
       </main>
     </div>
   );

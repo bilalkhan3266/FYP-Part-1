@@ -29,6 +29,8 @@ import ServiceDashboard from "./components/StudentServiceDepartment/ServiceDashb
 
 /* Fee Department */
 import FeeDepartmentDashboard from "./components/FeeDepartment/FeeDepartmentDashboard";
+import FeeEditProfile from "./components/FeeDepartment/FeeEditProfile";
+import FeeMessagePage from "./components/FeeDepartment/MessagePage";
 
 /* Coordination */
 import CoordinationDashboard from "./components/CoordinationOffice/CoordinationDashboard";
@@ -177,6 +179,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["feedepartment"]}>
             <FeeDepartmentDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/fee-edit-profile"
+        element={
+          <ProtectedRoute allowedRoles={["feedepartment"]}>
+            <FeeEditProfile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/fee-messages"
+        element={
+          <ProtectedRoute allowedRoles={["feedepartment"]}>
+            <FeeMessagePage />
           </ProtectedRoute>
         }
       />

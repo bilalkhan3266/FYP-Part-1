@@ -165,7 +165,7 @@ export default function FeeDepartmentDashboard() {
         </div>
 
         <nav className="sd-nav">
-          <button className="sd-nav-btn" onClick={() => navigate("/edit-profile")}>
+          <button className="sd-nav-btn" onClick={() => navigate("/fee-edit-profile")}>
             📝 Edit Profile
           </button>
 
