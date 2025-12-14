@@ -141,6 +141,9 @@ export default function FeeEditProfile() {
       {/* MAIN CONTENT */}
       <main className="edit-form-main">
         <form className="edit-form" onSubmit={handleSubmit}>
+          <div className="form-logo">
+            <img src="/logo192.png" alt="Riphah Monogram" />
+          </div>
           <h1>Edit Profile</h1>
 
           {error && <div className="alert alert-error">{error}</div>}

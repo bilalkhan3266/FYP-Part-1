@@ -134,6 +134,9 @@ export default function CoordinationMessages() {
         {success && <div className="alert alert-success">{success}</div>}
 
         <form onSubmit={handleSubmit} className="edit-form">
+          <div className="form-logo">
+            <img src="/logo192.png" alt="Riphah Monogram" />
+          </div>
           <div className="form-group">
             <label>Student SAP ID *</label>
             <input

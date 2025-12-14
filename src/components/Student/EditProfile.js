@@ -137,6 +137,10 @@ export default function EditProfile() {
         )}
 
         <form className="edit-form" onSubmit={handleSubmit}>
+          <div className="form-logo">
+            <img src="/logo192.png" alt="Riphah Monogram" />
+          </div>
+
           <div className="form-group">
             <label>Full Name *</label>
             <input

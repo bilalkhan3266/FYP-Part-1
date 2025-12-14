@@ -13,6 +13,46 @@
    SIDEBAR
    ============================================ */
 
+.sd-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 15px;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.sd-logo img {
+  width: 45px;
+  height: 45px;
+  object-fit: contain;
+}
+
+/* ============================================
+   FORM LOGO
+   ============================================ */
+
+.form-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 25px;
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.25);
+}
+
+.form-logo img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
 .sd-sidebar {
   width: 240px;
   background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%);

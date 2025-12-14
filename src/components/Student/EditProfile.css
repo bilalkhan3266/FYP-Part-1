@@ -164,6 +164,28 @@
 }
 
 /* ============================================
+   FORM LOGO
+   ============================================ */
+
+.form-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 25px;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
+}
+
+.form-logo img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+/* ============================================
    FORM
    ============================================ */
 
