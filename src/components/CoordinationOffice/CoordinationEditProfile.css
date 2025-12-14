@@ -2,7 +2,7 @@
    EDIT PROFILE PAGE CONTAINER
    ============================================ */
 
-.edit-profile-page {
+.student-dashboard-page {
   display: flex;
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -15,7 +15,7 @@
 
 .sd-sidebar {
   width: 240px;
-  background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+  background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%);
   color: white;
   padding: 25px 15px;
   display: flex;
@@ -39,14 +39,14 @@
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 20px;
   color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
   flex-shrink: 0;
 }
 
@@ -88,9 +88,13 @@
 }
 
 .sd-nav-btn.active {
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
   border-color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.sd-nav-btn.logout:hover {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
 }
 
 .sd-footer {
@@ -105,11 +109,28 @@
    MAIN CONTENT AREA
    ============================================ */
 
-.edit-form-main {
+.sd-main {
   flex: 1;
   margin-left: 240px;
   padding: 40px;
   overflow-y: auto;
+}
+
+.sd-header {
+  margin-bottom: 30px;
+}
+
+.sd-header h1 {
+  margin: 0;
+  font-size: 32px;
+  color: #1f2937;
+  font-weight: 800;
+}
+
+.sd-header p {
+  margin: 8px 0 0 0;
+  color: #6b7280;
+  font-size: 15px;
 }
 
 /* ============================================
@@ -121,23 +142,18 @@
   border-radius: 16px;
   padding: 40px;
   max-width: 600px;
-  margin: 0 auto;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-.edit-form h1 {
-  margin: 0 0 30px 0;
-  font-size: 28px;
-  color: #1f2937;
-  font-weight: 800;
-  text-align: center;
 }
 
 /* ============================================
    FORM GROUPS
    ============================================ */
 
-.edit-form label {
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-group label {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
@@ -147,10 +163,11 @@
   letter-spacing: 0.5px;
 }
 
-.edit-form input {
+.form-group input,
+.form-group textarea,
+.form-group select {
   width: 100%;
   padding: 14px 16px;
-  margin-bottom: 20px;
   border: 2px solid #e5e7eb;
   border-radius: 10px;
   font-size: 15px;
@@ -159,10 +176,22 @@
   box-sizing: border-box;
 }
 
-.edit-form input:focus {
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.form-group input:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
 }
 
 /* ============================================
@@ -203,19 +232,12 @@
 }
 
 /* ============================================
-   FORM BUTTONS
+   SUBMIT BUTTON
    ============================================ */
 
-.form-buttons {
-  display: flex;
-  gap: 12px;
-  margin-top: 30px;
-  justify-content: center;
-}
-
-.save-btn,
-.cancel-btn {
-  padding: 12px 28px;
+.submit-btn {
+  width: 100%;
+  padding: 14px 28px;
   font-size: 15px;
   font-weight: 600;
   border: none;
@@ -224,32 +246,18 @@
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  flex: 1;
-}
-
-.save-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  margin-top: 10px;
 }
 
-.save-btn:hover:not(:disabled) {
+.submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
 }
 
-.cancel-btn {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  color: #374151;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.cancel-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-}
-
-.save-btn:disabled {
+.submit-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
@@ -266,21 +274,12 @@
     height: auto;
   }
 
-  .edit-form-main {
+  .sd-main {
     margin-left: 0;
     padding: 20px;
   }
 
   .edit-form {
     padding: 25px;
-  }
-
-  .form-buttons {
-    flex-direction: column;
-  }
-
-  .save-btn,
-  .cancel-btn {
-    width: 100%;
   }
 }

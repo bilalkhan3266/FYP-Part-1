@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import axios from "axios";
-import "../Student/EditProfile.css";
+import "./CoordinationEditProfile.css";
 
 export default function CoordinationEditProfile() {
   const { user, logout } = useAuthContext();
