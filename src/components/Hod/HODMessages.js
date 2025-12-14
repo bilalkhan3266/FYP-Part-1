@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "../../contexts/AuthContext";
 import axios from "axios";
 import "../Student/EditProfile.css";
 
 export default function HODMessages() {
+  const { user, logout } = useAuthContext();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("hod_user") || "null");
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -79,9 +80,8 @@ export default function HODMessages() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("hod_user");
-    localStorage.removeItem("token");
-    navigate("/");
+    logout();
+    navigate("/login");
   };
 
   const displayName = user?.full_name || "HOD";

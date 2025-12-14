@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "../../contexts/AuthContext";
 import "../Library/LibraryDashboard.css";
 
 export default function HODDashboard() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("hod_user") || "null");
+  const { user, logout } = useAuthContext();
   
   const [activeTab, setActiveTab] = useState("pending");
   const [requests, setRequests] = useState([]);
@@ -14,15 +15,15 @@ export default function HODDashboard() {
   const [success, setSuccess] = useState("");
   const [modal, setModal] = useState({ show: false, type: "", requestId: "", remarks: "" });
 
-  const token = localStorage.getItem("token");
-  const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
+  const axiosConfig = { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } };
+  const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
   const fetchRequests = async () => {
     setLoading(true);
     setError("");
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/hod/${activeTab}-requests`,
+        `${apiUrl}/api/hod/${activeTab}-requests`,
         axiosConfig
       );
       setRequests(response.data.data || []);
@@ -38,10 +39,6 @@ export default function HODDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-
   const handleApprove = async () => {
     if (!modal.remarks.trim()) {
       setError("Remarks are required for approval");
@@ -49,7 +46,7 @@ export default function HODDashboard() {
     }
     try {
       await axios.put(
-        `http://localhost:5000/api/hod/requests/${modal.requestId}/approve`,
+        `${apiUrl}/api/hod/requests/${modal.requestId}/approve`,
         { remarks: modal.remarks },
         axiosConfig
       );
@@ -68,7 +65,7 @@ export default function HODDashboard() {
     }
     try {
       await axios.put(
-        `http://localhost:5000/api/hod/requests/${modal.requestId}/reject`,
+        `${apiUrl}/api/hod/requests/${modal.requestId}/reject`,
         { remarks: modal.remarks },
         axiosConfig
       );
@@ -87,9 +84,8 @@ export default function HODDashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("hod_user");
-    localStorage.removeItem("token");
-    navigate("/");
+    logout();
+    navigate("/login");
   };
 
   return (
