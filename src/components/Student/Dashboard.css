@@ -12,6 +12,45 @@
   --shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
 }
 
+/* ---- ANIMATIONS ---- */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
+  }
+}
+
 /* ---- Reset ---- */
 * {
   box-sizing: border-box;
@@ -477,9 +516,18 @@ body {
   text-align: center;
 }
 
-.btn-refresh:hover {
+.btn-refresh:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.btn-refresh:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-refresh.refreshing {
+  animation: spin 1s linear infinite;
 }
 
 /* ---- Submit New Request Button ---- */
@@ -500,6 +548,19 @@ body {
 .btn-submit:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+}
+
+/* ---- Last Updated Indicator ---- */
+.last-updated {
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+  font-weight: 500;
+  padding: 6px 12px;
+  background: rgba(107, 114, 128, 0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(107, 114, 128, 0.1);
+  animation: slideInDown 0.3s ease-out;
 }
 
 /* ---- CLEARANCE STATUS CARD (PROFESSIONAL) ---- */
@@ -690,6 +751,8 @@ body {
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  min-width: 240px;
+  flex: 1 1 280px;
 }
 
 .sd-card::before {
@@ -706,6 +769,11 @@ body {
 .sd-card.cleared {
   border-left-color: #10b981;
   background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  animation: slideInDown 0.4s ease-out;
+}
+
+.sd-card.cleared:hover {
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .sd-card.pending {
@@ -713,14 +781,21 @@ body {
   background: linear-gradient(135deg, #fffbf0 0%, #fef9e7 100%);
 }
 
+.sd-card.pending:hover {
+  box-shadow: 0 12px 32px rgba(245, 158, 11, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
 .sd-card.rejected {
   border-left-color: #ef4444;
   background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
 }
 
+.sd-card.rejected:hover {
+  box-shadow: 0 12px 32px rgba(239, 68, 68, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
 .sd-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
   border-left-color: #8b5cf6;
 }
 
@@ -757,29 +832,38 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
 }
 
 .indicator.cleared {
   background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
   color: #065f46;
   border: 1px solid #86efac;
+  animation: slideInDown 0.5s ease-out 0.1s backwards;
+}
+
+.indicator.cleared:hover {
+  animation: glow 2s ease-in-out infinite;
 }
 
 .indicator.pending {
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
   color: #78350f;
   border: 1px solid #fcd34d;
+  animation: slideInDown 0.5s ease-out 0.2s backwards;
 }
 
 .indicator.rejected {
   background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
   color: #7f1d1d;
   border: 1px solid #fca5a5;
+  animation: slideInDown 0.5s ease-out 0.3s backwards;
 }
 
 .indicator.na {
   background: #f3f4f6;
   color: #6b7280;
+  border: 1px solid #d1d5db;
 }
 
 .sd-card-remarks {

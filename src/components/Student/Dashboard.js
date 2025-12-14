@@ -12,6 +12,8 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // ====== STUDENT INFO ======
   const displayName = user?.full_name || "Student";
@@ -25,11 +27,14 @@ export default function StudentDashboard() {
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
       console.log('🔄 Fetching clearance status...');
+      setIsRefreshing(true);
+      
       const response = await axios.get(apiUrl + "/api/clearance-status", {
         headers: {
           Authorization: "Bearer " + token,
           "Content-Type": "application/json",
         },
+        timeout: 8000, // 8 second timeout
       });
 
       if (response.data.success && Array.isArray(response.data.data)) {
@@ -63,7 +68,9 @@ export default function StudentDashboard() {
 
         console.log('📋 Departments:', deptList.map(d => `${d.label}: ${d.status}`).join(', '));
         setDepartments(deptList);
+        setLastUpdated(new Date()); // Update timestamp
         setError("");
+        setLoading(false);
       } else {
         console.warn("No clearance status data received");
         setError("");
@@ -71,8 +78,9 @@ export default function StudentDashboard() {
     } catch (err) {
       console.error("❌ Fetch Clearance Status Error:", err);
       setError(err.response?.data?.message || "Failed to load clearance status");
-    } finally {
       setLoading(false);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -116,9 +124,21 @@ export default function StudentDashboard() {
       fetchUnreadCount();
     }, 5000);
 
+    // Detect when tab comes into focus - refresh immediately
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log("📲 Tab focused - refreshing clearance status...");
+        fetchClearanceStatus();
+        fetchUnreadCount();
+      }
+    };
+    
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       clearInterval(statusInterval);
       clearInterval(unreadInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
@@ -152,7 +172,11 @@ export default function StudentDashboard() {
     navigate("/login");
   };
 
-  const handleRefresh = () => alert("Refreshing clearance status (demo)");
+  const handleRefresh = () => {
+    console.log("🔄 Manual refresh triggered");
+    fetchClearanceStatus();
+    fetchUnreadCount();
+  };
 
   // Progress Circle Color
   const getProgressColor = (percentage) => {
@@ -216,10 +240,19 @@ export default function StudentDashboard() {
           </div>
 
           <div className="sd-header-actions">
-            <button className="btn-refresh" onClick={handleRefresh}>🔄 Refresh</button>
+            <button 
+              className={`btn-refresh ${isRefreshing ? 'refreshing' : ''}`} 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? '⟳ Updating...' : '🔄 Refresh'}
+            </button>
             <button className="btn-submit" onClick={() => navigate("/student-clearance-request")}>
               Submit New Request
             </button>
+            <span className="last-updated">
+              Last updated: {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
           </div>
         </header>
 
