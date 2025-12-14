@@ -124,11 +124,14 @@ export default function StudentDashboard() {
 
   // ====== PROGRESS CALC ======
   const progress = useMemo(() => {
+    if (departments.length === 0) return 0;
     const total = departments.length;
     const done = departments.filter(
-      (d) => d.status === "Cleared" || d.status === "Not Applicable"
+      (d) => d.status === "Cleared" || d.status === "Approved" || d.status === "Not Applicable"
     ).length;
-    return Math.round((done / total) * 100);
+    const calculatedProgress = Math.round((done / total) * 100);
+    console.log(`📊 Progress: ${done}/${total} departments = ${calculatedProgress}%`);
+    return calculatedProgress;
   }, [departments]);
 
   const allCleared = progress === 100;
