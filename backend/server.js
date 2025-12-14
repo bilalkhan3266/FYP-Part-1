@@ -818,66 +818,6 @@ app.get('/api/profile', verifyToken, async (req, res) => {
 });
 
 // Update Profile
-app.put('/api/update-profile', verifyToken, async (req, res) => {
-  try {
-    const { full_name, email, sap, department, password } = req.body;
-
-    if (!full_name || !email) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Full name and email are required' 
-      });
-    }
-
-    // Check if email exists for another user
-    const existingUser = await User.findOne({ email, _id: { $ne: req.user.id } });
-
-    if (existingUser) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Email already in use' 
-      });
-    }
-
-    // Update user
-    const updateData = {
-      full_name,
-      email,
-      sap,
-      department,
-      updatedAt: Date.now()
-    };
-
-    if (password) {
-      if (password.length < 6) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Password must be at least 6 characters' 
-        });
-      }
-      updateData.password = await bcrypt.hash(password, 10);
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
-      updateData,
-      { new: true }
-    ).select('-password');
-
-    res.json({
-      success: true,
-      message: 'Profile updated successfully',
-      user: updatedUser
-    });
-  } catch (err) {
-    console.error('Update Profile Error:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to update profile' 
-    });
-  }
-});
-
 // --------------------
 // MESSAGE ROUTES (Two-way conversation)
 // --------------------
