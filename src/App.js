@@ -20,6 +20,8 @@ import LibraryEditProfile from "./components/Library/LibraryEditProfile";
 
 /* Transport */
 import TransportDashboard from "./components/Transport/TransportDashboard";
+import TransportEditProfile from "./components/Transport/TransportEditProfile";
+import TransportMessages from "./components/Transport/TransportMessages";
 
 /* Laboratory */
 import LaboratoryDashboard from "./components/labortary/LaboratoryDashboard";
@@ -149,6 +151,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["transport"]}>
             <TransportDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/transport-edit-profile"
+        element={
+          <ProtectedRoute allowedRoles={["transport"]}>
+            <TransportEditProfile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/transport-messages"
+        element={
+          <ProtectedRoute allowedRoles={["transport"]}>
+            <TransportMessages />
           </ProtectedRoute>
         }
       />
