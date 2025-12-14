@@ -100,11 +100,16 @@ export default function Messages() {
     };
 
     console.log('📤 Sending message:', messageData);
+    console.log('📤 Full payload:', JSON.stringify(messageData));
 
     setSending(true);
+    setError("");
     try {
       const token = localStorage.getItem("token");
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      console.log('🔗 API URL:', apiUrl);
+      console.log('🔐 Token present:', !!token);
 
       if (!token) {
         setError("❌ No authentication token found. Please login again.");
@@ -112,11 +117,20 @@ export default function Messages() {
         return;
       }
 
+      console.log('📨 Posting to:', apiUrl + "/api/send");
+
       const response = await axios.post(
         apiUrl + "/api/send",
         messageData,
-        { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } }
+        { 
+          headers: { 
+            Authorization: "Bearer " + token, 
+            "Content-Type": "application/json" 
+          } 
+        }
       );
+
+      console.log('✅ Response received:', response.data);
 
       if (response.data.success) {
         // Reset form
@@ -131,14 +145,21 @@ export default function Messages() {
         await fetchMessages();
         setTimeout(() => setSuccess(""), 3000);
       } else {
-        setError(response.data.message || "❌ Failed to send message");
+        const errorMsg = response.data.message || "❌ Failed to send message";
+        console.log('❌ Server error:', errorMsg);
+        setError(errorMsg);
       }
     } catch (err) {
-      console.error("Send Message Error:", err);
+      console.error("❌ Send Message Error:", err);
+      console.error('❌ Error response:', err.response?.data);
+      console.error('❌ Error status:', err.response?.status);
+      
       if (err.response?.data?.message) {
         setError("❌ " + err.response.data.message);
+      } else if (err.message) {
+        setError("❌ " + err.message);
       } else {
-        setError("❌ Failed to send message");
+        setError("❌ Failed to send message. Please try again.");
       }
     } finally {
       setSending(false);
@@ -226,7 +247,7 @@ export default function Messages() {
                 </div>
 
                 <div style={{ fontSize: "14px", color: "#666", marginBottom: "8px" }}>
-                  <strong>From:</strong> {msg.senderName} ({msg.senderRole})
+                  <strong>From:</strong> {msg.sender_name || msg.senderName} ({msg.sender_role || msg.senderRole})
                 </div>
 
                 <div style={{ fontSize: "14px", marginBottom: "8px" }}>{msg.message}</div>

@@ -872,12 +872,17 @@ app.post('/api/send', verifyToken, async (req, res) => {
     const { recipientDepartment, subject, message } = req.body;
 
     console.log('📨 Send Message via /api/send:');
+    console.log('  - Sender:', senderName, '(' + senderSapid + ')');
     console.log('  - Department:', recipientDepartment);
     console.log('  - Subject:', subject);
-    console.log('  - From:', senderName, '(' + senderSapid + ')');
+    console.log('  - Full body:', JSON.stringify(req.body));
 
     // Validation
     if (!recipientDepartment || !subject || !message) {
+      console.log('❌ Validation failed');
+      console.log('  - recipientDepartment:', recipientDepartment);
+      console.log('  - subject:', subject);
+      console.log('  - message:', message);
       return res.status(400).json({
         success: false,
         message: '❌ Department, subject, and message are required'
@@ -887,9 +892,9 @@ app.post('/api/send', verifyToken, async (req, res) => {
     // Create unique conversation ID
     const conversation_id = `${senderSapid}-${recipientDepartment}-${Date.now()}`;
 
-    // Create new message
-    const newMessage = new Message({
-      conversation_id,
+    // Create new message object with all required fields
+    const messageObj = {
+      conversation_id: conversation_id,
       sender_id: senderId,
       sender_name: senderName,
       sender_role: senderRole,
@@ -901,24 +906,35 @@ app.post('/api/send', verifyToken, async (req, res) => {
       message: message.trim(),
       message_type: 'question',
       is_read: false,
-      createdAt: new Date()
-    });
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
 
-    await newMessage.save();
+    console.log('💾 Creating message object:', messageObj);
 
-    console.log(`✅ Message saved to ${recipientDepartment}`);
+    const newMessage = new Message(messageObj);
+
+    console.log('💾 Saving message to database...');
+    const savedMessage = await newMessage.save();
+
+    console.log(`✅ Message saved successfully - ID: ${savedMessage._id}`);
 
     res.status(201).json({
       success: true,
       message: `✅ Message sent to ${recipientDepartment}`,
-      messageId: newMessage._id,
-      conversation_id
+      messageId: savedMessage._id,
+      conversation_id: savedMessage.conversation_id
     });
   } catch (err) {
-    console.error('Send Message Error (/api/send):', err);
+    console.error('❌ Send Message Error (/api/send):', err);
+    console.error('❌ Error details:', {
+      name: err.name,
+      message: err.message,
+      stack: err.stack
+    });
     res.status(500).json({
       success: false,
-      message: '❌ Failed to send message'
+      message: '❌ Failed to send message: ' + err.message
     });
   }
 });
