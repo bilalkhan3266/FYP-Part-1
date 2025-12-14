@@ -861,6 +861,68 @@ app.put('/api/update-profile', verifyToken, async (req, res) => {
 // --------------------
 // MESSAGE ROUTES (Two-way conversation)
 // --------------------
+// ========== SEND MESSAGE (POST /api/send) ==========
+// Alias for /api/send-message - students send to departments
+app.post('/api/send', verifyToken, async (req, res) => {
+  try {
+    const senderId = req.user.id;
+    const senderName = req.user.full_name;
+    const senderRole = req.user.role;
+    const senderSapid = req.user.sap;
+    const { recipientDepartment, subject, message } = req.body;
+
+    console.log('📨 Send Message via /api/send:');
+    console.log('  - Department:', recipientDepartment);
+    console.log('  - Subject:', subject);
+    console.log('  - From:', senderName, '(' + senderSapid + ')');
+
+    // Validation
+    if (!recipientDepartment || !subject || !message) {
+      return res.status(400).json({
+        success: false,
+        message: '❌ Department, subject, and message are required'
+      });
+    }
+
+    // Create unique conversation ID
+    const conversation_id = `${senderSapid}-${recipientDepartment}-${Date.now()}`;
+
+    // Create new message
+    const newMessage = new Message({
+      conversation_id,
+      sender_id: senderId,
+      sender_name: senderName,
+      sender_role: senderRole,
+      sender_sapid: senderSapid,
+      recipient_sapid: senderSapid,
+      recipient_id: senderId,
+      recipient_department: recipientDepartment,
+      subject: subject.trim(),
+      message: message.trim(),
+      message_type: 'question',
+      is_read: false,
+      createdAt: new Date()
+    });
+
+    await newMessage.save();
+
+    console.log(`✅ Message saved to ${recipientDepartment}`);
+
+    res.status(201).json({
+      success: true,
+      message: `✅ Message sent to ${recipientDepartment}`,
+      messageId: newMessage._id,
+      conversation_id
+    });
+  } catch (err) {
+    console.error('Send Message Error (/api/send):', err);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to send message'
+    });
+  }
+});
+
 // Send initial message to department OR library to student
 app.post('/api/send-message', verifyToken, async (req, res) => {
   try {
@@ -1188,6 +1250,36 @@ app.get('/api/conversations/:conversation_id', verifyToken, async (req, res) => 
 });
 
 // Get unread message count
+// ========== GET ALL MESSAGES FOR STUDENT ==========
+app.get('/api/my-messages', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    let query = {};
+    if (userRole === 'student') {
+      query = { recipient_id: userId };
+    } else if (userRole === 'library') {
+      query = { recipient_department: 'Library' };
+    } else {
+      query = { recipient_department: req.user.department };
+    }
+
+    const messages = await Message.find(query).sort({ createdAt: -1 }).limit(100);
+
+    res.status(200).json({
+      success: true,
+      data: messages
+    });
+  } catch (err) {
+    console.error('My Messages Error:', err);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to fetch messages'
+    });
+  }
+});
+
 app.get('/api/unread-count', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;

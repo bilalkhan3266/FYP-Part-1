@@ -95,16 +95,17 @@ export default function StudentDashboard() {
     fetchClearanceStatus();
     fetchUnreadCount();
     
-    // Refresh clearance status every 5 seconds
+    // Refresh clearance status every 3 seconds (faster updates when departments approve)
     const statusInterval = setInterval(() => {
       console.log("🔄 Auto-refreshing clearance status...");
       fetchClearanceStatus();
-    }, 5000);
+    }, 3000);
 
-    // Refresh unread count every 30 seconds
+    // Refresh unread count every 5 seconds
     const unreadInterval = setInterval(() => {
+      console.log("🔄 Auto-refreshing unread count...");
       fetchUnreadCount();
-    }, 30000);
+    }, 5000);
 
     return () => {
       clearInterval(statusInterval);
@@ -237,6 +238,40 @@ export default function StudentDashboard() {
 
         {!loading && departments.length > 0 && (
         <section className="sd-overview">
+          {/* CLEARANCE STATUS CARD */}
+          <div className="sd-status-card">
+            <div className="status-header">
+              <h3>📊 Overall Clearance Status</h3>
+              <span className={`status-badge ${allCleared ? 'cleared' : 'pending'}`}>
+                {allCleared ? '✅ CLEARED' : '⏳ IN PROGRESS'}
+              </span>
+            </div>
+            
+            <div className="status-content">
+              <div className="status-info">
+                <p><strong>Progress:</strong> {departments.filter(d => d.status === "Cleared" || d.status === "Not Applicable").length} of {departments.length} departments cleared</p>
+                <p><strong>Status:</strong> {allCleared ? 'All departments have cleared your clearance request' : 'Some departments are still reviewing your request'}</p>
+              </div>
+
+              {/* LINEAR PROGRESS BAR */}
+              <div className="progress-bar-container">
+                <div className="progress-bar-label">
+                  <span>Clearance Progress</span>
+                  <span className="progress-percentage">{progress}%</span>
+                </div>
+                <div className="progress-bar-bg">
+                  <div 
+                    className="progress-bar-fill" 
+                    style={{ 
+                      width: `${progress}%`,
+                      backgroundColor: getProgressColor(progress)
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="sd-progress-card">
             <div className="sd-progress-circle">
               <svg viewBox="0 0 120 120">
@@ -283,26 +318,38 @@ export default function StudentDashboard() {
         {/* DEPARTMENT CARDS */}
         {departments.length > 0 && (
         <section className="sd-cards">
-          {departments.map((d) => (
-            <article key={d.key} className="sd-card">
-              <div className="sd-card-head">
-                <h4>{d.label}</h4>
-                <span className={statusClass(d.status)}>{d.status}</span>
-              </div>
+          <h3 style={{ marginBottom: "20px", color: "#333" }}>📋 Department Clearance Status</h3>
+          <div className="sd-cards-grid">
+            {departments.map((d) => (
+              <article key={d.key} className={`sd-card ${d.status.toLowerCase()}`}>
+                <div className="sd-card-head">
+                  <h4>{d.label}</h4>
+                  <span className={statusClass(d.status)}>{d.status}</span>
+                </div>
 
-              <p className="sd-card-remarks">
-                {d.remarks || (d.status === "Cleared"
-                  ? "No outstanding issues"
-                  : "Please resolve pending items")}
-              </p>
+                <div className="sd-card-status-indicator">
+                  {d.status === "Cleared" && <div className="indicator cleared">✓ Cleared</div>}
+                  {d.status === "Pending" && <div className="indicator pending">⏳ Pending</div>}
+                  {d.status === "Rejected" && <div className="indicator rejected">✗ Rejected</div>}
+                  {d.status === "Not Applicable" && <div className="indicator na">— N/A</div>}
+                </div>
 
-              <div className="sd-card-actions">
-                <button className="btn-message" onClick={() => handleMessageDept(d.key)}>
-                  💬 Message Dept
-                </button>
-              </div>
-            </article>
-          ))}
+                <p className="sd-card-remarks">
+                  {d.remarks || (d.status === "Cleared"
+                    ? "No outstanding issues"
+                    : d.status === "Pending"
+                    ? "Your request is being reviewed"
+                    : "Please contact the department")}
+                </p>
+
+                <div className="sd-card-actions">
+                  <button className="btn-message" onClick={() => handleMessageDept(d.key)}>
+                    💬 Message Dept
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
         )}
 
