@@ -11,12 +11,27 @@ export default function ClearanceStatus() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
 
   useEffect(() => {
     fetchClearanceStatus();
-    // Refresh every 5 seconds
-    const interval = setInterval(fetchClearanceStatus, 5000);
-    return () => clearInterval(interval);
+    // Refresh every 3 seconds (faster real-time updates)
+    const interval = setInterval(fetchClearanceStatus, 3000);
+    
+    // Detect when tab comes into focus - refresh immediately
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log("📲 Tab focused - refreshing clearance status...");
+        fetchClearanceStatus();
+      }
+    };
+    
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   const fetchClearanceStatus = async () => {
@@ -24,15 +39,20 @@ export default function ClearanceStatus() {
       const token = localStorage.getItem("token");
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
+      console.log('🔄 Fetching clearance status...');
       const response = await axios.get(apiUrl + "/api/clearance-status", {
         headers: {
           Authorization: "Bearer " + token,
           "Content-Type": "application/json",
         },
+        timeout: 8000,
       });
 
       if (response.data.success) {
+        console.log('✅ Clearance status received:', response.data.data.length, 'departments');
+        console.log('📋 Statuses:', response.data.data.map(s => `${s.department_name}: ${s.status}`).join(', '));
         setStatuses(response.data.data || []);
+        setLastUpdated(new Date());
         setError("");
       } else {
         setError("❌ Failed to load clearance status");
@@ -89,15 +109,18 @@ export default function ClearanceStatus() {
     }
   };
 
-  const departments = [
-    "Library",
-    "Transport",
-    "Laboratory",
-    "Student Service",
-    "Fee Department",
-    "Coordination",
-    "HOD",
-  ];
+  const deptMap = {
+    "Library": { key: "library", label: "Library" },
+    "Fee Department": { key: "fee", label: "Fee & Dues" },
+    "Transport": { key: "transport", label: "Transport" },
+    "Laboratory": { key: "laboratory", label: "Laboratory (if required)" },
+    "Student Service": { key: "studentServices", label: "Student Services" },
+    "Coordination": { key: "coordination", label: "Coordination Office" },
+    "HOD": { key: "hod", label: "HOD Office" },
+    "Hostel": { key: "hostel", label: "Hostel Mess" }
+  };
+
+  const departments = Object.keys(deptMap);
 
   if (loading) {
     return (
@@ -170,13 +193,18 @@ export default function ClearanceStatus() {
 
         {error && <div className="alert alert-error">{error}</div>}
 
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="refresh-btn"
-        >
-          {refreshing ? "🔄 Refreshing..." : "🔄 Refresh Status"}
-        </button>
+        <div className="header-controls">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className={`refresh-btn ${refreshing ? 'refreshing' : ''}`}
+          >
+            {refreshing ? "⟳ Updating..." : "🔄 Refresh"}
+          </button>
+          <span className="last-updated">
+            Last updated: {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          </span>
+        </div>
 
         {statuses.length === 0 ? (
           <div className="no-data">
@@ -192,7 +220,7 @@ export default function ClearanceStatus() {
           <div className="status-grid">
             {departments.map((dept) => {
               const deptStatus = statuses.find(
-                (s) => s.department === dept
+                (s) => s.department_name === dept
               );
 
               return (
@@ -255,7 +283,7 @@ export default function ClearanceStatus() {
               <strong>❌ Rejected:</strong> Department has rejected your request
             </li>
           </ul>
-          <p>Status updates automatically every 5 seconds.</p>
+          <p>Status updates automatically every 3 seconds. Updates immediately when you switch to this tab.</p>
         </div>
       </main>
     </div>
