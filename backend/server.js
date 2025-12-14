@@ -1291,17 +1291,29 @@ app.get('/api/my-messages', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const userRole = req.user.role;
+    const userDept = req.user.department;
 
     let query = {};
+    
     if (userRole === 'student') {
-      query = { recipient_id: userId };
+      // Students see both messages they sent AND received
+      query = {
+        $or: [
+          { sender_id: userId },        // Messages they sent
+          { recipient_id: userId }       // Messages they received
+        ]
+      };
     } else if (userRole === 'library') {
+      // Library staff see messages for Library department
       query = { recipient_department: 'Library' };
     } else {
-      query = { recipient_department: req.user.department };
+      // Other staff see messages for their department
+      query = { recipient_department: userDept };
     }
 
+    console.log('📨 Fetching messages for:', userRole, '- User ID:', userId);
     const messages = await Message.find(query).sort({ createdAt: -1 }).limit(100);
+    console.log(`✅ Found ${messages.length} messages`);
 
     res.status(200).json({
       success: true,

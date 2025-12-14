@@ -205,101 +205,124 @@ export default function Messages() {
 
       <main className="sd-main">
         <header className="sd-header">
-          <h1>💬 My Messages</h1>
-          <p>Communication with departments</p>
+          <div>
+            <h1>💬 My Messages</h1>
+            <p>Chat with departments about your clearance requests</p>
+          </div>
+          <button
+            className="btn-new-message"
+            onClick={() => setShowNewMessageForm(true)}
+          >
+            ✉️ Compose New Message
+          </button>
         </header>
 
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
 
-        <button
-          className="sd-nav-btn"
-          onClick={() => setShowNewMessageForm(true)}
-          style={{ marginBottom: "20px", backgroundColor: "#4CAF50", color: "white" }}
-        >
-          ✉️ Send New Message
-        </button>
-
         {loading ? (
-          <div className="loading">⏳ Loading messages...</div>
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>⏳ Loading messages...</p>
+          </div>
         ) : messages.length === 0 ? (
-          <div className="no-data" style={{ textAlign: "center", padding: "40px", color: "#666" }}>
-            📭 No messages yet
+          <div className="empty-state">
+            <div className="empty-icon">📭</div>
+            <h2>No messages yet</h2>
+            <p>Start a conversation with a department about your clearance</p>
+            <button
+              className="btn-new-message"
+              onClick={() => setShowNewMessageForm(true)}
+            >
+              ✉️ Send First Message
+            </button>
           </div>
         ) : (
-          <div className="messages-list" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {messages.map((msg) => (
-              <div
-                key={msg._id}
-                className="message-card"
-                style={{
-                  padding: "15px",
-                  border: "1px solid #ddd",
-                  borderRadius: "8px",
-                  backgroundColor: msg.is_read ? "#f9f9f9" : "#e3f2fd"
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <h3 style={{ margin: "0 0 8px 0" }}>{msg.subject}</h3>
-                  <span style={{ fontSize: "12px", color: "#999" }}>
-                    {new Date(msg.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
+          <div className="messages-container">
+            <div className="messages-header">
+              <span>{messages.length} message{messages.length !== 1 ? 's' : ''}</span>
+              <span className="unread-count">
+                {messages.filter(m => !m.is_read).length} unread
+              </span>
+            </div>
+            
+            <div className="messages-list">
+              {messages.map((msg) => {
+                const isSent = msg.sender_id === user?.id;
+                return (
+                  <div
+                    key={msg._id}
+                    className={`message-card ${isSent ? 'sent' : 'received'} ${msg.is_read ? 'read' : 'unread'}`}
+                  >
+                    <div className="message-header">
+                      <div className="message-sender">
+                        <div className="sender-avatar">
+                          {(msg.sender_name || msg.senderName)?.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <h4>{msg.subject}</h4>
+                          <span className="sender-info">
+                            {isSent ? '📤 Sent to ' : '📥 From '} 
+                            {msg.recipient_department || 'Department'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="message-meta">
+                        <span className="time">
+                          {new Date(msg.createdAt).toLocaleDateString([], { 
+                            month: 'short', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                        <span className={`status-badge ${msg.is_read ? 'read' : 'unread'}`}>
+                          {msg.is_read ? '✓ Read' : '● Unread'}
+                        </span>
+                      </div>
+                    </div>
 
-                <div style={{ fontSize: "14px", color: "#666", marginBottom: "8px" }}>
-                  <strong>From:</strong> {msg.sender_name || msg.senderName} ({msg.sender_role || msg.senderRole})
-                </div>
+                    <div className="message-body">
+                      <p>{msg.message}</p>
+                    </div>
 
-                <div style={{ fontSize: "14px", marginBottom: "8px" }}>{msg.message}</div>
-
-                <div style={{ fontSize: "12px", color: msg.is_read ? "#999" : "#2196F3" }}>
-                  {msg.is_read ? "✓ Read" : "● Unread"}
-                </div>
-              </div>
-            ))}
+                    {msg.remarks && (
+                      <div className="message-remarks">
+                        <strong>💬 Remarks:</strong> {msg.remarks}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
         {showNewMessageForm && (
-          <div
-            className="modal-overlay"
-            onClick={() => setShowNewMessageForm(false)}
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0,0,0,0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 1000
-            }}
-          >
-            <div
-              className="modal-content"
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                backgroundColor: "white",
-                padding: "30px",
-                borderRadius: "12px",
-                maxWidth: "500px",
-                width: "90%"
-              }}
-            >
-              <h2 style={{ marginTop: 0 }}>✉️ Send Message</h2>
+          <div className="modal-overlay" onClick={() => setShowNewMessageForm(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>✉️ Compose Message</h2>
+                <button 
+                  className="modal-close" 
+                  onClick={() => setShowNewMessageForm(false)}
+                >
+                  ✕
+                </button>
+              </div>
 
-              <form onSubmit={(e) => { e.preventDefault(); handleSendNewMessage(); }} className="edit-form">
+              <form onSubmit={(e) => { e.preventDefault(); handleSendNewMessage(); }}>
                 <div className="form-group">
-                  <label>Department *</label>
+                  <label htmlFor="dept">📍 Select Department *</label>
                   <select
+                    id="dept"
                     value={newMessage.recipientDepartment}
                     onChange={(e) =>
                       setNewMessage({ ...newMessage, recipientDepartment: e.target.value })
                     }
                     required
                   >
+                    <option value="">-- Choose a department --</option>
                     {departments.map((dept) => (
                       <option key={dept} value={dept}>
                         {dept}
@@ -309,46 +332,48 @@ export default function Messages() {
                 </div>
 
                 <div className="form-group">
-                  <label>Subject *</label>
+                  <label htmlFor="subject">📝 Subject *</label>
                   <input
+                    id="subject"
                     type="text"
                     value={newMessage.subject}
                     onChange={(e) =>
                       setNewMessage({ ...newMessage, subject: e.target.value })
                     }
-                    placeholder="Enter subject"
+                    placeholder="Brief subject of your message"
                     required
                   />
                 </div>
 
                 <div className="form-group">
-                  <label>Message *</label>
+                  <label htmlFor="message">💬 Message *</label>
                   <textarea
+                    id="message"
                     value={newMessage.message}
                     onChange={(e) =>
                       setNewMessage({ ...newMessage, message: e.target.value })
                     }
-                    placeholder="Enter your message"
+                    placeholder="Type your message here..."
                     required
                     rows="6"
                   />
+                  <span className="char-count">{newMessage.message.length} characters</span>
                 </div>
 
-                <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <div className="modal-actions">
                   <button
                     type="button"
-                    className="sd-nav-btn"
+                    className="btn-cancel"
                     onClick={() => setShowNewMessageForm(false)}
-                    style={{ backgroundColor: "#f44336" }}
                   >
                     ✕ Cancel
                   </button>
                   <button
                     type="submit"
-                    className="submit-btn"
+                    className="btn-send"
                     disabled={sending}
                   >
-                    {sending ? "Sending..." : "✉️ Send"}
+                    {sending ? '⟳ Sending...' : '✉️ Send Message'}
                   </button>
                 </div>
               </form>
