@@ -43,6 +43,8 @@ import CoordinationEditProfile from "./components/CoordinationOffice/Coordinatio
 
 /* HOD */
 import HODDashboard from "./components/Hod/HODDashboard";
+import HODEditProfile from "./components/Hod/HODEditProfile";
+import HODMessages from "./components/Hod/HODMessages";
 
 /* Student Pages */
 import ClearanceRequest from "./components/Student/ClearanceRequest";
@@ -275,6 +277,24 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["hod"]}>
             <HODDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/hod-edit-profile"
+        element={
+          <ProtectedRoute allowedRoles={["hod"]}>
+            <HODEditProfile />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/hod-messages"
+        element={
+          <ProtectedRoute allowedRoles={["hod"]}>
+            <HODMessages />
           </ProtectedRoute>
         }
       />

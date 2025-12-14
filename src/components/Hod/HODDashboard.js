@@ -123,6 +123,18 @@ export default function HODDashboard() {
           >
             ❌ Rejected Requests
           </button>
+          <button
+            className="sd-nav-btn"
+            onClick={() => navigate("/hod-messages")}
+          >
+            💬 Messages
+          </button>
+          <button
+            className="sd-nav-btn"
+            onClick={() => navigate("/hod-edit-profile")}
+          >
+            📝 Edit Profile
+          </button>
         </nav>
 
         <button className="sd-nav-btn logout" onClick={handleLogout}>
