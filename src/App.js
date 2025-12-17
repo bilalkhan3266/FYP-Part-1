@@ -42,9 +42,12 @@ import CoordinationMessages from "./components/CoordinationOffice/CoordinationMe
 import CoordinationEditProfile from "./components/CoordinationOffice/CoordinationEditProfile";
 
 /* Admin Panel */
-import AdminDashboard from "./components/Hod/AdminDashboard";
-import AdminEditProfile from "./components/Hod/AdminEditProfile";
-import AdminMessages from "./components/Hod/AdminMessages";
+import AdminDashboard from "./components/Admin/AdminDashboard";
+import AdminEditProfile from "./components/Admin/AdminEditProfile";
+import AdminMessages from "./components/Admin/AdminMessages";
+import HODDashboard from "./components/Hod/HODDashboard";
+import HODEditProfile from "./components/Hod/HODEditProfile";
+import HODMessages from "./components/Hod/HODMessages";
 
 /* Student Pages */
 import ClearanceRequest from "./components/Student/ClearanceRequest";
@@ -79,8 +82,10 @@ function getDashboardPath() {
       return "fee-dashboard";
     case "coordination":
       return "coordination-dashboard";
-    case "hod":
+    case "admin":
       return "admin-dashboard";
+    case "hod":
+      return "hod-dashboard";
     default:
       return "login";
   }
@@ -271,11 +276,11 @@ function AppRoutes() {
         }
       />
 
-      {/* Protected Routes - Admin Panel */}
+      {/* Protected Routes - Admin Panel (System Administrator) */}
       <Route
         path="/admin-dashboard"
         element={
-          <ProtectedRoute allowedRoles={["hod"]}>
+          <ProtectedRoute allowedRoles={["admin"]}>
             <AdminDashboard />
           </ProtectedRoute>
         }
@@ -284,7 +289,7 @@ function AppRoutes() {
       <Route
         path="/admin-edit-profile"
         element={
-          <ProtectedRoute allowedRoles={["hod"]}>
+          <ProtectedRoute allowedRoles={["admin"]}>
             <AdminEditProfile />
           </ProtectedRoute>
         }
@@ -293,18 +298,18 @@ function AppRoutes() {
       <Route
         path="/admin-messages"
         element={
-          <ProtectedRoute allowedRoles={["hod"]}>
+          <ProtectedRoute allowedRoles={["admin"]}>
             <AdminMessages />
           </ProtectedRoute>
         }
       />
 
-      {/* Legacy HOD routes - redirect to admin panel */}
+      {/* Protected Routes - HOD Dashboard (Department Head) */}
       <Route
         path="/hod-dashboard"
         element={
           <ProtectedRoute allowedRoles={["hod"]}>
-            <AdminDashboard />
+            <HODDashboard />
           </ProtectedRoute>
         }
       />
@@ -313,7 +318,7 @@ function AppRoutes() {
         path="/hod-edit-profile"
         element={
           <ProtectedRoute allowedRoles={["hod"]}>
-            <AdminEditProfile />
+            <HODEditProfile />
           </ProtectedRoute>
         }
       />
@@ -322,7 +327,7 @@ function AppRoutes() {
         path="/hod-messages"
         element={
           <ProtectedRoute allowedRoles={["hod"]}>
-            <AdminMessages />
+            <HODMessages />
           </ProtectedRoute>
         }
       />

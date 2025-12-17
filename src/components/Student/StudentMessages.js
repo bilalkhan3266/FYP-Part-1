@@ -235,7 +235,7 @@ export default function StudentMessages() {
                 </div>
 
                 <div style={{ fontSize: "14px", color: "#666", marginBottom: "8px" }}>
-                  <strong>From:</strong> {msg.senderName} ({msg.senderRole})
+                  <strong>From:</strong> {msg.senderName} ({msg.recipient_department || msg.senderRole})
                 </div>
 
                 <div style={{ fontSize: "14px", lineHeight: "1.5", marginBottom: "8px" }}>

@@ -487,6 +487,33 @@ body {
   animation: spin 1s linear infinite;
 }
 
+.resubmit-btn {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+  color: white;
+  border: none;
+  padding: 11px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.25s ease;
+  flex: 1 1 auto;
+}
+
+.resubmit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.resubmit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.resubmit-btn.resubmitting {
+  animation: spin 1s linear infinite;
+}
+
 /* ---- Last Updated Indicator ---- */
 .last-updated {
   font-size: 12px;

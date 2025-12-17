@@ -10,8 +10,10 @@ export default function ClearanceStatus() {
   const [statuses, setStatuses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [resubmitting, setResubmitting] = useState(false);
 
   useEffect(() => {
     fetchClearanceStatus();
@@ -74,6 +76,49 @@ export default function ClearanceStatus() {
     await fetchClearanceStatus();
   };
 
+  const handleResubmit = async () => {
+    try {
+      setResubmitting(true);
+      setError("");
+      setSuccess("");
+
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      console.log('🔄 Resubmitting clearance request...');
+      const response = await axios.post(
+        apiUrl + "/api/clearance-requests/resubmit",
+        {},
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setSuccess(`✅ ${response.data.message}`);
+        console.log('✅ Resubmit successful:', response.data.details);
+        
+        // Refresh the status after 1 second
+        setTimeout(() => {
+          fetchClearanceStatus();
+        }, 1000);
+      } else {
+        setError("❌ " + (response.data.message || "Failed to resubmit"));
+      }
+    } catch (err) {
+      console.error("Resubmit Error:", err);
+      setError(
+        err.response?.data?.message ||
+          "❌ Failed to resubmit clearance request"
+      );
+    } finally {
+      setResubmitting(false);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -121,6 +166,9 @@ export default function ClearanceStatus() {
   };
 
   const departments = Object.keys(deptMap);
+
+  // Check if any requests are rejected
+  const hasRejected = statuses.some(s => s.status === 'Rejected');
 
   if (loading) {
     return (
@@ -192,6 +240,7 @@ export default function ClearanceStatus() {
         </header>
 
         {error && <div className="alert alert-error">{error}</div>}
+        {success && <div className="alert alert-success">{success}</div>}
 
         <div className="header-controls">
           <button
@@ -201,6 +250,15 @@ export default function ClearanceStatus() {
           >
             {refreshing ? "⟳ Updating..." : "🔄 Refresh"}
           </button>
+          {hasRejected && (
+            <button
+              onClick={handleResubmit}
+              disabled={resubmitting}
+              className={`resubmit-btn ${resubmitting ? 'resubmitting' : ''}`}
+            >
+              {resubmitting ? "🔄 Resubmitting..." : "🔁 Resubmit Rejected Request"}
+            </button>
+          )}
           <span className="last-updated">
             Last updated: {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </span>
@@ -297,7 +355,7 @@ export default function ClearanceStatus() {
               <div className="info-icon">❌</div>
               <div className="info-content">
                 <h4>Rejected</h4>
-                <p>Department has rejected your request. Contact the department for more details.</p>
+                <p>Department has rejected your request. You can resubmit your request using the 'Resubmit Rejected Request' button above.</p>
               </div>
             </div>
           </div>

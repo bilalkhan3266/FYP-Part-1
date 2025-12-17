@@ -47,6 +47,7 @@ export default function Login() {
           studentservice: "/service-dashboard",
           feedepartment: "/fee-dashboard",
           coordination: "/coordination-dashboard",
+          admin: "/admin-dashboard",
           hod: "/hod-dashboard"
         };
 

@@ -10,6 +10,7 @@ const crypto = require("crypto");
 // Import Routes
 const libraryRoutes = require("./routes/libraryRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const hodRoutes = require("./routes/hodRoutes");
 
 // Import Models
 const User = require("./models/User");
@@ -18,6 +19,7 @@ const DepartmentClearance = require("./models/DepartmentClearance");
 const Message = require("./models/Message");
 const AdminMessage = require("./models/AdminMessage");
 const DepartmentStats = require("./models/DepartmentStats");
+const DocumentQRCode = require("./models/DocumentQRCode");
 
 // --------------------
 // Express app
@@ -65,7 +67,7 @@ mongoose.connect(MONGO_URI, {
 // --------------------
 // JWT Configuration
 // --------------------
-const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key_change_this';
+const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_in_production_123456';
 const JWT_EXPIRE = process.env.JWT_EXPIRE || '2h';
 
 // --------------------
@@ -569,6 +571,21 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
       });
     }
 
+    // Check if student already has pending requests
+    console.log('🔍 Checking for existing clearance requests...');
+    const existingRequests = await DepartmentClearance.find({
+      student_id: req.user.id,
+      status: 'Pending'
+    });
+
+    if (existingRequests.length > 0) {
+      console.log(`⚠️ Student already has ${existingRequests.length} pending request(s)`);
+      return res.status(400).json({
+        success: false,
+        message: 'You already have a pending clearance request. Please wait for it to be reviewed before submitting again.'
+      });
+    }
+
     // Create main clearance request
     const clearanceRequest = new ClearanceRequest({
       student_id: req.user.id,
@@ -792,6 +809,70 @@ app.put('/api/clearance-requests/:id', verifyToken, async (req, res) => {
   }
 });
 
+// Resubmit Clearance Request (after rejection)
+app.post('/api/clearance-requests/resubmit', verifyToken, async (req, res) => {
+  try {
+    console.log('🔄 Resubmitting clearance request for student:', req.user.id);
+
+    // Find all rejected requests for this student
+    const rejectedRecords = await DepartmentClearance.find({
+      student_id: req.user.id,
+      status: 'Rejected'
+    });
+
+    if (rejectedRecords.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No rejected requests to resubmit'
+      });
+    }
+
+    // Check if student has any pending requests (cannot resubmit if already pending)
+    const pendingRecords = await DepartmentClearance.find({
+      student_id: req.user.id,
+      status: 'Pending'
+    });
+
+    if (pendingRecords.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'You already have a pending clearance request. Please wait for it to be reviewed.'
+      });
+    }
+
+    // Update all rejected records back to Pending
+    const updateResult = await DepartmentClearance.updateMany(
+      { student_id: req.user.id, status: 'Rejected' },
+      {
+        $set: {
+          status: 'Pending',
+          remarks: '',
+          approved_by: '',
+          approved_at: null,
+          createdAt: new Date()
+        }
+      }
+    );
+
+    console.log(`✅ Updated ${updateResult.modifiedCount} rejected records to Pending`);
+
+    res.json({
+      success: true,
+      message: 'Clearance request resubmitted successfully to all departments',
+      details: {
+        resubmittedCount: updateResult.modifiedCount,
+        timestamp: new Date()
+      }
+    });
+  } catch (err) {
+    console.error('❌ Resubmit Error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to resubmit clearance request: ' + err.message
+    });
+  }
+});
+
 // --------------------
 // PROFILE ROUTES
 // --------------------
@@ -949,7 +1030,7 @@ app.post('/api/send-message', verifyToken, async (req, res) => {
         sender_sapid: senderSapid,
         recipient_id: student._id,
         recipient_sapid: recipient_sapid.trim(),
-        recipient_department: 'Library',
+        recipient_department: req.user.department || senderRole, // Use actual sender's department, not hardcoded 'Library'
         subject: subject.trim(),
         message: message.trim(),
         message_type: message_type || 'info',
@@ -1246,15 +1327,21 @@ app.get('/api/my-messages', verifyToken, async (req, res) => {
           { recipient_id: userId }       // Messages they received
         ]
       };
-    } else if (userRole === 'library') {
-      // Library staff see messages for Library department
-      query = { recipient_department: 'Library' };
     } else {
-      // Other staff see messages for their department
-      query = { recipient_department: userDept };
+      // Staff see:
+      // 1. Messages FROM students to their department
+      // 2. Messages they SENT to students
+      // 3. Admin broadcasts to their role
+      query = {
+        $or: [
+          { recipient_department: userDept, sender_role: 'student' },  // Messages FROM students
+          { sender_id: userId },                                        // Messages they sent
+          { messageType: 'admin-broadcast', recipient_role: userRole }  // Admin broadcasts to their role
+        ]
+      };
     }
 
-    console.log('📨 Fetching messages for:', userRole, '- User ID:', userId);
+    console.log('📨 Fetching messages for:', userRole, '- Department:', userDept);
     const messages = await Message.find(query).sort({ createdAt: -1 }).limit(100);
     console.log(`✅ Found ${messages.length} messages`);
 
@@ -1267,6 +1354,74 @@ app.get('/api/my-messages', verifyToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: '❌ Failed to fetch messages'
+    });
+  }
+});
+
+// ========== GET STAFF SENT MESSAGES (GET /api/staff/sent-messages) ==========
+// Staff can view messages they have sent to students
+app.get('/api/staff/sent-messages', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    console.log('📨 Fetching sent messages for staff:');
+    console.log('  - User ID from token:', userId);
+    console.log('  - User ID type:', typeof userId);
+    console.log('  - User Role:', userRole);
+
+    // Only staff can view their sent messages
+    if (userRole === 'student') {
+      return res.status(403).json({
+        success: false,
+        message: '❌ Students cannot view staff sent messages'
+      });
+    }
+
+    // Convert userId string to ObjectId for proper matching
+    let objectId;
+    try {
+      const mongoose = require('mongoose');
+      // The userId from JWT is a string representation of ObjectId
+      // We need to convert it to actual ObjectId for Mongoose to match it
+      objectId = mongoose.Types.ObjectId.isValid(userId) 
+        ? new mongoose.Types.ObjectId(userId) 
+        : userId;
+      console.log('  - Converted ObjectId:', objectId);
+    } catch (conversionErr) {
+      console.warn('⚠️ ObjectId conversion issue:', conversionErr.message);
+      objectId = userId;
+    }
+
+    // Query for messages where sender_id matches the staff member
+    const messages = await Message.find({
+      sender_id: objectId
+    })
+    .sort({ createdAt: -1 })
+    .limit(100)
+    .lean()
+    .exec();
+
+    console.log(`✅ Found ${messages.length} sent messages for staff`);
+    
+    if (messages.length > 0) {
+      console.log('  - Sample message sender_id:', messages[0].sender_id);
+      console.log('  - Match check - First message sender_id == userId?', 
+        messages[0].sender_id.toString() === userId);
+    }
+
+    res.status(200).json({
+      success: true,
+      data: messages,
+      count: messages.length
+    });
+  } catch (err) {
+    console.error('❌ Staff Sent Messages Error:', err.message);
+    console.error('  Stack:', err.stack);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to fetch sent messages: ' + err.message,
+      error: err.message
     });
   }
 });
@@ -2289,6 +2444,11 @@ app.put('/api/hod/requests/:id/reject', verifyToken, async (req, res) => {
 // ADMIN PANEL ROUTES
 // ============================================
 app.use('/api/admin', adminRoutes);
+
+// ============================================
+// HOD ROUTES
+// ============================================
+app.use('/api/hod', hodRoutes);
 
 // Start Server
 // --------------------

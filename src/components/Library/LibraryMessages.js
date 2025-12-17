@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import axios from "axios";
@@ -8,8 +8,14 @@ export default function LibraryMessages() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
 
+  const [activeTab, setActiveTab] = useState("received"); // "received", "send", "history", or "broadcasts"
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sentMessages, setSentMessages] = useState([]);
+  const [receivedMessages, setReceivedMessages] = useState([]);
+  const [adminBroadcasts, setAdminBroadcasts] = useState([]);
+  
   const [formData, setFormData] = useState({
     recipient_sapid: "",
     subject: "",
@@ -24,6 +30,129 @@ export default function LibraryMessages() {
       [name]: value
     }));
   };
+
+  // ✅ FETCH RECEIVED MESSAGES FROM STUDENTS
+  const fetchReceivedMessages = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      console.log("📨 Fetching received messages from:", apiUrl + "/api/my-messages");
+
+      const response = await axios.get(
+        apiUrl + "/api/my-messages",
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      console.log("✅ Received messages response:", response.data);
+
+      if (response.data.success) {
+        // Filter to only show messages FROM students (not sent by staff)
+        const studentMessages = response.data.data.filter(msg => msg.sender_role === 'student');
+        setReceivedMessages(studentMessages);
+        setError("");
+      } else {
+        setError(response.data.message || "❌ Failed to load messages");
+      }
+    } catch (err) {
+      console.error("❌ Error fetching received messages:", err);
+      setError(err.response?.data?.message || "❌ Failed to load messages");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ FETCH SENT MESSAGES
+  const fetchSentMessages = async () => {
+    try {
+      setLoading(true);
+      setError(""); // Clear previous errors
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      console.log("📨 Fetching sent messages from:", apiUrl + "/api/staff/sent-messages");
+
+      const response = await axios.get(
+        apiUrl + "/api/staff/sent-messages",
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      console.log("✅ Sent messages response:", response.data);
+
+      if (response.data.success) {
+        setSentMessages(response.data.data || []);
+        setError("");
+      } else {
+        setError(response.data.message || "❌ Failed to load sent messages");
+      }
+    } catch (err) {
+      console.error("❌ Error fetching sent messages:", err);
+      console.error("❌ Error response:", err.response?.data);
+      console.error("❌ Error status:", err.response?.status);
+      setError(err.response?.data?.message || "❌ Failed to load sent messages");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ FETCH ADMIN BROADCASTS
+  const fetchAdminBroadcasts = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      console.log("📢 Fetching admin broadcasts from:", apiUrl + "/api/my-messages");
+
+      const response = await axios.get(
+        apiUrl + "/api/my-messages",
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      if (response.data.success) {
+        // Filter to show only admin broadcast messages
+        const broadcasts = response.data.data.filter(msg => msg.messageType === 'admin-broadcast' || msg.message_type === 'admin-broadcast');
+        setAdminBroadcasts(broadcasts);
+        setError("");
+      } else {
+        setError(response.data.message || "❌ Failed to load broadcasts");
+      }
+    } catch (err) {
+      console.error("❌ Error fetching broadcasts:", err);
+      setError(err.response?.data?.message || "❌ Failed to load broadcasts");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ LOAD MESSAGES WHEN TAB CHANGES
+  useEffect(() => {
+    if (activeTab === "received") {
+      fetchReceivedMessages();
+    } else if (activeTab === "history") {
+      fetchSentMessages();
+    } else if (activeTab === "broadcasts") {
+      fetchAdminBroadcasts();
+    }
+  }, [activeTab]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -121,68 +250,317 @@ export default function LibraryMessages() {
 
       <main className="sd-main">
         <header className="sd-header">
-          <h1>Send Message to Student</h1>
-          <p>Send notifications and clearance updates to students</p>
+          <h1>💬 Messages</h1>
+          <p>Send notifications and view message history</p>
         </header>
 
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
 
-        <form className="edit-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Student SAP ID *</label>
-            <input
-              type="text"
-              name="recipient_sapid"
-              value={formData.recipient_sapid}
-              onChange={handleChange}
-              placeholder="Enter student's SAP ID"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Subject *</label>
-            <input
-              type="text"
-              name="subject"
-              value={formData.subject}
-              onChange={handleChange}
-              placeholder="Message subject"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Message Type</label>
-            <select
-              name="message_type"
-              value={formData.message_type}
-              onChange={handleChange}
-            >
-              <option value="info">ℹ️ Information</option>
-              <option value="success">✅ Approved</option>
-              <option value="warning">⚠️ Warning</option>
-              <option value="error">❌ Rejection</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>Message *</label>
-            <textarea
-              name="message"
-              value={formData.message}
-              onChange={handleChange}
-              placeholder="Type your message..."
-              rows="8"
-              required
-            />
-          </div>
-
-          <button type="submit" className="submit-btn">
+        {/* ✅ TAB NAVIGATION */}
+        <div style={{ display: "flex", gap: "10px", marginBottom: "30px", borderBottom: "2px solid #e0e0e0", paddingBottom: "10px", flexWrap: "wrap" }}>
+          <button
+            onClick={() => setActiveTab("received")}
+            style={{
+              padding: "10px 20px",
+              background: activeTab === "received" ? "#FF9800" : "#f0f0f0",
+              color: activeTab === "received" ? "white" : "#333",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+              fontWeight: "600",
+              fontSize: "14px"
+            }}
+          >
+            📥 Received ({receivedMessages.length})
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("send");
+              setError("");
+            }}
+            style={{
+              padding: "10px 20px",
+              background: activeTab === "send" ? "#4CAF50" : "#f0f0f0",
+              color: activeTab === "send" ? "white" : "#333",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+              fontWeight: "600",
+              fontSize: "14px"
+            }}
+          >
             📤 Send Message
           </button>
-        </form>
+          <button
+            onClick={() => setActiveTab("history")}
+            style={{
+              padding: "10px 20px",
+              background: activeTab === "history" ? "#2196F3" : "#f0f0f0",
+              color: activeTab === "history" ? "white" : "#333",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+              fontWeight: "600",
+              fontSize: "14px"
+            }}
+          >
+            📋 Sent ({sentMessages.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("broadcasts")}
+            style={{
+              padding: "10px 20px",
+              background: activeTab === "broadcasts" ? "#9C27B0" : "#f0f0f0",
+              color: activeTab === "broadcasts" ? "white" : "#333",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+              fontWeight: "600",
+              fontSize: "14px"
+            }}
+          >
+            📢 Admin Broadcasts ({adminBroadcasts.length})
+          </button>
+        </div>
+
+        {/* ✅ RECEIVED MESSAGES TAB */}
+        {activeTab === "received" && (
+          <div>
+            {loading ? (
+              <div style={{ textAlign: "center", padding: "40px", color: "#666", fontSize: "18px" }}>
+                ⏳ Loading messages...
+              </div>
+            ) : receivedMessages.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px", color: "#999", fontSize: "16px" }}>
+                📭 No messages from students yet
+              </div>
+            ) : (
+              <div style={{ display: "grid", gap: "15px" }}>
+                {receivedMessages.map((msg) => (
+                  <div
+                    key={msg._id}
+                    style={{
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                      padding: "15px",
+                      backgroundColor: msg.is_read ? "#f9f9f9" : "#e3f2fd",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "10px" }}>
+                      <div>
+                        <h3 style={{ margin: "0 0 5px 0", color: "#333" }}>
+                          📬 {msg.subject}
+                        </h3>
+                        <p style={{ margin: "0", color: "#666", fontSize: "14px" }}>
+                          <strong>From:</strong> {msg.sender_name} ({msg.sender_sapid})
+                        </p>
+                      </div>
+                      <span
+                        style={{
+                          background: msg.message_type === "success" ? "#4CAF50" : msg.message_type === "error" ? "#f44336" : msg.message_type === "warning" ? "#ff9800" : "#2196F3",
+                          color: "white",
+                          padding: "5px 10px",
+                          borderRadius: "5px",
+                          fontSize: "12px",
+                          fontWeight: "600"
+                        }}
+                      >
+                        {msg.message_type === "success" ? "✅ Approved" : msg.message_type === "error" ? "❌ Rejection" : msg.message_type === "warning" ? "⚠️ Warning" : "ℹ️ Question"}
+                      </span>
+                    </div>
+                    <p style={{ margin: "10px 0", color: "#555", lineHeight: "1.6" }}>
+                      {msg.message}
+                    </p>
+                    <p style={{ margin: "10px 0 0 0", color: "#999", fontSize: "13px" }}>
+                      📅 {new Date(msg.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ✅ SEND MESSAGE TAB */}
+        {activeTab === "send" && (
+          <form className="edit-form" onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Student SAP ID *</label>
+              <input
+                type="text"
+                name="recipient_sapid"
+                value={formData.recipient_sapid}
+                onChange={handleChange}
+                placeholder="Enter student's SAP ID"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Subject *</label>
+              <input
+                type="text"
+                name="subject"
+                value={formData.subject}
+                onChange={handleChange}
+                placeholder="Message subject"
+                required
+              />
+            </div>
+
+          <div className="form-group">
+              <label>Message Type</label>
+              <select
+                name="message_type"
+                value={formData.message_type}
+                onChange={handleChange}
+              >
+                <option value="info">ℹ️ Information</option>
+                <option value="success">✅ Approved</option>
+                <option value="warning">⚠️ Warning</option>
+                <option value="error">❌ Rejection</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Message *</label>
+              <textarea
+                name="message"
+                value={formData.message}
+                onChange={handleChange}
+                placeholder="Type your message..."
+                rows="8"
+                required
+              />
+            </div>
+
+            <button type="submit" className="submit-btn">
+              📤 Send Message
+            </button>
+          </form>
+        )}
+
+        {/* ✅ SENT MESSAGES HISTORY TAB */}
+        {activeTab === "history" && (
+          <div>
+            {loading ? (
+              <div style={{ textAlign: "center", padding: "40px", color: "#666", fontSize: "18px" }}>
+                ⏳ Loading sent messages...
+              </div>
+            ) : sentMessages.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px", color: "#999", fontSize: "16px" }}>
+                📭 No sent messages yet
+              </div>
+            ) : (
+              <div style={{ display: "grid", gap: "15px" }}>
+                {sentMessages.map((msg) => (
+                  <div
+                    key={msg._id}
+                    style={{
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                      padding: "15px",
+                      backgroundColor: "#f9f9f9",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "10px" }}>
+                      <div>
+                        <h3 style={{ margin: "0 0 5px 0", color: "#333" }}>
+                          📨 {msg.subject}
+                        </h3>
+                        <p style={{ margin: "0", color: "#666", fontSize: "14px" }}>
+                          <strong>To:</strong> {msg.recipient_sapid || "N/A"}
+                        </p>
+                      </div>
+                      <span
+                        style={{
+                          background: msg.message_type === "success" ? "#4CAF50" : msg.message_type === "error" ? "#f44336" : msg.message_type === "warning" ? "#ff9800" : "#2196F3",
+                          color: "white",
+                          padding: "5px 10px",
+                          borderRadius: "5px",
+                          fontSize: "12px",
+                          fontWeight: "600"
+                        }}
+                      >
+                        {msg.message_type === "success" ? "✅ Approved" : msg.message_type === "error" ? "❌ Rejection" : msg.message_type === "warning" ? "⚠️ Warning" : "ℹ️ Info"}
+                      </span>
+                    </div>
+                    <p style={{ margin: "10px 0", color: "#555", lineHeight: "1.6" }}>
+                      {msg.message}
+                    </p>
+                    <p style={{ margin: "10px 0 0 0", color: "#999", fontSize: "13px" }}>
+                      📅 {new Date(msg.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ✅ ADMIN BROADCASTS TAB */}
+        {activeTab === "broadcasts" && (
+          <div>
+            {loading ? (
+              <div style={{ textAlign: "center", padding: "40px", color: "#666", fontSize: "18px" }}>
+                ⏳ Loading admin broadcasts...
+              </div>
+            ) : adminBroadcasts.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px", color: "#999", fontSize: "16px" }}>
+                📭 No admin broadcasts received yet
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+                {adminBroadcasts.map((msg) => (
+                  <div
+                    key={msg._id}
+                    style={{
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                      padding: "15px",
+                      backgroundColor: "#f5f5f5",
+                      borderLeft: "5px solid #9C27B0"
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <h3 style={{ margin: "0 0 8px 0", color: "#333" }}>
+                        🔔 {msg.subject}
+                      </h3>
+                      <span style={{ fontSize: "12px", color: "#999" }}>
+                        {new Date(msg.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <p style={{ margin: "8px 0", color: "#666", fontSize: "13px" }}>
+                      <strong>From:</strong> {msg.senderName || "System Admin"}
+                    </p>
+                    <p style={{ margin: "10px 0", color: "#555", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
+                      {msg.message}
+                    </p>
+                    {msg.priority && (
+                      <span
+                        style={{
+                          display: "inline-block",
+                          background: msg.priority === "urgent" ? "#f44336" : msg.priority === "high" ? "#ff9800" : msg.priority === "normal" ? "#2196F3" : "#4CAF50",
+                          color: "white",
+                          padding: "5px 10px",
+                          borderRadius: "5px",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          marginTop: "10px"
+                        }}
+                      >
+                        {msg.priority === "urgent" ? "🔥 Urgent" : msg.priority === "high" ? "⚠️ High" : msg.priority === "normal" ? "📌 Normal" : "📍 Low"}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );

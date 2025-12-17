@@ -88,6 +88,7 @@ export default function Signup() {
           studentservice: "/service-dashboard",
           feedepartment: "/fee-dashboard",
           coordination: "/coordination-dashboard",
+          admin: "/admin-dashboard",
           hod: "/hod-dashboard"
         };
 
@@ -189,7 +190,7 @@ export default function Signup() {
               <div className="form-group">
                 <label className="form-label">Select Role *</label>
                 <div className="input-wrapper">
-                  <span className="input-icon">🎓</span>
+                  {/* <span className="input-icon">🎓</span> */}
                   <select
                     name="role"
                     className="form-input"
@@ -205,7 +206,8 @@ export default function Signup() {
                     <option value="StudentService">Student Service</option>
                     <option value="FeeDepartment">Fee Department</option>
                     <option value="Coordination">Coordination Office</option>
-                    <option value="Hod">HOD</option>
+                    <option value="Admin">System Administrator</option>
+                    <option value="Hod">HOD (Department Head)</option>
                   </select>
                 </div>
               </div>
