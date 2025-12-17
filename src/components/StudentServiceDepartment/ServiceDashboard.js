@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
-import "../Library/LibraryDashboard.css";
+import "../Student/EditProfile.css";
 
 export default function ServiceDashboard() {
   const { user, logout } = useAuthContext();
@@ -149,24 +149,39 @@ export default function ServiceDashboard() {
     navigate("/");
   };
 
+  const displayName = user?.full_name || "Service Staff";
+  const displaySap = user?.sap || "N/A";
+
   return (
     <div className="student-dashboard-page">
-      {/* Sidebar */}
       <aside className="sd-sidebar">
         <div className="sd-profile">
-          <div className="sd-avatar">{user?.email?.[0]?.toUpperCase() || "S"}</div>
+          <div className="sd-avatar">{displayName.charAt(0).toUpperCase()}</div>
           <div>
-            <h3 className="sd-name">{user?.email?.split("@")[0]}</h3>
-            <p className="sd-small">Student Service Dept</p>
+            <h3 className="sd-name">{displayName}</h3>
+            <p className="sd-small">{displaySap} • Student Service</p>
+            <p className="sd-small">Riphah International University</p>
           </div>
         </div>
 
         <nav className="sd-nav">
           <button
-            className="sd-nav-btn active"
-            onClick={() => navigate("/service-dashboard")}
+            className={`sd-nav-btn ${activeTab === "pending" ? "active" : ""}`}
+            onClick={() => setActiveTab("pending")}
           >
-            📋 Dashboard
+            📋 Pending
+          </button>
+          <button
+            className={`sd-nav-btn ${activeTab === "approved" ? "active" : ""}`}
+            onClick={() => setActiveTab("approved")}
+          >
+            ✅ Approved
+          </button>
+          <button
+            className={`sd-nav-btn ${activeTab === "rejected" ? "active" : ""}`}
+            onClick={() => setActiveTab("rejected")}
+          >
+            ❌ Rejected
           </button>
           <button
             className="sd-nav-btn"
@@ -180,51 +195,29 @@ export default function ServiceDashboard() {
           >
             📝 Edit Profile
           </button>
+          <button className="sd-nav-btn logout" onClick={handleLogout}>
+            🚪 Logout
+          </button>
         </nav>
 
-        <button className="sd-nav-btn logout" onClick={handleLogout}>
-          🚪 Logout
-        </button>
-
-        <footer className="sd-footer">© 2025 University Portal</footer>
+        <footer className="sd-footer">© 2025 Riphah</footer>
       </aside>
 
-      {/* Main Content */}
-      <div className="sd-main">
+      <main className="sd-main">
         <header className="sd-header">
-          <h1>Student Service Dashboard</h1>
-          <p>Manage student clearance requests</p>
+          <h1>👥 Student Service Clearance Management</h1>
+          <p>Review and manage student clearance requests</p>
         </header>
 
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
 
-        {/* Tab Navigation */}
-        <div className="tabs-container">
-          <button
-            className={`tab-btn ${activeTab === "pending" ? "active" : ""}`}
-            onClick={() => setActiveTab("pending")}
-          >
-            📋 Pending Requests
-          </button>
-          <button
-            className={`tab-btn ${activeTab === "approved" ? "active" : ""}`}
-            onClick={() => setActiveTab("approved")}
-          >
-            ✅ Approved Requests
-          </button>
-          <button
-            className={`tab-btn ${activeTab === "rejected" ? "active" : ""}`}
-            onClick={() => setActiveTab("rejected")}
-          >
-            ❌ Rejected Requests
-          </button>
-        </div>
-
         {loading ? (
-          <div className="loading">Loading requests...</div>
+          <div className="loading">⏳ Loading {activeTab} requests...</div>
         ) : requests.length === 0 ? (
-          <div className="no-data"><p>No {activeTab} requests</p></div>
+          <div className="no-data">
+            <p>📭 No {activeTab} requests found</p>
+          </div>
         ) : (
           <div className="table-wrapper">
             <table className="requests-table">

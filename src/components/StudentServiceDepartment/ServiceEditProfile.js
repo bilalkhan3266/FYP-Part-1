@@ -107,7 +107,6 @@ export default function ServiceEditProfile() {
 
   return (
     <div className="student-dashboard-page">
-      {/* SIDEBAR */}
       <aside className="sd-sidebar">
         <div className="sd-profile">
           <div className="sd-avatar">{displayName.charAt(0).toUpperCase()}</div>
