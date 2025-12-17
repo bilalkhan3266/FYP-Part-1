@@ -1474,6 +1474,180 @@ app.post('/api/department/send-message', verifyToken, async (req, res) => {
   }
 });
 
+// --------------------
+// ADMIN - SEND MESSAGE TO DEPARTMENTS/STUDENTS
+// --------------------
+app.post('/api/admin/send-message', verifyToken, async (req, res) => {
+  try {
+    // Verify admin role
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied - Admin role required'
+      });
+    }
+
+    const { messageType, subject, message, priority, targetType, department, studentSapId, roleTarget } = req.body;
+    const senderId = req.user.id;
+    const senderName = req.user.full_name || 'Admin';
+
+    // Validation
+    if (!subject || !message) {
+      return res.status(400).json({
+        success: false,
+        message: 'Subject and message are required'
+      });
+    }
+
+    console.log('📨 Admin sending message:', { messageType, subject, targetType, department, studentSapId, roleTarget });
+
+    let messagesSent = 0;
+    let recipients = [];
+
+    // CASE 1: Send to student
+    if (messageType === 'student') {
+      if (!studentSapId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Student SAP ID is required'
+        });
+      }
+
+      const student = await User.findOne({ sap: studentSapId });
+      if (!student) {
+        return res.status(404).json({
+          success: false,
+          message: `Student with SAP ID ${studentSapId} not found`
+        });
+      }
+
+      const newMessage = new Message({
+        sender_id: senderId,
+        sender_name: senderName,
+        sender_role: 'admin',
+        sender_sapid: null,
+        recipient_id: student._id,
+        recipient_sapid: studentSapId,
+        recipient_department: 'admin',
+        subject: subject.trim(),
+        message: message.trim(),
+        message_type: 'notification',
+        priority: priority || 'normal',
+        is_read: false,
+        createdAt: new Date()
+      });
+
+      await newMessage.save();
+      messagesSent = 1;
+      recipients.push(student.full_name);
+    }
+    
+    // CASE 2: Send to all departments or specific department
+    else if (messageType === 'department') {
+      let departmentUsers = [];
+
+      if (targetType === 'all') {
+        // Send to all department staff
+        departmentUsers = await User.find({
+          role: { $in: ['library', 'transport', 'laboratory', 'feedepartment', 'coordination', 'studentservice'] }
+        });
+      } else if (targetType === 'specific') {
+        if (!department) {
+          return res.status(400).json({
+            success: false,
+            message: 'Department is required'
+          });
+        }
+        // Map department name to role
+        const deptMapping = {
+          'Library': 'library',
+          'Transport': 'transport',
+          'Laboratory': 'laboratory',
+          'Fee Department': 'feedepartment',
+          'Coordination': 'coordination',
+          'Student Services': 'studentservice'
+        };
+        
+        const role = deptMapping[department];
+        departmentUsers = await User.find({ role });
+      }
+
+      // Send message to each department user
+      for (const user of departmentUsers) {
+        const newMessage = new Message({
+          sender_id: senderId,
+          sender_name: senderName,
+          sender_role: 'admin',
+          sender_sapid: null,
+          recipient_id: user._id,
+          recipient_sapid: user.sap,
+          recipient_department: user.department,
+          subject: subject.trim(),
+          message: message.trim(),
+          message_type: 'notification',
+          priority: priority || 'normal',
+          is_read: false,
+          createdAt: new Date()
+        });
+
+        await newMessage.save();
+        messagesSent++;
+        recipients.push(`${user.full_name} (${user.department})`);
+      }
+    }
+    
+    // CASE 3: Send to role (broadcast)
+    else if (messageType === 'role') {
+      if (!roleTarget) {
+        return res.status(400).json({
+          success: false,
+          message: 'Target role is required'
+        });
+      }
+
+      const roleUsers = await User.find({ role: roleTarget });
+
+      // Send message to each role user
+      for (const user of roleUsers) {
+        const newMessage = new Message({
+          sender_id: senderId,
+          sender_name: senderName,
+          sender_role: 'admin',
+          sender_sapid: null,
+          recipient_id: user._id,
+          recipient_sapid: user.sap,
+          recipient_department: user.department,
+          subject: subject.trim(),
+          message: message.trim(),
+          message_type: 'notification',
+          priority: priority || 'normal',
+          is_read: false,
+          createdAt: new Date()
+        });
+
+        await newMessage.save();
+        messagesSent++;
+        recipients.push(`${user.full_name} (${user.department})`);
+      }
+    }
+
+    console.log(`✅ Admin message sent to ${messagesSent} recipients`);
+
+    res.status(201).json({
+      success: true,
+      message: `✅ Message sent successfully to ${messagesSent} recipient(s)!`,
+      messagesSent,
+      recipients
+    });
+  } catch (err) {
+    console.error('Admin Message Error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send message: ' + err.message
+    });
+  }
+});
+
 // Get all conversations for a student (by SAPID)
 app.get('/api/conversations', verifyToken, async (req, res) => {
   try {
