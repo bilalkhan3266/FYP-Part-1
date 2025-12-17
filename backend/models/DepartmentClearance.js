@@ -15,6 +15,8 @@ const departmentClearanceSchema = new mongoose.Schema({
   remarks: String,
   approved_by: String,
   approved_at: Date,
+  // Track if this request is ready for HOD (all depts approved)
+  ready_for_hod: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 

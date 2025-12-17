@@ -121,6 +121,12 @@ export default function HODDashboard() {
           </button>
           <button
             className="sd-nav-btn"
+            onClick={() => navigate("/hod-clearance-approvals")}
+          >
+            🎓 Student Clearance Approvals
+          </button>
+          <button
+            className="sd-nav-btn"
             onClick={() => navigate("/hod-messages")}
           >
             💬 Messages

@@ -768,9 +768,63 @@ app.put('/api/clearance-requests/:requestId/approve', verifyToken, async (req, r
       });
     }
 
+    console.log(`📋 Department approval updated: ${updated.department_name} - ${status}`);
+
+    // If approved, check if ALL departments are now approved
+    if (status === 'Approved') {
+      const clearanceRequestId = updated.clearance_request_id;
+      const studentId = updated.student_id;
+
+      // Check all department statuses for this clearance request
+      const allDeptRecords = await DepartmentClearance.find({
+        clearance_request_id: clearanceRequestId
+      });
+
+      console.log(`🔍 Checking all departments for request ${clearanceRequestId}`);
+      console.log(`   Total departments: ${allDeptRecords.length}`);
+      console.log(`   Approved: ${allDeptRecords.filter(d => d.status === 'Approved').length}`);
+
+      // Check if all are approved
+      const allApproved = allDeptRecords.every(d => d.status === 'Approved');
+
+      if (allApproved) {
+        console.log(`✅ ALL DEPARTMENTS APPROVED! Moving to HOD for final approval`);
+        
+        // Update all records to mark them as ready for HOD
+        await DepartmentClearance.updateMany(
+          { clearance_request_id: clearanceRequestId },
+          { ready_for_hod: true }
+        );
+
+        // Update the main clearance request
+        await ClearanceRequest.findByIdAndUpdate(
+          clearanceRequestId,
+          { hod_status: 'Ready for HOD' }
+        );
+
+        // Send notification to student
+        const clearanceReq = await ClearanceRequest.findById(clearanceRequestId);
+        const message = new Message({
+          conversation_id: `${clearanceReq.sapid}-hod-ready-${Date.now()}`,
+          sender_id: new mongoose.Types.ObjectId(),
+          sender_name: 'System',
+          sender_role: 'system',
+          recipient_sapid: clearanceReq.sapid,
+          recipient_id: studentId,
+          recipient_department: 'System',
+          subject: '🎯 All Departments Approved - Awaiting HOD Final Approval',
+          message: `Congratulations! All departments have approved your clearance request. Your application is now awaiting final approval from the HOD (Head of Department).`,
+          message_type: 'notification'
+        });
+        await message.save();
+        console.log(`📨 Notification sent to student`);
+      }
+    }
+
     res.json({
       success: true,
-      message: `Request ${status.toLowerCase()} successfully`
+      message: `Request ${status.toLowerCase()} successfully`,
+      readyForHOD: updated.status === 'Approved' ? (await checkAllDepartmentsApproved(updated.clearance_request_id)) : false
     });
   } catch (err) {
     console.error('Approve Error:', err);
@@ -780,6 +834,12 @@ app.put('/api/clearance-requests/:requestId/approve', verifyToken, async (req, r
     });
   }
 });
+
+// Helper function to check if all departments approved
+async function checkAllDepartmentsApproved(clearanceRequestId) {
+  const allRecords = await DepartmentClearance.find({ clearance_request_id: clearanceRequestId });
+  return allRecords.every(d => d.status === 'Approved');
+}
 
 // Update Clearance Status
 app.put('/api/clearance-requests/:id', verifyToken, async (req, res) => {
@@ -869,6 +929,176 @@ app.post('/api/clearance-requests/resubmit', verifyToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to resubmit clearance request: ' + err.message
+    });
+  }
+});
+
+// --------------------
+// HOD CLEARANCE APPROVAL ROUTES
+// --------------------
+
+// Get all clearance requests ready for HOD approval
+app.get('/api/hod/pending-approvals', verifyToken, async (req, res) => {
+  try {
+    console.log('📋 Fetching pending HOD approvals...');
+    
+    // Get clearance requests that are ready for HOD
+    const readyForHOD = await ClearanceRequest.find({
+      hod_status: 'Ready for HOD'
+    }).sort({ submitted_at: -1 });
+
+    console.log(`✅ Found ${readyForHOD.length} applications ready for HOD approval`);
+
+    // Get detailed department records
+    const details = await Promise.all(readyForHOD.map(async (req) => {
+      const deptRecords = await DepartmentClearance.find({
+        clearance_request_id: req._id
+      });
+      return {
+        ...req.toObject(),
+        departmentStatus: deptRecords
+      };
+    }));
+
+    res.json({
+      success: true,
+      count: details.length,
+      data: details
+    });
+  } catch (err) {
+    console.error('HOD Pending Approvals Error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch pending approvals: ' + err.message
+    });
+  }
+});
+
+// HOD Approve Clearance Request (with QR Code generation)
+app.post('/api/hod/approve-clearance/:clearanceRequestId', verifyToken, async (req, res) => {
+  try {
+    const { clearanceRequestId } = req.params;
+    const { remarks } = req.body;
+    const hodId = req.user.id;
+    const hodName = req.user.full_name || req.user.email;
+
+    console.log(`🔐 HOD approving clearance request: ${clearanceRequestId}`);
+    console.log(`   HOD: ${hodName}`);
+
+    // Get the clearance request
+    const clearanceReq = await ClearanceRequest.findById(clearanceRequestId);
+    if (!clearanceReq) {
+      return res.status(404).json({
+        success: false,
+        message: 'Clearance request not found'
+      });
+    }
+
+    // Check if it's ready for HOD
+    if (clearanceReq.hod_status !== 'Ready for HOD') {
+      return res.status(400).json({
+        success: false,
+        message: 'This request is not ready for HOD approval'
+      });
+    }
+
+    // Generate unique QR code
+    const qrCodeId = `CLEAR-${Date.now()}-${clearanceReq.sapid}`;
+    
+    console.log(`📊 Generating QR Code: ${qrCodeId}`);
+
+    // Create DocumentQRCode record
+    const qrCode = new DocumentQRCode({
+      qrCode: qrCodeId,
+      documentName: 'Clearance Certificate',
+      studentName: clearanceReq.student_name,
+      studentSapId: clearanceReq.sapid,
+      studentDepartment: clearanceReq.department || 'N/A',
+      createdByHOD: hodName,
+      isActive: true,
+      generatedAt: new Date()
+    });
+
+    const savedQR = await qrCode.save();
+    console.log(`✅ QR Code saved: ${savedQR._id}`);
+
+    // Update clearance request with HOD approval and QR code
+    const updatedReq = await ClearanceRequest.findByIdAndUpdate(
+      clearanceRequestId,
+      {
+        hod_status: 'HOD Approved',
+        hod_approved_by: hodName,
+        hod_approved_at: new Date(),
+        qr_code: qrCodeId,
+        status: 'Completed'
+      },
+      { new: true }
+    );
+
+    // Update all department records as well
+    await DepartmentClearance.updateMany(
+      { clearance_request_id: clearanceRequestId },
+      { ready_for_hod: false }
+    );
+
+    // Send success notification to student
+    const message = new Message({
+      conversation_id: `${clearanceReq.sapid}-hod-approved-${Date.now()}`,
+      sender_id: hodId,
+      sender_name: hodName,
+      sender_role: 'hod',
+      sender_sapid: req.user.sap,
+      recipient_sapid: clearanceReq.sapid,
+      recipient_id: clearanceReq.student_id,
+      recipient_department: 'System',
+      subject: '✅ CLEARANCE APPROVED - Certificate Ready',
+      message: `Congratulations! Your clearance has been approved by the HOD. Your clearance certificate is ready. QR Code: ${qrCodeId}${remarks ? `\n\nRemarks: ${remarks}` : ''}`,
+      message_type: 'notification'
+    });
+    await message.save();
+
+    res.json({
+      success: true,
+      message: 'Clearance request approved by HOD successfully',
+      qrCode: qrCodeId,
+      details: {
+        studentName: clearanceReq.student_name,
+        sapId: clearanceReq.sapid,
+        approvedBy: hodName,
+        approvedAt: new Date()
+      }
+    });
+  } catch (err) {
+    console.error('HOD Approve Error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to approve clearance: ' + err.message
+    });
+  }
+});
+
+// Get QR Code details for verification
+app.get('/api/hod/verify-qr/:qrCode', verifyToken, async (req, res) => {
+  try {
+    const { qrCode } = req.params;
+
+    const qrRecord = await DocumentQRCode.findOne({ qrCode });
+    if (!qrRecord) {
+      return res.status(404).json({
+        success: false,
+        message: 'QR Code not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: qrRecord
+    });
+  } catch (err) {
+    console.error('QR Verify Error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify QR code: ' + err.message
     });
   }
 });

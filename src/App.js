@@ -48,6 +48,7 @@ import AdminMessages from "./components/Admin/AdminMessages";
 import HODDashboard from "./components/Hod/HODDashboard";
 import HODEditProfile from "./components/Hod/HODEditProfile";
 import HODMessages from "./components/Hod/HODMessages";
+import ClearanceApprovalPanel from "./components/Hod/ClearanceApprovalPanel";
 
 /* Student Pages */
 import ClearanceRequest from "./components/Student/ClearanceRequest";
@@ -310,6 +311,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["hod"]}>
             <HODDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/hod-clearance-approvals"
+        element={
+          <ProtectedRoute allowedRoles={["hod"]}>
+            <ClearanceApprovalPanel />
           </ProtectedRoute>
         }
       />
