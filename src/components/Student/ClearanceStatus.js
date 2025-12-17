@@ -148,15 +148,18 @@ export default function ClearanceStatus() {
       const token = localStorage.getItem("token");
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
+      const url = apiUrl + "/api/clearance-requests/resubmit-department";
       console.log('🔄 Resubmitting to', departmentName);
-      console.log('📤 Request:', { 
-        url: apiUrl + "/api/clearance-requests/resubmit-department",
+      console.log('📤 Full Request Details:', { 
+        method: 'POST',
+        url: url,
         data: { department_name: departmentName },
-        token: token ? '✓ Present' : '✗ Missing'
+        token: token ? '✓ Present (' + token.substring(0, 20) + '...)' : '✗ Missing',
+        apiUrl: apiUrl
       });
 
       const response = await axios.post(
-        apiUrl + "/api/clearance-requests/resubmit-department",
+        url,
         { department_name: departmentName },
         {
           headers: {
@@ -182,11 +185,30 @@ export default function ClearanceStatus() {
       console.error("❌ Full Error Object:", {
         message: err.message,
         status: err.response?.status,
+        statusText: err.response?.statusText,
         data: err.response?.data,
-        config: err.config
+        url: err.config?.url,
+        method: err.config?.method,
+        headers: err.config?.headers,
+        code: err.code
       });
       
-      const errorMsg = err.response?.data?.message || err.message || "Failed to resubmit request";
+      let errorMsg = "Failed to resubmit request";
+      
+      if (err.response?.status === 404) {
+        errorMsg = "❌ Server endpoint not found (404). Is backend running on port 5000?";
+        console.error("🔴 404 Error - Backend may not be running or endpoint is missing");
+      } else if (err.response?.status === 401) {
+        errorMsg = "❌ Authentication failed - Token expired or invalid";
+      } else if (err.response?.status === 500) {
+        errorMsg = "❌ Server error: " + (err.response?.data?.message || "Unknown error");
+      } else if (err.code === 'ERR_NETWORK') {
+        errorMsg = "❌ Network error - Cannot connect to server";
+        console.error("🔴 Network Error - Is server running?");
+      } else {
+        errorMsg = err.response?.data?.message || err.message || "Failed to resubmit request";
+      }
+      
       console.error("🔴 Final Error Message:", errorMsg);
       showNotification(errorMsg, "error");
     } finally {

@@ -33,6 +33,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // --------------------
+// Health Check Route
+// --------------------
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running' });
+});
+
+// --------------------
 // MongoDB Connection
 // --------------------
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/role_based_system';
