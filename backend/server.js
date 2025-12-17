@@ -941,9 +941,15 @@ app.post('/api/clearance-requests/resubmit', verifyToken, async (req, res) => {
 app.post('/api/clearance-requests/resubmit-department', verifyToken, async (req, res) => {
   try {
     const { department_name } = req.body;
-    console.log('🔄 Resubmitting clearance to department:', department_name, 'for student:', req.user.id);
+    const studentId = req.user.id;
+    console.log('🔄 Resubmit Request Details:', {
+      department_name,
+      studentId,
+      timestamp: new Date()
+    });
 
     if (!department_name) {
+      console.warn('⚠️ Department name missing');
       return res.status(400).json({
         success: false,
         message: 'Department name is required'
@@ -952,36 +958,48 @@ app.post('/api/clearance-requests/resubmit-department', verifyToken, async (req,
 
     // Find the rejected request for this specific department
     const rejectedRecord = await DepartmentClearance.findOne({
-      student_id: req.user.id,
+      student_id: studentId,
       department_name: department_name,
       status: 'Rejected'
     });
 
+    console.log('🔍 Rejected Record Search:', {
+      found: !!rejectedRecord,
+      query: { student_id: studentId, department_name, status: 'Rejected' }
+    });
+
     if (!rejectedRecord) {
+      console.warn('⚠️ No rejected record found for:', department_name);
       return res.status(400).json({
         success: false,
-        message: `No rejected request found for ${department_name}`
+        message: `No rejected request found for ${department_name}. Record may have been already processed or doesn't exist.`
       });
     }
 
     // Check if student already has a pending request for this department
     const pendingRecord = await DepartmentClearance.findOne({
-      student_id: req.user.id,
+      student_id: studentId,
       department_name: department_name,
       status: 'Pending'
     });
 
+    console.log('⏳ Pending Record Check:', {
+      found: !!pendingRecord
+    });
+
     if (pendingRecord) {
+      console.warn('⚠️ Pending request already exists:', department_name);
       return res.status(400).json({
         success: false,
-        message: `You already have a pending request with ${department_name}`
+        message: `You already have a pending request with ${department_name}. Please wait for review.`
       });
     }
 
     // Update the rejected record back to Pending for this specific department
     const updateResult = await DepartmentClearance.updateOne(
       { 
-        student_id: req.user.id, 
+        _id: rejectedRecord._id,
+        student_id: studentId, 
         department_name: department_name,
         status: 'Rejected' 
       },
@@ -996,7 +1014,17 @@ app.post('/api/clearance-requests/resubmit-department', verifyToken, async (req,
       }
     );
 
-    console.log(`✅ Updated ${department_name} record to Pending for student ${req.user.id}`);
+    console.log('📝 Update Result:', {
+      matched: updateResult.matchedCount,
+      modified: updateResult.modifiedCount,
+      department: department_name
+    });
+
+    if (updateResult.modifiedCount === 0) {
+      throw new Error('Failed to update record - no documents modified');
+    }
+
+    console.log(`✅ Successfully updated ${department_name} to Pending`);
 
     res.json({
       success: true,
@@ -1008,7 +1036,12 @@ app.post('/api/clearance-requests/resubmit-department', verifyToken, async (req,
       }
     });
   } catch (err) {
-    console.error('❌ Resubmit Department Error:', err);
+    console.error('❌ Resubmit Department Error:', {
+      message: err.message,
+      stack: err.stack,
+      department: req.body?.department_name,
+      studentId: req.user?.id
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to resubmit clearance request: ' + err.message

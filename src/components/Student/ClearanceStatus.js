@@ -14,6 +14,9 @@ export default function ClearanceStatus() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [resubmitting, setResubmitting] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedDeptForResubmit, setSelectedDeptForResubmit] = useState(null);
+  const [notification, setNotification] = useState({ show: false, message: "", type: "" });
 
   useEffect(() => {
     fetchClearanceStatus();
@@ -119,6 +122,23 @@ export default function ClearanceStatus() {
     }
   };
 
+  const openConfirmModal = (departmentName) => {
+    setSelectedDeptForResubmit(departmentName);
+    setShowConfirmModal(true);
+  };
+
+  const closeConfirmModal = () => {
+    setShowConfirmModal(false);
+    setSelectedDeptForResubmit(null);
+  };
+
+  const showNotification = (message, type = "success") => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => {
+      setNotification({ show: false, message: "", type: "" });
+    }, 4000);
+  };
+
   const handleResubmitToDepartment = async (departmentName) => {
     try {
       setResubmitting(true);
@@ -129,6 +149,12 @@ export default function ClearanceStatus() {
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
       console.log('🔄 Resubmitting to', departmentName);
+      console.log('📤 Request:', { 
+        url: apiUrl + "/api/clearance-requests/resubmit-department",
+        data: { department_name: departmentName },
+        token: token ? '✓ Present' : '✗ Missing'
+      });
+
       const response = await axios.post(
         apiUrl + "/api/clearance-requests/resubmit-department",
         { department_name: departmentName },
@@ -140,17 +166,29 @@ export default function ClearanceStatus() {
         }
       );
 
+      console.log('✅ Response received:', response.data);
+
       if (response.data.success) {
-        setSuccess(`✅ Clearance request resubmitted to ${departmentName}!`);
+        showNotification(`✅ Successfully resubmitted to ${departmentName}!`, "success");
+        closeConfirmModal();
         setTimeout(() => {
           fetchClearanceStatus();
-        }, 1000);
+        }, 800);
       } else {
-        setError(response.data.message || "Failed to resubmit");
+        console.warn('⚠️ Success false:', response.data.message);
+        showNotification(response.data.message || "Failed to resubmit", "error");
       }
     } catch (err) {
-      console.error("Error:", err);
-      setError(err.response?.data?.message || "Failed to resubmit request");
+      console.error("❌ Full Error Object:", {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+        config: err.config
+      });
+      
+      const errorMsg = err.response?.data?.message || err.message || "Failed to resubmit request";
+      console.error("🔴 Final Error Message:", errorMsg);
+      showNotification(errorMsg, "error");
     } finally {
       setResubmitting(false);
     }
@@ -356,11 +394,12 @@ export default function ClearanceStatus() {
 
                       {deptStatus.status === 'Rejected' && (
                         <button
-                          onClick={() => handleResubmitToDepartment(dept)}
+                          onClick={() => openConfirmModal(dept)}
                           disabled={resubmitting}
                           className="dept-resubmit-btn"
                         >
-                          {resubmitting ? "🔄 Resubmitting..." : "🔁 Resubmit to This Department"}
+                          <span className="btn-icon">↻</span>
+                          <span className="btn-text">Resubmit to This Department</span>
                         </button>
                       )}
                     </>
@@ -419,6 +458,57 @@ export default function ClearanceStatus() {
           </div>
         </div>
       </main>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="modal-overlay" onClick={closeConfirmModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Confirm Resubmission</h2>
+              <button className="modal-close" onClick={closeConfirmModal}>
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="confirm-icon">⚡</div>
+              <p className="confirm-text">
+                Are you sure you want to resubmit your clearance request to <strong>{selectedDeptForResubmit}</strong>?
+              </p>
+              <p className="confirm-subtext">
+                Your request will be reviewed again by the department.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-cancel"
+                onClick={closeConfirmModal}
+                disabled={resubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-confirm"
+                onClick={() => handleResubmitToDepartment(selectedDeptForResubmit)}
+                disabled={resubmitting}
+              >
+                {resubmitting ? "⏳ Submitting..." : "✓ Confirm & Submit"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {notification.show && (
+        <div className={`toast-notification toast-${notification.type}`}>
+          <div className="toast-content">
+            <span className="toast-icon">
+              {notification.type === "success" ? "✓" : "✕"}
+            </span>
+            <span className="toast-message">{notification.message}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
