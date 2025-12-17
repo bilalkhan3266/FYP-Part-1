@@ -30,6 +30,8 @@ import LaboratoryMessages from "./components/labortary/LaboratoryMessages";
 
 /* Student Service */
 import ServiceDashboard from "./components/StudentServiceDepartment/ServiceDashboard";
+import ServiceEditProfile from "./components/StudentServiceDepartment/ServiceEditProfile";
+import ServiceMessage from "./components/StudentServiceDepartment/ServiceMessage";
 
 /* Fee Department */
 import FeeDepartmentDashboard from "./components/FeeDepartment/FeeDepartmentDashboard";
@@ -221,6 +223,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["studentservice"]}>
             <ServiceDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/service-edit-profile"
+        element={
+          <ProtectedRoute allowedRoles={["studentservice"]}>
+            <ServiceEditProfile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/service-messages"
+        element={
+          <ProtectedRoute allowedRoles={["studentservice"]}>
+            <ServiceMessage />
           </ProtectedRoute>
         }
       />

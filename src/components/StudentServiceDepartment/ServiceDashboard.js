@@ -163,22 +163,22 @@ export default function ServiceDashboard() {
 
         <nav className="sd-nav">
           <button
-            className={`sd-nav-btn ${activeTab === "pending" ? "active" : ""}`}
-            onClick={() => setActiveTab("pending")}
+            className="sd-nav-btn active"
+            onClick={() => navigate("/service-dashboard")}
           >
-            📋 Pending Requests
+            📋 Dashboard
           </button>
           <button
-            className={`sd-nav-btn ${activeTab === "approved" ? "active" : ""}`}
-            onClick={() => setActiveTab("approved")}
+            className="sd-nav-btn"
+            onClick={() => navigate("/service-messages")}
           >
-            ✅ Approved Requests
+            💬 Messages
           </button>
           <button
-            className={`sd-nav-btn ${activeTab === "rejected" ? "active" : ""}`}
-            onClick={() => setActiveTab("rejected")}
+            className="sd-nav-btn"
+            onClick={() => navigate("/service-edit-profile")}
           >
-            ❌ Rejected Requests
+            📝 Edit Profile
           </button>
         </nav>
 
@@ -198,6 +198,28 @@ export default function ServiceDashboard() {
 
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
+
+        {/* Tab Navigation */}
+        <div className="tabs-container">
+          <button
+            className={`tab-btn ${activeTab === "pending" ? "active" : ""}`}
+            onClick={() => setActiveTab("pending")}
+          >
+            📋 Pending Requests
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "approved" ? "active" : ""}`}
+            onClick={() => setActiveTab("approved")}
+          >
+            ✅ Approved Requests
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "rejected" ? "active" : ""}`}
+            onClick={() => setActiveTab("rejected")}
+          >
+            ❌ Rejected Requests
+          </button>
+        </div>
 
         {loading ? (
           <div className="loading">Loading requests...</div>
