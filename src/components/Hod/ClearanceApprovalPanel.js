@@ -25,7 +25,8 @@ export default function ClearanceApprovalPanel() {
     try {
       setLoading(true);
       setError("");
-      console.log("📋 Fetching pending HOD approvals...");
+      console.log("📋 Fetching pending HOD approvals from:", `${apiUrl}/api/hod/pending-approvals`);
+      console.log("📋 Token exists:", !!token);
 
       const response = await axios.get(`${apiUrl}/api/hod/pending-approvals`, {
         headers: {
@@ -34,14 +35,20 @@ export default function ClearanceApprovalPanel() {
         },
       });
 
+      console.log("📋 Response received:", response.data);
+
       if (response.data.success) {
         console.log(`✅ Found ${response.data.count} pending approvals`);
         setPendingApprovals(response.data.data || []);
+      } else {
+        console.error("❌ API returned success: false");
+        setError(response.data.message || "Failed to fetch pending approvals");
       }
     } catch (err) {
-      console.error("Error fetching approvals:", err);
+      console.error("❌ Error fetching approvals:", err);
+      console.error("Error response:", err.response?.data);
       setError(
-        err.response?.data?.message || "Failed to fetch pending approvals"
+        err.response?.data?.message || err.message || "Failed to fetch pending approvals"
       );
     } finally {
       setLoading(false);

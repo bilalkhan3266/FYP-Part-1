@@ -940,10 +940,12 @@ app.post('/api/clearance-requests/resubmit', verifyToken, async (req, res) => {
 // Get all clearance requests ready for HOD approval
 app.get('/api/hod/pending-approvals', verifyToken, async (req, res) => {
   try {
-    console.log('📋 Fetching pending HOD approvals...');
+    console.log('📋 Fetching pending HOD approvals for user:', req.user.email);
+    console.log('User role:', req.user.role);
     
     // Verify user is HOD
     if (req.user.role !== 'hod') {
+      console.log('❌ Access denied - not HOD role');
       return res.status(403).json({
         success: false,
         message: 'Access denied - HOD role required'
@@ -951,22 +953,37 @@ app.get('/api/hod/pending-approvals', verifyToken, async (req, res) => {
     }
     
     // Get clearance requests that are ready for HOD
+    console.log('🔍 Searching for requests with hod_status: "Ready for HOD"');
     const readyForHOD = await ClearanceRequest.find({
       hod_status: 'Ready for HOD'
-    }).populate('student_id').sort({ submitted_at: -1 });
+    })
+    .populate('student_id', 'full_name email sap')
+    .sort({ submitted_at: -1 })
+    .lean();
 
     console.log(`✅ Found ${readyForHOD.length} applications ready for HOD approval`);
 
-    // Get detailed department records
-    const details = await Promise.all(readyForHOD.map(async (req) => {
-      const deptRecords = await DepartmentClearance.find({
-        clearance_request_id: req._id
-      });
-      return {
-        ...(req.toObject ? req.toObject() : req),
-        departmentStatus: deptRecords
-      };
-    }));
+    // Get detailed department records for each request
+    const details = await Promise.all(
+      readyForHOD.map(async (clearanceReq) => {
+        try {
+          const deptRecords = await DepartmentClearance.find({
+            clearance_request_id: clearanceReq._id
+          }).lean();
+          
+          return {
+            ...clearanceReq,
+            departmentStatus: deptRecords || []
+          };
+        } catch (error) {
+          console.error('Error fetching dept records for:', clearanceReq._id, error);
+          return {
+            ...clearanceReq,
+            departmentStatus: []
+          };
+        }
+      })
+    );
 
     res.json({
       success: true,
@@ -974,7 +991,7 @@ app.get('/api/hod/pending-approvals', verifyToken, async (req, res) => {
       data: details
     });
   } catch (err) {
-    console.error('HOD Pending Approvals Error:', err);
+    console.error('🔴 HOD Pending Approvals Error:', err);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch pending approvals: ' + err.message
