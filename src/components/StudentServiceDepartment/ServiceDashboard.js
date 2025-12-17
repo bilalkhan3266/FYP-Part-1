@@ -268,7 +268,7 @@ export default function ServiceDashboard() {
             </table>
           </div>
         )}
-      </div>
+      </main>
 
       {/* Modal */}
       {showRemarksModal && (
