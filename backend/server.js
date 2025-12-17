@@ -942,10 +942,18 @@ app.get('/api/hod/pending-approvals', verifyToken, async (req, res) => {
   try {
     console.log('📋 Fetching pending HOD approvals...');
     
+    // Verify user is HOD
+    if (req.user.role !== 'hod') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied - HOD role required'
+      });
+    }
+    
     // Get clearance requests that are ready for HOD
     const readyForHOD = await ClearanceRequest.find({
       hod_status: 'Ready for HOD'
-    }).sort({ submitted_at: -1 });
+    }).populate('student_id').sort({ submitted_at: -1 });
 
     console.log(`✅ Found ${readyForHOD.length} applications ready for HOD approval`);
 
@@ -955,7 +963,7 @@ app.get('/api/hod/pending-approvals', verifyToken, async (req, res) => {
         clearance_request_id: req._id
       });
       return {
-        ...req.toObject(),
+        ...(req.toObject ? req.toObject() : req),
         departmentStatus: deptRecords
       };
     }));
