@@ -1,36 +1,57 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "../../contexts/AuthContext";
 import "../Library/LibraryDashboard.css";
 
 export default function ServiceDashboard() {
+  const { user, logout } = useAuthContext();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("ssd_user") || "null");
-  
+
   const [activeTab, setActiveTab] = useState("pending");
   const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [modal, setModal] = useState({ show: false, type: "", requestId: "", remarks: "" });
-
-  const token = localStorage.getItem("token");
-  const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
+  const [actionLoading, setActionLoading] = useState(false);
+  const [showRemarksModal, setShowRemarksModal] = useState(false);
+  const [remarks, setRemarks] = useState("");
+  const [modalAction, setModalAction] = useState("");
+  const [modalRequestId, setModalRequestId] = useState(null);
 
   const fetchRequests = async () => {
-    setLoading(true);
-    setError("");
     try {
-      const response = await axios.get(
-        `http://localhost:5000/api/studentservice/${activeTab}-requests`,
-        axiosConfig
-      );
-      setRequests(response.data.data || []);
+      setLoading(true);
+      setError("");
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      let endpoint = "";
+      if (activeTab === "pending") {
+        endpoint = "/api/studentservice/pending-requests";
+      } else if (activeTab === "approved") {
+        endpoint = "/api/studentservice/approved-requests";
+      } else if (activeTab === "rejected") {
+        endpoint = "/api/studentservice/rejected-requests";
+      }
+
+      const response = await axios.get(apiUrl + endpoint, {
+        headers: {
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (response.data.success) {
+        setRequests(response.data.data || []);
+      } else {
+        setError(response.data.message || "❌ Failed to fetch requests");
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to fetch requests");
-      setRequests([]);
+      setError(err.response?.data?.message || "❌ Failed to fetch requests");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -38,57 +59,93 @@ export default function ServiceDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-
   const handleApprove = async () => {
-    if (!modal.remarks.trim()) {
-      setError("Remarks are required for approval");
+    if (!remarks.trim()) {
+      setError("❌ Remarks are required for approval");
       return;
     }
     try {
-      await axios.put(
-        `http://localhost:5000/api/studentservice/requests/${modal.requestId}/approve`,
-        { remarks: modal.remarks },
-        axiosConfig
+      setActionLoading(true);
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      const response = await axios.put(
+        `${apiUrl}/api/studentservice/requests/${modalRequestId}/approve`,
+        { remarks },
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
       );
-      setSuccess("Request approved successfully!");
-      setModal({ show: false, type: "", requestId: "", remarks: "" });
-      fetchRequests();
+
+      if (response.data.success) {
+        setSuccess("✅ Request approved successfully!");
+        setShowRemarksModal(false);
+        setRemarks("");
+        setModalRequestId(null);
+        setTimeout(() => setSuccess(""), 3000);
+        fetchRequests();
+      } else {
+        setError(response.data.message || "❌ Failed to approve request");
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to approve request");
+      setError(err.response?.data?.message || "❌ Failed to approve request");
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleReject = async () => {
-    if (!modal.remarks.trim()) {
-      setError("Remarks are required for rejection");
+    if (!remarks.trim()) {
+      setError("❌ Remarks are required for rejection");
       return;
     }
     try {
-      await axios.put(
-        `http://localhost:5000/api/studentservice/requests/${modal.requestId}/reject`,
-        { remarks: modal.remarks },
-        axiosConfig
+      setActionLoading(true);
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      const response = await axios.put(
+        `${apiUrl}/api/studentservice/requests/${modalRequestId}/reject`,
+        { remarks },
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
       );
-      setSuccess("Request rejected successfully!");
-      setModal({ show: false, type: "", requestId: "", remarks: "" });
-      fetchRequests();
+
+      if (response.data.success) {
+        setSuccess("✅ Request rejected successfully!");
+        setShowRemarksModal(false);
+        setRemarks("");
+        setModalRequestId(null);
+        setTimeout(() => setSuccess(""), 3000);
+        fetchRequests();
+      } else {
+        setError(response.data.message || "❌ Failed to reject request");
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to reject request");
+      setError(err.response?.data?.message || "❌ Failed to reject request");
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const openModal = (type, requestId) => {
+  const openModal = (action, requestId) => {
     setError("");
     setSuccess("");
-    setModal({ show: true, type, requestId, remarks: "" });
+    setModalAction(action);
+    setModalRequestId(requestId);
+    setRemarks("");
+    setShowRemarksModal(true);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("ssd_user");
-    localStorage.removeItem("token");
+    logout();
     navigate("/");
   };
 
@@ -97,9 +154,9 @@ export default function ServiceDashboard() {
       {/* Sidebar */}
       <aside className="sd-sidebar">
         <div className="sd-profile">
-          <div className="sd-avatar">{user.email?.[0]?.toUpperCase() || "S"}</div>
+          <div className="sd-avatar">{user?.email?.[0]?.toUpperCase() || "S"}</div>
           <div>
-            <h3 className="sd-name">{user.email?.split("@")[0]}</h3>
+            <h3 className="sd-name">{user?.email?.split("@")[0]}</h3>
             <p className="sd-small">Student Service Dept</p>
           </div>
         </div>
@@ -162,8 +219,8 @@ export default function ServiceDashboard() {
               <tbody>
                 {requests.map((req) => (
                   <tr key={req._id}>
-                    <td><strong>{req.student?.name || "N/A"}</strong></td>
-                    <td>{req.student?.rollNumber || "N/A"}</td>
+                    <td><strong>{req.student_id?.full_name || "N/A"}</strong></td>
+                    <td>{req.student_id?.sap || "N/A"}</td>
                     <td>{new Date(req.createdAt).toLocaleDateString()}</td>
                     <td>
                       <span className={`status-badge status-${req.status}`}>
@@ -172,7 +229,7 @@ export default function ServiceDashboard() {
                     </td>
                     <td><span className="remarks-text">{req.remarks || "—"}</span></td>
                     <td className="actions-cell">
-                      {req.status === "pending" && (
+                      {req.status === "Pending" && (
                         <>
                           <button
                             className="btn btn-approve"
@@ -188,7 +245,7 @@ export default function ServiceDashboard() {
                           </button>
                         </>
                       )}
-                      {req.status !== "pending" && <span>—</span>}
+                      {req.status !== "Pending" && <span>—</span>}
                     </td>
                   </tr>
                 ))}
@@ -199,11 +256,11 @@ export default function ServiceDashboard() {
       </div>
 
       {/* Modal */}
-      {modal.show && (
-        <div className="modal-overlay" onClick={() => setModal({ ...modal, show: false })}>
+      {showRemarksModal && (
+        <div className="modal-overlay" onClick={() => setShowRemarksModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2 className="modal-title">
-              {modal.type === "approve" ? "Approve Request" : "Reject Request"}
+              {modalAction === "approve" ? "Approve Request" : "Reject Request"}
             </h2>
             <div className="modal-body">
               <label>
@@ -211,23 +268,26 @@ export default function ServiceDashboard() {
               </label>
               <textarea
                 className="modal-textarea"
-                value={modal.remarks}
-                onChange={(e) => setModal({ ...modal, remarks: e.target.value })}
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
                 placeholder="Enter remarks..."
+                disabled={actionLoading}
               />
             </div>
             <div className="modal-actions">
               <button
                 className="btn btn-cancel"
-                onClick={() => setModal({ ...modal, show: false })}
+                onClick={() => setShowRemarksModal(false)}
+                disabled={actionLoading}
               >
                 Cancel
               </button>
               <button
-                className={`btn ${modal.type === "approve" ? "btn-approve" : "btn-reject"}`}
-                onClick={modal.type === "approve" ? handleApprove : handleReject}
+                className={`btn ${modalAction === "approve" ? "btn-approve" : "btn-reject"}`}
+                onClick={modalAction === "approve" ? handleApprove : handleReject}
+                disabled={actionLoading}
               >
-                {modal.type === "approve" ? "Approve" : "Reject"}
+                {actionLoading ? "Processing..." : (modalAction === "approve" ? "Approve" : "Reject")}
               </button>
             </div>
           </div>
