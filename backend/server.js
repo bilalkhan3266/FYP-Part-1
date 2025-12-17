@@ -937,6 +937,85 @@ app.post('/api/clearance-requests/resubmit', verifyToken, async (req, res) => {
 // HOD CLEARANCE APPROVAL ROUTES
 // --------------------
 
+// Resubmit clearance to a specific department
+app.post('/api/clearance-requests/resubmit-department', verifyToken, async (req, res) => {
+  try {
+    const { department_name } = req.body;
+    console.log('🔄 Resubmitting clearance to department:', department_name, 'for student:', req.user.id);
+
+    if (!department_name) {
+      return res.status(400).json({
+        success: false,
+        message: 'Department name is required'
+      });
+    }
+
+    // Find the rejected request for this specific department
+    const rejectedRecord = await DepartmentClearance.findOne({
+      student_id: req.user.id,
+      department_name: department_name,
+      status: 'Rejected'
+    });
+
+    if (!rejectedRecord) {
+      return res.status(400).json({
+        success: false,
+        message: `No rejected request found for ${department_name}`
+      });
+    }
+
+    // Check if student already has a pending request for this department
+    const pendingRecord = await DepartmentClearance.findOne({
+      student_id: req.user.id,
+      department_name: department_name,
+      status: 'Pending'
+    });
+
+    if (pendingRecord) {
+      return res.status(400).json({
+        success: false,
+        message: `You already have a pending request with ${department_name}`
+      });
+    }
+
+    // Update the rejected record back to Pending for this specific department
+    const updateResult = await DepartmentClearance.updateOne(
+      { 
+        student_id: req.user.id, 
+        department_name: department_name,
+        status: 'Rejected' 
+      },
+      {
+        $set: {
+          status: 'Pending',
+          remarks: '',
+          approved_by: '',
+          approved_at: null,
+          createdAt: new Date()
+        }
+      }
+    );
+
+    console.log(`✅ Updated ${department_name} record to Pending for student ${req.user.id}`);
+
+    res.json({
+      success: true,
+      message: `Clearance request resubmitted to ${department_name}`,
+      details: {
+        department: department_name,
+        status: 'Pending',
+        timestamp: new Date()
+      }
+    });
+  } catch (err) {
+    console.error('❌ Resubmit Department Error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to resubmit clearance request: ' + err.message
+    });
+  }
+});
+
 // Get all clearance requests ready for HOD approval
 app.get('/api/hod/pending-approvals', verifyToken, async (req, res) => {
   try {

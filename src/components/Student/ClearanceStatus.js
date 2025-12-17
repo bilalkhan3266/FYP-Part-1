@@ -119,6 +119,43 @@ export default function ClearanceStatus() {
     }
   };
 
+  const handleResubmitToDepartment = async (departmentName) => {
+    try {
+      setResubmitting(true);
+      setError("");
+      setSuccess("");
+
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      console.log('🔄 Resubmitting to', departmentName);
+      const response = await axios.post(
+        apiUrl + "/api/clearance-requests/resubmit-department",
+        { department_name: departmentName },
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setSuccess(`✅ Clearance request resubmitted to ${departmentName}!`);
+        setTimeout(() => {
+          fetchClearanceStatus();
+        }, 1000);
+      } else {
+        setError(response.data.message || "Failed to resubmit");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setError(err.response?.data?.message || "Failed to resubmit request");
+    } finally {
+      setResubmitting(false);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -315,6 +352,16 @@ export default function ClearanceStatus() {
                             Approved: {new Date(deptStatus.approved_at).toLocaleDateString()}
                           </small>
                         </div>
+                      )}
+
+                      {deptStatus.status === 'Rejected' && (
+                        <button
+                          onClick={() => handleResubmitToDepartment(dept)}
+                          disabled={resubmitting}
+                          className="dept-resubmit-btn"
+                        >
+                          {resubmitting ? "🔄 Resubmitting..." : "🔁 Resubmit to This Department"}
+                        </button>
                       )}
                     </>
                   ) : (
