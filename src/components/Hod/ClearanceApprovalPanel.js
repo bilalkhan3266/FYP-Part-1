@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import "./ClearanceApprovalPanel.css";
 
 export default function ClearanceApprovalPanel() {
-  const { user } = useAuthContext();
+  const { user, logout } = useAuthContext();
+  const navigate = useNavigate();
   const [pendingApprovals, setPendingApprovals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -44,6 +46,11 @@ export default function ClearanceApprovalPanel() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
   };
 
   const handleApproveClick = (requestId) => {
@@ -106,6 +113,50 @@ export default function ClearanceApprovalPanel() {
 
   return (
     <div className="clearance-approval-page">
+      {/* Sidebar */}
+      <aside className="cap-sidebar">
+        <div className="cap-profile">
+          <div className="cap-avatar">{displayName.charAt(0).toUpperCase()}</div>
+          <div>
+            <h3 className="cap-name">{displayName}</h3>
+            <p className="cap-small">Head of Department</p>
+            <p className="cap-small">Riphah International University</p>
+          </div>
+        </div>
+
+        <nav className="cap-nav">
+          <button
+            onClick={() => navigate("/hod-dashboard")}
+            className="cap-nav-btn"
+          >
+            📊 Dashboard
+          </button>
+          <button
+            onClick={() => navigate("/hod-clearance-approvals")}
+            className="cap-nav-btn active"
+          >
+            🎓 Clearance Approvals
+          </button>
+          <button
+            onClick={() => navigate("/hod-messages")}
+            className="cap-nav-btn"
+          >
+            💬 Messages
+          </button>
+          <button
+            onClick={() => navigate("/hod-edit-profile")}
+            className="cap-nav-btn"
+          >
+            📝 Edit Profile
+          </button>
+          <button onClick={handleLogout} className="cap-nav-btn logout">
+            🚪 Logout
+          </button>
+        </nav>
+
+        <footer className="cap-footer">© 2025 Riphah</footer>
+      </aside>
+
       <main className="cap-main">
         <header className="cap-header">
           <h1>🎓 Student Clearance Final Approval</h1>

@@ -1,15 +1,113 @@
 /* ClearanceApprovalPanel.css */
 
 .clearance-approval-page {
+  display: flex;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 40px 20px;
+  background: #f5f7fa;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* ---- Sidebar ---- */
+.cap-sidebar {
+  width: 280px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30px 20px;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.cap-profile {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  align-items: flex-start;
+}
+
+.cap-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.cap-name {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cap-small {
+  margin: 3px 0;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.cap-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cap-nav-btn {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.cap-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(4px);
+}
+
+.cap-nav-btn.active {
+  background: rgba(255, 255, 255, 0.3);
+  border-left: 3px solid white;
+  padding-left: 13px;
+}
+
+.cap-nav-btn.logout {
+  margin-top: auto;
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.cap-nav-btn.logout:hover {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+.cap-footer {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 12px;
+  text-align: center;
+  opacity: 0.8;
+}
+
+/* ---- Main Content ---- */
 .cap-main {
-  max-width: 1200px;
-  margin: 0 auto;
+  margin-left: 280px;
+  padding: 40px 20px;
+  flex: 1;
 }
 
 .cap-header {
@@ -442,5 +540,29 @@
   .modal-content {
     width: 95%;
     max-width: none;
+  }
+
+  .cap-main {
+    margin-left: 0;
+  }
+
+  .cap-sidebar {
+    width: 100%;
+    position: relative;
+    height: auto;
+    padding: 20px;
+  }
+
+  .cap-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .cap-nav-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px 12px;
+    font-size: 12px;
   }
 }
