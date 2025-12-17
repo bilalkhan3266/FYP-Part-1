@@ -2,15 +2,17 @@
 :root {
   --primary: #003366;
   --primary-2: #00509e;
-  --bg: #f4f7fc;
-  --card: #fff;
+  --bg: #f0f4f9;
+  --card: #ffffff;
   --muted: #6b7280;
   --success: #16a34a;
   --pending: #f59e0b;
   --danger: #ef4444;
   --na: #9ca3af;
-  --radius: 12px;
-  --shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+  --radius: 16px;
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  --shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 20px 50px rgba(15, 23, 42, 0.15);
 }
 
 /* ---- ANIMATIONS ---- */
@@ -167,23 +169,177 @@ body {
 .sd-main {
   margin-left: 280px;
   flex: 1;
-  padding: 40px;
+  padding: 45px;
+  background: linear-gradient(135deg, #f0f4f9 0%, #e8ecf1 100%);
+  min-height: 100vh;
 }
 
 .sd-header {
-  margin-bottom: 40px;
+  margin-bottom: 50px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 35px;
+  border-radius: 18px;
+  color: white;
+  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.sd-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
 }
 
 .sd-header h1 {
-  font-size: 28px;
-  color: #1a1a1a;
-  margin: 0 0 10px 0;
+  font-size: 32px;
+  color: white;
+  margin: 0 0 12px 0;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  position: relative;
+  z-index: 1;
 }
 
 .sd-header p {
-  color: #666;
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
+  position: relative;
+  z-index: 1;
+  font-weight: 500;
+}
+
+/* ============================================
+   PROGRESS INDICATORS
+   ============================================ */
+
+.progress-section {
+  background: white;
+  padding: 28px;
+  border-radius: 16px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+  animation: slideInDown 0.4s ease-out;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.progress-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.progress-percentage {
+  font-size: 24px;
+  font-weight: 800;
+  color: #667eea;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 12px;
+  background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 100%);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  margin-bottom: 24px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 12px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.progress-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+.progress-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.progress-stat:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.progress-stat-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7280;
+}
+
+.progress-stat-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.progress-stat.approved .progress-stat-value {
+  color: #16a34a;
+}
+
+.progress-stat.pending .progress-stat-value {
+  color: #f59e0b;
+}
+
+.progress-stat.rejected .progress-stat-value {
+  color: #ef4444;
 }
 
 /* ============================================
@@ -191,18 +347,23 @@ body {
    ============================================ */
 
 .alert {
-  padding: 15px 20px;
-  border-radius: 10px;
-  margin-bottom: 25px;
+  padding: 18px 24px;
+  border-radius: 14px;
+  margin-bottom: 28px;
   font-size: 14px;
-  font-weight: 500;
-  animation: slideDown 0.3s ease-out;
+  font-weight: 600;
+  animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-left: 5px solid;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-15px);
   }
   to {
     opacity: 1;
@@ -211,15 +372,26 @@ body {
 }
 
 .alert-error {
-  background: #fee;
-  color: #c33;
-  border: 1px solid #fcc;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  color: #991b1b;
+  border-left-color: #ef4444;
+}
+
+.alert-error::before {
+  content: '⚠️';
+  font-size: 18px;
 }
 
 .alert-success {
-  background: #efe;
-  color: #3c3;
-  border: 1px solid #cfc;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  color: #166534;
+  border-left-color: #16a34a;
+}
+
+.alert-success::before {
+  content: '✓';
+  font-size: 18px;
+  font-weight: 700;
 }
 
 /* ============================================
@@ -456,26 +628,61 @@ body {
   display: flex;
   gap: 16px;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
   flex-wrap: wrap;
+  background: white;
+  padding: 20px 28px;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+  animation: slideInDown 0.4s ease-out;
 }
 
 .refresh-btn {
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
   color: white;
   border: none;
-  padding: 11px 22px;
-  border-radius: 8px;
+  padding: 12px 28px;
+  border-radius: 12px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
-  transition: all 0.25s ease;
-  flex: 1 1 auto;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+  min-width: 160px;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.refresh-btn::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -100%;
+  width: 100%;
+  height: 104%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.refresh-btn:hover:not(:disabled)::before {
+  left: 100%;
 }
 
 .refresh-btn:hover:not(:disabled) {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(245, 158, 11, 0.35);
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+.refresh-btn:active:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
 }
 
 .refresh-btn:disabled {
@@ -484,25 +691,39 @@ body {
 }
 
 .refresh-btn.refreshing {
-  animation: spin 1s linear infinite;
+  animation: spin 1.2s linear infinite;
 }
 
 .resubmit-btn {
-  background: linear-gradient(90deg, #ef4444, #f87171);
+  background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
   color: white;
   border: none;
-  padding: 11px 22px;
-  border-radius: 8px;
+  padding: 12px 28px;
+  border-radius: 12px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
-  transition: all 0.25s ease;
-  flex: 1 1 auto;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+  min-width: 160px;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.25);
+  position: relative;
+  overflow: hidden;
 }
 
 .resubmit-btn:hover:not(:disabled) {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(239, 68, 68, 0.35);
+  background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+}
+
+.resubmit-btn:active:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
 .resubmit-btn:disabled {
@@ -511,7 +732,7 @@ body {
 }
 
 .resubmit-btn.resubmitting {
-  animation: spin 1s linear infinite;
+  animation: spin 1.2s linear infinite;
 }
 
 /* ---- Department Resubmit Button ---- */
@@ -519,21 +740,23 @@ body {
   background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
   color: white;
   border: none;
-  padding: 12px 16px;
-  border-radius: 8px;
+  padding: 14px 18px;
+  border-radius: 12px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 13px;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  margin-top: 12px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 14px;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
   position: relative;
   overflow: hidden;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
 
 .dept-resubmit-btn::before {
@@ -543,8 +766,8 @@ body {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s ease;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.6s ease;
 }
 
 .dept-resubmit-btn:hover:not(:disabled)::before {
@@ -552,14 +775,14 @@ body {
 }
 
 .dept-resubmit-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(245, 158, 11, 0.5);
   background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
 }
 
 .dept-resubmit-btn:active:not(:disabled) {
-  transform: translateY(0px);
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
 }
 
 .dept-resubmit-btn:disabled {
@@ -572,15 +795,21 @@ body {
   font-size: 16px;
   display: inline-block;
   animation: none;
+  transition: transform 0.3s ease;
 }
 
 .dept-resubmit-btn:disabled .btn-icon {
-  animation: spin 1s linear infinite;
+  animation: spin 1.2s linear infinite;
+}
+
+.dept-resubmit-btn:hover:not(:disabled) .btn-icon {
+  transform: scale(1.1);
 }
 
 .btn-text {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
 
 /* ---- Modal Styles ---- */
@@ -893,45 +1122,180 @@ body {
 
 /* ---- Status Grid & Cards Enhancements ---- */
 .status-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
   width: 100%;
   padding: 0;
-}
-
-/* Ensure each status card has consistent flex sizing */
-[class*="status-card"],
-.status-header,
-.status-remarks,
-.status-date,
-.status-pending {
   animation: slideInDown 0.4s ease-out;
 }
 
+/* Professional Status Card Styling */
+.status-card {
+  background: white;
+  border-radius: 18px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  border: 2px solid #f0f0f0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  animation: slideInDown 0.5s ease-out backwards;
+}
+
+.status-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.status-card:hover::before {
+  transform: scaleX(1);
+}
+
+.status-card:hover {
+  transform: translateY(-8px);
+  border-color: #e5e7eb;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Status Card Header */
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f3f4f6;
+  animation: slideInDown 0.5s ease-out 0.05s backwards;
+}
+
+.status-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: #1f2937;
+  letter-spacing: -0.3px;
+  flex: 1;
+}
+
+/* Status Badge - Professional Styling */
+.status-badge {
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  animation: slideInDown 0.5s ease-out 0.1s backwards;
+}
+
+.status-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Status Remarks */
+.status-remarks {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-left: 4px solid #f59e0b;
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #374151;
+  animation: slideInDown 0.5s ease-out 0.15s backwards;
+}
+
+.status-remarks strong {
+  color: #1f2937;
+  font-weight: 700;
+}
+
+/* Status Date */
+.status-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+  border-radius: 8px;
+  border-left: 3px solid #0ea5e9;
+  animation: slideInDown 0.5s ease-out 0.2s backwards;
+}
+
+.status-date::before {
+  content: '📅';
+  font-size: 14px;
+}
+
+/* Status Pending Message */
+.status-pending {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #d97706;
+  font-weight: 600;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #fffbf0 0%, #fef9e7 100%);
+  border-radius: 10px;
+  border-left: 3px solid #f59e0b;
+  animation: slideInDown 0.5s ease-out 0.25s backwards;
+}
+
+.status-pending::before {
+  content: '⏳';
+  font-size: 16px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
 /* Stagger card animations */
+.status-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
 .status-card:nth-child(2) {
-  animation-delay: 0.1s;
+  animation-delay: 0.15s;
 }
 
 .status-card:nth-child(3) {
-  animation-delay: 0.2s;
+  animation-delay: 0.25s;
 }
 
 .status-card:nth-child(4) {
-  animation-delay: 0.3s;
+  animation-delay: 0.35s;
 }
 
 .status-card:nth-child(5) {
-  animation-delay: 0.4s;
+  animation-delay: 0.45s;
 }
 
 .status-card:nth-child(6) {
-  animation-delay: 0.5s;
+  animation-delay: 0.55s;
 }
 
 .status-card:nth-child(7) {
-  animation-delay: 0.6s;
+  animation-delay: 0.65s;
 }
 
 /* ---- Status Info Section ---- */
