@@ -1049,6 +1049,38 @@ app.post('/api/clearance-requests/resubmit-department', verifyToken, async (req,
   }
 });
 
+// Diagnostic endpoint - Check all records for a student
+app.get('/api/diagnostic/my-records', verifyToken, async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    console.log('🔍 Diagnostic: Checking records for student:', studentId);
+
+    const records = await DepartmentClearance.find({ student_id: studentId }).sort({ department_name: 1 });
+
+    const summary = records.map(r => ({
+      department: r.department_name,
+      status: r.status,
+      remarks: r.remarks || 'N/A',
+      hasRejectedRecord: r.status === 'Rejected',
+      canResubmit: r.status === 'Rejected'
+    }));
+
+    res.json({
+      success: true,
+      totalRecords: records.length,
+      studentId,
+      records: summary,
+      rawRecords: records
+    });
+  } catch (err) {
+    console.error('❌ Diagnostic Error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error: ' + err.message
+    });
+  }
+});
+
 // Get all clearance requests ready for HOD approval
 app.get('/api/hod/pending-approvals', verifyToken, async (req, res) => {
   try {
