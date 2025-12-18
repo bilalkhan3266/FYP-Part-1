@@ -163,6 +163,9 @@ export default function AdminEditProfile() {
         {success && <div className="alert alert-success">{success}</div>}
 
         <form className="admin-edit-form" onSubmit={handleSubmit}>
+          <div className="form-logo">
+            <img src="/logo192.png" alt="Riphah Monogram" />
+          </div>
           <fieldset>
             <legend>📋 Personal Information</legend>
 
@@ -295,17 +298,17 @@ export default function AdminEditProfile() {
 const styles = `
   .admin-edit-form {
     background: white;
-    padding: 32px;
+    padding: 25px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    max-width: 600px;
+    max-width: 1100px;
   }
 
   fieldset {
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 24px;
+    padding: 15px;
+    margin-bottom: 15px;
   }
 
   legend {
@@ -316,7 +319,7 @@ const styles = `
   }
 
   .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
   }
 
   .form-group label {
@@ -352,7 +355,7 @@ const styles = `
   .form-actions {
     display: flex;
     gap: 12px;
-    margin-top: 32px;
+    margin-top: 20px;
   }
 
   .btn-submit,
