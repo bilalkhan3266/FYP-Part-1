@@ -6,6 +6,7 @@ const AdminMessage = require('../models/AdminMessage');
 const DepartmentStats = require('../models/DepartmentStats');
 const User = require('../models/User');
 const Message = require('../models/Message');
+const Submission = require('../models/Submission');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_in_production_123456';
 
