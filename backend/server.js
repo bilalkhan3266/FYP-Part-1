@@ -1911,12 +1911,17 @@ app.get('/api/my-messages', verifyToken, async (req, res) => {
       // Staff see:
       // 1. Messages FROM students to their department
       // 2. Messages they SENT to students
-      // 3. Admin broadcasts to their role
+      // 3. Admin messages sent to their role (where recipient_department matches their role or department)
       query = {
         $or: [
-          { recipient_department: userDept, sender_role: 'student' },  // Messages FROM students
-          { sender_id: userId },                                        // Messages they sent
-          { messageType: 'admin-broadcast', recipient_role: userRole }  // Admin broadcasts to their role
+          // Messages from students targeting their department
+          { recipient_department: userDept, sender_role: 'student' },
+          { recipient_department: { $regex: `^${userDept}$`, $options: 'i' }, sender_role: 'student' },
+          // Messages they sent
+          { sender_id: userId },
+          // Admin messages to their role (message_type = 'notification' and recipient_department = their role)
+          { recipient_department: userRole, sender_role: 'admin', message_type: 'notification' },
+          { recipient_department: { $regex: `^${userRole}$`, $options: 'i' }, sender_role: 'admin', message_type: 'notification' }
         ]
       };
     }
@@ -1924,6 +1929,7 @@ app.get('/api/my-messages', verifyToken, async (req, res) => {
     console.log('📨 Fetching messages for:', userRole, '- Department:', userDept);
     const messages = await Message.find(query).sort({ createdAt: -1 }).limit(100);
     console.log(`✅ Found ${messages.length} messages`);
+    console.log('📨 Query used:', JSON.stringify(query, null, 2));
 
     res.status(200).json({
       success: true,
@@ -2010,12 +2016,24 @@ app.get('/api/unread-count', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const userRole = req.user.role;
+    const userDept = req.user.department;
 
     let query = {};
     if (userRole === 'student') {
       query = { recipient_id: userId, is_read: false };
     } else {
-      query = { recipient_department: req.user.department, is_read: false };
+      // Staff see unread messages from:
+      // 1. Messages directed to their department (from students)
+      // 2. Admin messages directed to their role
+      query = {
+        $or: [
+          { recipient_department: userDept, is_read: false, sender_role: 'student' },
+          { recipient_department: { $regex: `^${userDept}$`, $options: 'i' }, is_read: false, sender_role: 'student' },
+          { recipient_department: userRole, is_read: false, sender_role: 'admin', message_type: 'notification' },
+          { recipient_department: { $regex: `^${userRole}$`, $options: 'i' }, is_read: false, sender_role: 'admin', message_type: 'notification' }
+        ],
+        is_read: false
+      };
     }
 
     const count = await Message.countDocuments(query);

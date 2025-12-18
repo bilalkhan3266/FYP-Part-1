@@ -4,7 +4,7 @@ import { useAuthContext } from "../../contexts/AuthContext";
 import axios from "axios";
 import "../FeeDepartment/FeeEditProfile.css";
 
-export default function LibraryEditProfile() {
+export default function LaboratoryEditProfile() {
   const { user, setUser } = useAuthContext();
   const navigate = useNavigate();
 
@@ -92,7 +92,7 @@ export default function LibraryEditProfile() {
         localStorage.setItem("user", JSON.stringify(updatedUser));
 
         setTimeout(() => {
-          navigate("/library-dashboard");
+          navigate("/laboratory-dashboard");
         }, 1500);
       } else {
         setError(response.data.message || "❌ Failed to update profile");
@@ -114,23 +114,23 @@ export default function LibraryEditProfile() {
             {user?.full_name ? user.full_name.charAt(0).toUpperCase() : "L"}
           </div>
           <div>
-            <h3 className="sd-name">{user?.full_name || "Library"}</h3>
+            <h3 className="sd-name">{user?.full_name || "Laboratory"}</h3>
             <p className="sd-small">
-              {user?.sap || "N/A"} • {user?.department || "Library"}
+              {user?.sap || "N/A"} • {user?.department || "Laboratory"}
             </p>
             <p className="sd-small">Riphah International University</p>
           </div>
         </div>
 
         <nav className="sd-nav">
-          <button className="sd-nav-btn" onClick={() => navigate("/library-dashboard")}>
+          <button className="sd-nav-btn" onClick={() => navigate("/laboratory-dashboard")}>
             🏠 Dashboard
           </button>
           <button className="sd-nav-btn active">📝 Edit Profile</button>
-          <button className="sd-nav-btn" onClick={() => navigate("/library-messages")}>
+          <button className="sd-nav-btn" onClick={() => navigate("/laboratory-messages")}>
             💬 Messages
           </button>
-          <button className="sd-nav-btn" onClick={() => navigate("/library-dashboard")}>
+          <button className="sd-nav-btn" onClick={() => navigate("/laboratory-dashboard")}>
             🚪 Back
           </button>
         </nav>
@@ -194,7 +194,7 @@ export default function LibraryEditProfile() {
             <button
               type="button"
               className="cancel-btn"
-              onClick={() => navigate("/library-dashboard")}
+              onClick={() => navigate("/laboratory-dashboard")}
             >
               Cancel
             </button>

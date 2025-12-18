@@ -1,33 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import axios from "axios";
-import "../Student/EditProfile.css";
+import "../FeeDepartment/FeeEditProfile.css";
 
 export default function TransportEditProfile() {
-  const { user, logout } = useAuthContext();
+  const { user, setUser } = useAuthContext();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    full_name: user?.full_name || "",
-    email: user?.email || "",
-    phone: user?.phone || "",
-    department: user?.department || "",
-    old_password: "",
-    new_password: "",
-    confirm_password: ""
+  const [form, setForm] = useState({
+    full_name: "",
+    email: "",
+    password: "",
+    confirmPassword: ""
   });
 
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setForm({
+        full_name: user.full_name || "",
+        email: user.email || "",
+        password: "",
+        confirmPassword: ""
+      });
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setError("");
   };
 
   const handleSubmit = async (e) => {
@@ -35,42 +41,40 @@ export default function TransportEditProfile() {
     setError("");
     setSuccess("");
 
-    // Validate passwords if changing password
-    if (formData.new_password || formData.old_password || formData.confirm_password) {
-      if (!formData.old_password) {
-        setError("❌ Current password is required to change password");
-        return;
-      }
-      if (formData.new_password.length < 6) {
-        setError("❌ New password must be at least 6 characters");
-        return;
-      }
-      if (formData.new_password !== formData.confirm_password) {
-        setError("❌ Passwords do not match");
-        return;
-      }
+    // Validation
+    if (!form.full_name || !form.email) {
+      setError("❌ Full name and email are required");
+      return;
+    }
+
+    if (form.password && form.password.length < 6) {
+      setError("❌ Password must be at least 6 characters");
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setError("❌ Passwords do not match");
+      return;
     }
 
     setLoading(true);
+
     try {
       const token = localStorage.getItem("token");
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-      const payload = {
-        full_name: formData.full_name,
-        email: formData.email,
-        phone: formData.phone,
-        department: formData.department
+      const updateData = {
+        full_name: form.full_name.trim(),
+        email: form.email.trim()
       };
 
-      if (formData.old_password) {
-        payload.old_password = formData.old_password;
-        payload.new_password = formData.new_password;
+      if (form.password) {
+        updateData.password = form.password;
       }
 
       const response = await axios.put(
         apiUrl + "/api/update-profile",
-        payload,
+        updateData,
         {
           headers: {
             Authorization: "Bearer " + token,
@@ -81,63 +85,53 @@ export default function TransportEditProfile() {
 
       if (response.data.success) {
         setSuccess("✅ Profile updated successfully!");
-        setFormData(prev => ({
-          ...prev,
-          old_password: "",
-          new_password: "",
-          confirm_password: ""
-        }));
-        setTimeout(() => setSuccess(""), 3000);
+        
+        // Update user in context
+        const updatedUser = response.data.user;
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+
+        setTimeout(() => {
+          navigate("/transport-dashboard");
+        }, 1500);
+      } else {
+        setError(response.data.message || "❌ Failed to update profile");
       }
     } catch (err) {
-      console.error("Error:", err);
+      console.error("Update Profile Error:", err);
       setError(err.response?.data?.message || "❌ Failed to update profile");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
-  const displayName = user?.full_name || "Transport Staff";
-  const displaySap = user?.sap || "N/A";
-
   return (
-    <div className="student-dashboard-page">
+    <div className="edit-profile-page">
+      {/* SIDEBAR */}
       <aside className="sd-sidebar">
         <div className="sd-profile">
-          <div className="sd-avatar">{displayName.charAt(0).toUpperCase()}</div>
+          <div className="sd-avatar">
+            {user?.full_name ? user.full_name.charAt(0).toUpperCase() : "T"}
+          </div>
           <div>
-            <h3 className="sd-name">{displayName}</h3>
-            <p className="sd-small">{displaySap} • Transport</p>
+            <h3 className="sd-name">{user?.full_name || "Transport"}</h3>
+            <p className="sd-small">
+              {user?.sap || "N/A"} • {user?.department || "Transport"}
+            </p>
             <p className="sd-small">Riphah International University</p>
           </div>
         </div>
 
         <nav className="sd-nav">
-          <button
-            className="sd-nav-btn"
-            onClick={() => navigate("/transport-dashboard")}
-          >
-            📋 Dashboard
+          <button className="sd-nav-btn" onClick={() => navigate("/transport-dashboard")}>
+            🏠 Dashboard
           </button>
-          <button
-            className="sd-nav-btn"
-            onClick={() => navigate("/transport-messages")}
-          >
+          <button className="sd-nav-btn active">📝 Edit Profile</button>
+          <button className="sd-nav-btn" onClick={() => navigate("/transport-messages")}>
             💬 Messages
           </button>
-          <button
-            className="sd-nav-btn active"
-            onClick={() => navigate("/transport-edit-profile")}
-          >
-            📝 Edit Profile
-          </button>
-          <button className="sd-nav-btn logout" onClick={handleLogout}>
-            🚪 Logout
+          <button className="sd-nav-btn" onClick={() => navigate("/transport-dashboard")}>
+            🚪 Back
           </button>
         </nav>
 
@@ -145,110 +139,57 @@ export default function TransportEditProfile() {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="sd-main">
-        <header className="sd-header">
-          <h1>Edit Profile</h1>
-          <p>Update your transport profile information and password</p>
-        </header>
-
-        {error && <div className="alert alert-error">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
-
+      <main className="edit-form-main">
         <form className="edit-form" onSubmit={handleSubmit}>
           <div className="form-logo">
             <img src="/logo192.png" alt="Riphah Monogram" />
           </div>
+          <h1>Edit Profile</h1>
 
-          <fieldset>
-            <legend>📋 Profile Information</legend>
+          {error && <div className="alert alert-error">{error}</div>}
+          {success && <div className="alert alert-success">{success}</div>}
 
-            <div className="form-group">
-              <label>Full Name *</label>
-              <input
-                type="text"
-                name="full_name"
-                value={formData.full_name}
-                onChange={handleChange}
-                placeholder="Your full name"
-                required
-              />
-            </div>
+          <label>Full Name *</label>
+          <input
+            type="text"
+            name="full_name"
+            value={form.full_name}
+            onChange={handleChange}
+            placeholder="Enter your full name"
+            required
+          />
 
-            <div className="form-group">
-              <label>Email Address *</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="your.email@riphah.edu.pk"
-                required
-              />
-            </div>
+          <label>Email *</label>
+          <input
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            placeholder="Enter your email"
+            required
+          />
 
-            <div className="form-group">
-              <label>Phone Number</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="Your phone number"
-              />
-            </div>
+          <label>New Password (leave blank to keep current)</label>
+          <input
+            type="password"
+            name="password"
+            value={form.password}
+            onChange={handleChange}
+            placeholder="Enter new password"
+          />
 
-            <div className="form-group">
-              <label>Department</label>
-              <input
-                type="text"
-                name="department"
-                value={formData.department}
-                disabled
-                placeholder="Department"
-              />
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend>🔐 Change Password (Optional)</legend>
-
-            <div className="form-group">
-              <label>Current Password</label>
-              <input
-                type="password"
-                name="old_password"
-                value={formData.old_password}
-                onChange={handleChange}
-                placeholder="Enter current password to change it"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>New Password</label>
-              <input
-                type="password"
-                name="new_password"
-                value={formData.new_password}
-                onChange={handleChange}
-                placeholder="Min 6 characters"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Confirm New Password</label>
-              <input
-                type="password"
-                name="confirm_password"
-                value={formData.confirm_password}
-                onChange={handleChange}
-                placeholder="Re-enter new password"
-              />
-            </div>
-          </fieldset>
+          <label>Confirm Password</label>
+          <input
+            type="password"
+            name="confirmPassword"
+            value={form.confirmPassword}
+            onChange={handleChange}
+            placeholder="Confirm new password"
+          />
 
           <div className="form-buttons">
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? "Updating..." : "✅ Update Profile"}
+            <button type="submit" className="save-btn" disabled={loading}>
+              {loading ? "Saving..." : "💾 Save Changes"}
             </button>
             <button
               type="button"
