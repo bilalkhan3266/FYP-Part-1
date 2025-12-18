@@ -10,8 +10,8 @@ const getDepartmentIcon = (departmentName) => {
     Library: "📚",
     Transport: "🚌",
     Laboratory: "🔬",
-    "Fee Department": "💰",
-    Coordination: "🎯",
+    "Fee & Dues": "💰",
+    "Coordination Office": "🎯",
     "Student Services": "🎓"
   };
   return icons[departmentName] || "📍";
@@ -23,8 +23,8 @@ const getDepartmentColor = (departmentName) => {
     Library: "#3b82f6",
     Transport: "#10b981",
     Laboratory: "#f59e0b",
-    "Fee Department": "#ef4444",
-    Coordination: "#8b5cf6",
+    "Fee & Dues": "#ef4444",
+    "Coordination Office": "#8b5cf6",
     "Student Services": "#ec4899"
   };
   return colors[departmentName] || "#6b7280";

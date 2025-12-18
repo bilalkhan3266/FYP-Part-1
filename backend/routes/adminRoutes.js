@@ -353,6 +353,7 @@ router.get('/messages', verifyToken, verifyAdmin, async (req, res) => {
 /**
  * GET /api/admin/department-stats
  * Get statistics for all departments (real-time progress tracking)
+ * Calculates stats directly from Submission collection for real-time data
  */
 router.get('/department-stats', verifyToken, verifyAdmin, async (req, res) => {
   try {
@@ -360,69 +361,107 @@ router.get('/department-stats', verifyToken, verifyAdmin, async (req, res) => {
       { name: 'Library', role: 'library' },
       { name: 'Transport', role: 'transport' },
       { name: 'Laboratory', role: 'laboratory' },
-      { name: 'Fee Department', role: 'feedepartment' },
-      { name: 'Coordination', role: 'coordination' },
+      { name: 'Fee & Dues', role: 'feedepartment' },
+      { name: 'Coordination Office', role: 'coordination' },
       { name: 'Student Services', role: 'studentservice' }
     ];
 
-    let stats = await DepartmentStats.find({
-      departmentName: { $in: departments.map(d => d.name) }
-    });
-
-    // If no stats exist, initialize them
-    if (stats.length === 0) {
-      const initialStats = departments.map(dept => ({
-        departmentName: dept.name,
-        totalRequests: 0,
-        approvedRequests: 0,
-        rejectedRequests: 0,
-        pendingRequests: 0
-      }));
-
-      stats = await DepartmentStats.insertMany(initialStats);
-    }
-
-    // Get real-time message counts per department (case-insensitive)
-    const messageCounts = await Promise.all(
-      departments.map(async (dept) => {
-        const count = await Message.countDocuments({
-          recipient_department: new RegExp(`^${dept.role}$`, 'i'),  // Case-insensitive match
-          message_type: { $in: ['notification', 'reminder'] }
-        });
-        return {
-          departmentName: dept.name,
-          messageCount: count
-        };
-      })
-    );
+    // Get real-time stats directly from Submission collection using aggregation pipeline
+    const submissionStats = await Submission.aggregate([
+      {
+        $group: {
+          _id: '$department',
+          totalRequests: { $sum: 1 },
+          approved: { $sum: { $cond: [{ $eq: ['$status', 'approved'] }, 1, 0] } },
+          rejected: { $sum: { $cond: [{ $eq: ['$status', 'rejected'] }, 1, 0] } },
+          pending: { $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] } },
+          inReview: { $sum: { $cond: [{ $eq: ['$status', 'in_review'] }, 1, 0] } }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          department: '$_id',
+          totalRequests: 1,
+          approved: 1,
+          rejected: 1,
+          pending: 1,
+          inReview: 1
+        }
+      },
+      { $sort: { department: 1 } }
+    ]);
 
     // Create a map for quick lookup
-    const messageCountMap = {};
-    messageCounts.forEach(mc => {
-      messageCountMap[mc.departmentName] = mc.messageCount;
+    const statsMap = {};
+    submissionStats.forEach(stat => {
+      statsMap[stat.department] = stat;
     });
 
-    // Calculate overall stats
-    const overallStats = {
-      totalRequests: stats.reduce((sum, s) => sum + s.totalRequests, 0),
-      totalApproved: stats.reduce((sum, s) => sum + s.approvedRequests, 0),
-      totalRejected: stats.reduce((sum, s) => sum + s.rejectedRequests, 0),
-      totalPending: stats.reduce((sum, s) => sum + s.pendingRequests, 0),
-      totalMessages: messageCounts.reduce((sum, mc) => sum + mc.messageCount, 0)
-    };
+    // Build department stats ensuring all departments are included
+    const departmentStats = departments.map(dept => {
+      const stat = statsMap[dept.name] || {
+        department: dept.name,
+        totalRequests: 0,
+        approved: 0,
+        rejected: 0,
+        pending: 0,
+        inReview: 0
+      };
 
-    // Format department stats with progress percentages and message counts
-    const departmentStats = stats.map(stat => ({
-      id: stat._id,
-      departmentName: stat.departmentName,
-      totalRequests: stat.totalRequests,
-      approved: stat.approvedRequests,
-      rejected: stat.rejectedRequests,
-      pending: stat.pendingRequests,
-      receivedMessages: messageCountMap[stat.departmentName] || 0,
-      progressPercentage: stat.getProgressPercentage && stat.getProgressPercentage() || 0,
-      lastUpdated: stat.lastUpdated
-    }));
+      const approved = stat.approved || 0;
+      const rejected = stat.rejected || 0;
+      const pending = stat.pending || 0;
+      const total = stat.totalRequests || 0;
+
+      // Calculate progress percentage (approved + rejected out of total)
+      const processedCount = approved + rejected;
+      const progressPercentage = total > 0 ? Math.round((processedCount / total) * 100) : 0;
+
+      return {
+        departmentName: dept.name,
+        role: dept.role,
+        totalRequests: total,
+        approved: approved,
+        rejected: rejected,
+        pending: pending,
+        inReview: stat.inReview || 0,
+        progressPercentage: progressPercentage,
+        approvalRate: total > 0 ? Math.round((approved / total) * 100) : 0,
+        rejectionRate: total > 0 ? Math.round((rejected / total) * 100) : 0,
+        pendingRate: total > 0 ? Math.round((pending / total) * 100) : 0
+      };
+    });
+
+    // Calculate overall statistics
+    const overallStats = departmentStats.reduce(
+      (acc, dept) => ({
+        totalRequests: acc.totalRequests + dept.totalRequests,
+        totalApproved: acc.totalApproved + dept.approved,
+        totalRejected: acc.totalRejected + dept.rejected,
+        totalPending: acc.totalPending + dept.pending,
+        totalInReview: acc.totalInReview + dept.inReview
+      }),
+      {
+        totalRequests: 0,
+        totalApproved: 0,
+        totalRejected: 0,
+        totalPending: 0,
+        totalInReview: 0
+      }
+    );
+
+    // Add overall progress metrics
+    const overallProcessed = overallStats.totalApproved + overallStats.totalRejected;
+    overallStats.progressPercentage = overallStats.totalRequests > 0 
+      ? Math.round((overallProcessed / overallStats.totalRequests) * 100) 
+      : 0;
+    overallStats.approvalRate = overallStats.totalRequests > 0 
+      ? Math.round((overallStats.totalApproved / overallStats.totalRequests) * 100) 
+      : 0;
+    overallStats.rejectionRate = overallStats.totalRequests > 0 
+      ? Math.round((overallStats.totalRejected / overallStats.totalRequests) * 100) 
+      : 0;
 
     res.json({
       success: true,
