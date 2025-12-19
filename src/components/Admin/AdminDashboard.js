@@ -10,9 +10,9 @@ const getDepartmentIcon = (departmentName) => {
     Library: "📚",
     Transport: "🚌",
     Laboratory: "🔬",
-    "Fee & Dues": "💰",
-    "Coordination Office": "🎯",
-    "Student Services": "🎓"
+    "Fee Department": "💰",
+    Coordination: "🏢",
+    "Student Service": "🎓"
   };
   return icons[departmentName] || "📍";
 };
@@ -23,9 +23,9 @@ const getDepartmentColor = (departmentName) => {
     Library: "#3b82f6",
     Transport: "#10b981",
     Laboratory: "#f59e0b",
-    "Fee & Dues": "#ef4444",
-    "Coordination Office": "#8b5cf6",
-    "Student Services": "#ec4899"
+    "Fee Department": "#ef4444",
+    Coordination: "#8b5cf6",
+    "Student Service": "#ec4899"
   };
   return colors[departmentName] || "#6b7280";
 };
@@ -290,33 +290,7 @@ export default function AdminDashboard() {
           )}
         </section>
 
-        {/* Quick Actions */}
-        <section className="admin-actions">
-          <h2>⚡ Quick Actions</h2>
-          <div className="actions-grid">
-            <button 
-              className="action-btn"
-              onClick={() => navigate("/admin-messages")}
-            >
-              <span className="action-icon">💬</span>
-              <span>Send Message to Department</span>
-            </button>
-            <button 
-              className="action-btn"
-              onClick={() => navigate("/admin-messages?type=student")}
-            >
-              <span className="action-icon">📨</span>
-              <span>Send Message to Student</span>
-            </button>
-            <button 
-              className="action-btn"
-              onClick={() => navigate("/admin-edit-profile")}
-            >
-              <span className="action-icon">📝</span>
-              <span>Edit My Profile</span>
-            </button>
-          </div>
-        </section>
+
       </main>
     </div>
   );

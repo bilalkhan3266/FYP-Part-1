@@ -1698,9 +1698,9 @@ app.post('/api/admin/send-message', verifyToken, async (req, res) => {
       let departmentUsers = [];
 
       if (targetType === 'all') {
-        // Send to all department staff
+        // Send to all department staff (case-insensitive)
         departmentUsers = await User.find({
-          role: { $in: ['library', 'transport', 'laboratory', 'feedepartment', 'coordination', 'studentservice'] }
+          role: { $regex: /^(library|transport|laboratory|feedepartment|coordination|studentservice)$/i }
         });
       } else if (targetType === 'specific') {
         if (!department) {
@@ -1709,18 +1709,25 @@ app.post('/api/admin/send-message', verifyToken, async (req, res) => {
             message: 'Department is required'
           });
         }
-        // Map department name to role
+        // Map department name to role (case-insensitive)
         const deptMapping = {
-          'Library': 'library',
-          'Transport': 'transport',
-          'Laboratory': 'laboratory',
-          'Fee Department': 'feedepartment',
-          'Coordination': 'coordination',
-          'Student Services': 'studentservice'
+          'Library': /^library$/i,
+          'Transport': /^transport$/i,
+          'Laboratory': /^laboratory$/i,
+          'Fee Department': /^feedepartment$/i,
+          'Coordination': /^coordination$/i,
+          'Student Service': /^studentservice$/i,
+          'Student Services': /^studentservice$/i
         };
         
-        const role = deptMapping[department];
-        departmentUsers = await User.find({ role });
+        const roleRegex = deptMapping[department];
+        if (!roleRegex) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid department: ${department}`
+          });
+        }
+        departmentUsers = await User.find({ role: roleRegex });
       }
 
       // Send message to each department user
@@ -1894,8 +1901,13 @@ app.get('/api/conversations/:conversation_id', verifyToken, async (req, res) => 
 app.get('/api/my-messages', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const userRole = req.user.role;
+    const userRole = (req.user.role || '').toLowerCase();
     const userDept = req.user.department;
+
+    console.log('🔍 User Info:');
+    console.log('  - ID:', userId);
+    console.log('  - Role:', userRole);
+    console.log('  - Department:', userDept);
 
     let query = {};
     
@@ -1908,28 +1920,42 @@ app.get('/api/my-messages', verifyToken, async (req, res) => {
         ]
       };
     } else {
-      // Staff see:
+      // Staff (department personnel) see:
       // 1. Messages FROM students to their department
       // 2. Messages they SENT to students
-      // 3. Admin messages sent to their role (where recipient_department matches their role or department)
-      query = {
-        $or: [
-          // Messages from students targeting their department
-          { recipient_department: userDept, sender_role: 'student' },
-          { recipient_department: { $regex: `^${userDept}$`, $options: 'i' }, sender_role: 'student' },
-          // Messages they sent
-          { sender_id: userId },
-          // Admin messages to their role (message_type = 'notification' and recipient_department = their role)
-          { recipient_department: userRole, sender_role: 'admin', message_type: 'notification' },
-          { recipient_department: { $regex: `^${userRole}$`, $options: 'i' }, sender_role: 'admin', message_type: 'notification' }
-        ]
-      };
+      // 3. Messages sent DIRECTLY to them by admin (recipient_id)
+      const orConditions = [
+        // Messages they sent
+        { sender_id: userId },
+        // Messages sent directly to them (admin messages, library to student, etc)
+        { recipient_id: userId }
+      ];
+
+      // Add messages from students to their department (case-insensitive match)
+      if (userDept) {
+        console.log(`📨 Adding student messages to department: "${userDept}"`);
+        orConditions.push({ 
+          recipient_department: { $regex: `^${userDept}$`, $options: 'i' }, 
+          sender_role: 'student' 
+        });
+      }
+
+      query = { $or: orConditions };
     }
 
     console.log('📨 Fetching messages for:', userRole, '- Department:', userDept);
-    const messages = await Message.find(query).sort({ createdAt: -1 }).limit(100);
+    console.log('📨 Query:', JSON.stringify(query, null, 2));
+    
+    const messages = await Message.find(query).sort({ createdAt: -1 }).limit(100).lean().exec();
     console.log(`✅ Found ${messages.length} messages`);
-    console.log('📨 Query used:', JSON.stringify(query, null, 2));
+
+    // Log sample messages for debugging
+    if (messages.length > 0) {
+      console.log('📨 Sample messages:');
+      messages.slice(0, 3).forEach(msg => {
+        console.log(`  - ID: ${msg._id}, From: ${msg.sender_role} (${msg.sender_name}), To Dept: ${msg.recipient_department}, To ID: ${msg.recipient_id}`);
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -2007,6 +2033,169 @@ app.get('/api/staff/sent-messages', verifyToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: '❌ Failed to fetch sent messages: ' + err.message,
+      error: err.message
+    });
+  }
+});
+
+// ========== GET ADMIN BROADCASTS (GET /api/admin/messages) ==========
+// Staff can view admin broadcasts sent to their department/role
+app.get('/api/admin/messages', verifyToken, async (req, res) => {
+  try {
+    const userRole = req.user.role;
+    const userDept = req.user.department;
+
+    console.log('📢 Fetching admin broadcasts for staff:');
+    console.log('  - User Role:', userRole);
+    console.log('  - User Department:', userDept);
+
+    // Only staff can view admin messages
+    if (userRole === 'student') {
+      return res.status(200).json({
+        success: true,
+        data: [],
+        message: 'Students cannot view admin broadcasts'
+      });
+    }
+
+    // Query for admin messages sent to their role or department
+    const messages = await Message.find({
+      sender_role: 'admin',
+      $or: [
+        { recipient_department: userRole },
+        { recipient_department: { $regex: `^${userRole}$`, $options: 'i' } },
+        { recipient_department: userDept },
+        { recipient_department: { $regex: `^${userDept}$`, $options: 'i' } },
+        { recipient_department: 'all' },
+        { message_type: 'broadcast' }
+      ]
+    })
+    .sort({ createdAt: -1 })
+    .limit(100)
+    .lean()
+    .exec();
+
+    console.log(`✅ Found ${messages.length} admin broadcasts`);
+
+    res.status(200).json({
+      success: true,
+      data: messages,
+      count: messages.length
+    });
+  } catch (err) {
+    console.error('❌ Admin Messages Error:', err.message);
+    res.status(200).json({
+      success: true,
+      data: [],
+      message: 'No admin broadcasts available'
+    });
+  }
+});
+
+// Get admin department statistics
+app.get('/api/admin/department-stats', verifyToken, async (req, res) => {
+  try {
+    const userRole = req.user.role;
+
+    // Only admin can view department stats
+    if (userRole !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: '❌ Only admins can view department statistics'
+      });
+    }
+
+    console.log('📊 Fetching department clearance statistics...');
+
+    // Get all department clearance records
+    const allRecords = await DepartmentClearance.find({}).lean().exec();
+    
+    console.log(`📊 Total clearance records: ${allRecords.length}`);
+    
+    // Log sample records to see actual data structure
+    if (allRecords.length > 0) {
+      console.log('📋 Sample record:', JSON.stringify(allRecords[0], null, 2));
+      console.log('🔍 Unique status values:', [...new Set(allRecords.map(r => r.status))]);
+      console.log('🔍 Unique department names:', [...new Set(allRecords.map(r => r.department_name))]);
+    }
+
+    // Define the 6 main departments
+    const mainDepartments = ['Library', 'Transport', 'Laboratory', 'Fee Department', 'Coordination', 'Student Service'];
+    
+    // Initialize all 6 departments with 0 counts
+    const statsByDept = {};
+    mainDepartments.forEach(dept => {
+      statsByDept[dept] = {
+        id: dept.toLowerCase().replace(/\s+/g, '-'),
+        departmentName: dept,
+        totalRequests: 0,
+        approved: 0,
+        rejected: 0,
+        pending: 0
+      };
+    });
+
+    // Count by department and status - ONLY for the 6 main departments
+    allRecords.forEach(record => {
+      const dept = record.department_name || 'Unknown';
+      const status = (record.status || '').toLowerCase().trim();
+      
+      // Only count if it's one of the 6 main departments
+      if (statsByDept[dept]) {
+        statsByDept[dept].totalRequests++;
+        
+        // Handle case-insensitive status matching
+        if (status === 'approved' || status === 'approve' || status === 'cleared') {
+          statsByDept[dept].approved++;
+        } else if (status === 'rejected' || status === 'reject') {
+          statsByDept[dept].rejected++;
+        } else {
+          // Everything else counts as pending (including 'pending', 'in_review', etc.)
+          statsByDept[dept].pending++;
+        }
+      } else {
+        // Log records that don't match any department
+        console.log(`⚠️ Record for unknown department "${dept}" with status "${status}"`);
+      }
+    });
+
+    // Calculate overall stats
+    const overallStats = {
+      totalRequests: allRecords.length,
+      totalApproved: 0,
+      totalRejected: 0,
+      totalPending: 0
+    };
+
+    Object.values(statsByDept).forEach(dept => {
+      overallStats.totalApproved += dept.approved;
+      overallStats.totalRejected += dept.rejected;
+      overallStats.totalPending += dept.pending;
+    });
+
+    // Get only the 6 main departments (no "Unknown")
+    const departments = Object.values(statsByDept);
+
+    console.log('✅ Department statistics calculated:');
+    console.log('  Overall:', overallStats);
+    console.log(`  Found ${departments.length} departments`);
+    console.log('  Departments:');
+    departments.forEach(d => {
+      console.log(`    - ${d.departmentName}: ${d.totalRequests} requests (${d.approved}✓, ${d.rejected}✗, ${d.pending}⏳)`);
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        overall: overallStats,
+        departments: departments
+      }
+    });
+  } catch (err) {
+    console.error('❌ Department Stats Error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to fetch department statistics',
       error: err.message
     });
   }

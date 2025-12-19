@@ -47,6 +47,22 @@ async function seedDatabase() {
         role: "transport",
         sap: "TRN001",
         department: "Transport"
+      },
+      {
+        full_name: "Fee Staff",
+        email: "fee@example.com",
+        password: "password123",
+        role: "fee",
+        sap: "FEE001",
+        department: "Fee"
+      },
+      {
+        full_name: "Admin User",
+        email: "admin@example.com",
+        password: "password123",
+        role: "admin",
+        sap: "ADM001",
+        department: "Admin"
       }
     ];
 
@@ -73,6 +89,21 @@ async function seedDatabase() {
     console.log("  Email: library@example.com");
     console.log("  Password: password123");
     console.log("  SAP ID: LIB001");
+    console.log();
+    console.log("Transport Staff:");
+    console.log("  Email: transport@example.com");
+    console.log("  Password: password123");
+    console.log("  SAP ID: TRN001");
+    console.log();
+    console.log("Fee Staff:");
+    console.log("  Email: fee@example.com");
+    console.log("  Password: password123");
+    console.log("  SAP ID: FEE001");
+    console.log();
+    console.log("Admin:");
+    console.log("  Email: admin@example.com");
+    console.log("  Password: password123");
+    console.log("  SAP ID: ADM001");
     console.log("─────────────────────────────────────\n");
 
   } catch (err) {

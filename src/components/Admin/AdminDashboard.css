@@ -585,9 +585,9 @@ html, body {
   transform: translateY(0);
 }
 
-/* =================== QUICK ACTIONS =================== */
+/* =================== QUICK ACTIONS (MOVED TO FOOTER) =================== */
 .admin-actions {
-  margin-bottom: 20px;
+  display: none;
 }
 
 .admin-actions h2 {
