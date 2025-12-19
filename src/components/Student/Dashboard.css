@@ -193,17 +193,23 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
+  min-height: 60px;
 }
 
 .sd-header h1 {
   color: var(--primary);
   font-size: 22px;
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 250px;
 }
 
 .sd-header p {
-  color: var(--muted);
+  color: #6b7280;
+  flex: 1 1 100%;
+  margin: 8px 0 0 0;
 }
 
 /* ---- Buttons ---- */
@@ -269,8 +275,7 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   flex: 1 1 320px;
-  min-width: 300px;
-}
+  min-width: 300px;  border-top: 4px solid #3b82f6;}
 
 /* Circular Progress */
 .sd-progress-circle {
@@ -494,11 +499,12 @@ body {
 /* ---- Button Container ---- */
 .sd-header-actions {
   display: flex;
-  gap: 12px; /* space between buttons */
+  gap: 12px;
   align-items: center;
-  justify-content: flex-end; /* align buttons to the right */
-  margin-top: 12px;
-  flex-wrap: wrap; /* allow wrapping on smaller screens */
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  width: auto;
+  min-width: 300px;
 }
 
 /* ---- Refresh Button ---- */
@@ -682,10 +688,31 @@ body {
 
 .progress-percentage {
   font-size: 18px;
-  color: #6366f1;
   font-weight: 800;
   min-width: 50px;
   text-align: right;
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 6px;
+  color: white;
+}
+
+/* Progress bar percentage colors based on completion */
+.progress-percentage[data-stage="0-25"] {
+  background: #ef4444;
+}
+
+.progress-percentage[data-stage="25-50"] {
+  background: #f59e0b;
+}
+
+.progress-percentage[data-stage="50-75"] {
+  background: #facc15;
+  color: #333;
+}
+
+.progress-percentage[data-stage="75-100"] {
+  background: #16a34a;
 }
 
 .progress-bar-bg {

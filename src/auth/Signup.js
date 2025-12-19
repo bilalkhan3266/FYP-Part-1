@@ -77,24 +77,8 @@ export default function Signup() {
       });
 
       if (result.success) {
-        const user = JSON.parse(localStorage.getItem("user"));
-        
-        // Role-based redirect
-        const roleRoutes = {
-          student: "/student-dashboard",
-          library: "/library-dashboard",
-          transport: "/transport-dashboard",
-          laboratory: "/lab-dashboard",
-          studentservice: "/service-dashboard",
-          feedepartment: "/fee-dashboard",
-          coordination: "/coordination-dashboard",
-          admin: "/admin-dashboard",
-          hod: "/hod-dashboard"
-        };
-
-        const userRole = user.role ? user.role.toLowerCase() : "student";
-        const redirectRoute = roleRoutes[userRole] || "/";
-        navigate(redirectRoute, { replace: true });
+        // Redirect to login page after successful signup
+        navigate("/login", { replace: true });
       } else {
         setError(result.message || "Signup failed");
       }
@@ -212,42 +196,39 @@ export default function Signup() {
                 </div>
               </div>
 
-              {/* Student-only fields */}
-              {formData.role === "Student" && (
-                <>
-                  <div className="form-group">
-                    <label className="form-label">SAP ID</label>
-                    <div className="input-wrapper">
-                      {/* <span className="input-icon">🔢</span> */}
-                      <input
-                        type="text"
-                        name="sap"
-                        className="form-input"
-                        placeholder="e.g., 12345"
-                        value={formData.sap}
-                        onChange={handleChange}
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
+              {/* SAP ID / Staff ID */}
+              <div className="form-group">
+                <label className="form-label">SAP ID / Staff ID</label>
+                <div className="input-wrapper">
+                  {/* <span className="input-icon">🔢</span> */}
+                  <input
+                    type="text"
+                    name="sap"
+                    className="form-input"
+                    placeholder="e.g., 12345"
+                    value={formData.sap}
+                    onChange={handleChange}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Department</label>
-                    <div className="input-wrapper">
-                      {/* <span className="input-icon">📚</span> */}
-                      <input
-                        type="text"
-                        name="department"
-                        className="form-input"
-                        placeholder="Your department"
-                        value={formData.department}
-                        onChange={handleChange}
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
+              {/* Department */}
+              <div className="form-group">
+                <label className="form-label">Department</label>
+                <div className="input-wrapper">
+                  {/* <span className="input-icon">📚</span> */}
+                  <input
+                    type="text"
+                    name="department"
+                    className="form-input"
+                    placeholder="Your department"
+                    value={formData.department}
+                    onChange={handleChange}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
 
               {/* Password */}
               <div className="form-group">

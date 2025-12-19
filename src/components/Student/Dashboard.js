@@ -186,6 +186,14 @@ export default function StudentDashboard() {
     return "#16a34a";
   };
 
+  // Get stage category for styling
+  const getProgressStage = (percentage) => {
+    if (percentage <= 25) return "0-25";
+    if (percentage <= 50) return "25-50";
+    if (percentage <= 75) return "50-75";
+    return "75-100";
+  };
+
   return (
     <div className="student-dashboard-page">
 
@@ -234,7 +242,7 @@ export default function StudentDashboard() {
       {/* MAIN CONTENT */}
       <main className="sd-main">
         <header className="sd-header">
-          <div>
+          <div style={{ flex: '1 1 auto', minWidth: '250px' }}>
             <h1>Welcome back, {displayName}</h1>
             <p>Track department approvals below — your clearance progress is updated in real time.</p>
           </div>
@@ -302,7 +310,7 @@ export default function StudentDashboard() {
               <div className="progress-bar-container">
                 <div className="progress-bar-label">
                   <span>Clearance Progress</span>
-                  <span className="progress-percentage">{progress}%</span>
+                  <span className="progress-percentage" data-stage={getProgressStage(progress)}>{progress}%</span>
                 </div>
                 <div className="progress-bar-bg">
                   <div 
