@@ -22,6 +22,7 @@ export default function Signup() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -32,6 +33,7 @@ export default function Signup() {
       [name]: value
     }));
     setError("");
+    setSuccess("");
   };
 
   const handleSubmit = async (e) => {
@@ -77,10 +79,15 @@ export default function Signup() {
       });
 
       if (result.success) {
-        // Redirect to login page after successful signup
-        navigate("/login", { replace: true });
+        // ✅ Show success message and redirect to login page
+        setSuccess("✅ Account created successfully! Redirecting to login...");
+        setError("");
+        setTimeout(() => {
+          navigate("/login", { replace: true });
+        }, 2000);
       } else {
         setError(result.message || "Signup failed");
+        setSuccess("");
       }
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Signup failed");
@@ -130,6 +137,13 @@ export default function Signup() {
               <div className="error-alert">
                 <span className="error-icon">⚠️</span>
                 <span>{error}</span>
+              </div>
+            )}
+
+            {success && (
+              <div className="success-alert">
+                <span className="success-icon">✅</span>
+                <span>{success}</span>
               </div>
             )}
 

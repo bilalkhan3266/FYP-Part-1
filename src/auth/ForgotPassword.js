@@ -12,6 +12,7 @@ export default function ForgotPassword() {
   const [step, setStep] = useState(1); // 1: Email, 2: Code, 3: Password
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [testCode, setTestCode] = useState(""); // For development/testing
 
   const [formData, setFormData] = useState({
     email: "",
@@ -56,6 +57,12 @@ export default function ForgotPassword() {
       });
 
       if (response.data.success) {
+        console.log("📧 Reset code response:", response.data);
+        // Store test code if provided (development mode)
+        if (response.data._testCode) {
+          setTestCode(response.data._testCode);
+          console.log(`🔐 Test code (development): ${response.data._testCode}`);
+        }
         setStep(2);
       } else {
         setError(response.data.message || "Failed to send reset code");
@@ -237,6 +244,21 @@ export default function ForgotPassword() {
                   <div className="forgot-password-error-alert">
                     <span className="forgot-password-error-icon">⚠️</span>
                     <span>{error}</span>
+                  </div>
+                )}
+
+                {testCode && (
+                  <div style={{
+                    backgroundColor: "#fff3cd",
+                    border: "1px solid #ffc107",
+                    borderRadius: "8px",
+                    padding: "15px",
+                    marginBottom: "20px",
+                    color: "#856404"
+                  }}>
+                    <p style={{ margin: "0 0 10px 0", fontWeight: "600" }}>🧪 Development Mode - Test Code:</p>
+                    <p style={{ margin: "0", fontSize: "18px", fontWeight: "bold", fontFamily: "monospace", letterSpacing: "3px" }}>{testCode}</p>
+                    <p style={{ margin: "10px 0 0 0", fontSize: "12px" }}>This code is displayed because email credentials are not configured. In production, check your email instead.</p>
                   </div>
                 )}
 

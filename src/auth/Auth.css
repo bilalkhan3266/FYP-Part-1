@@ -204,7 +204,7 @@ body {
   width: 100px;
   height: 100px;
   margin-bottom: 20px;
-  filter: drop-shadow(0 4px 15px rgba(0, 0, 0, 0.2));
+  filter: brightness(0) invert(1) drop-shadow(0 4px 15px rgba(255, 255, 255, 0.3));
   animation: bounce 1s ease-in-out infinite;
 }
 
@@ -287,18 +287,20 @@ body {
 .auth-form-container {
   flex: 1;
   min-width: 300px;
-  padding: 60px 40px;
+  padding: 40px 30px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   background: white;
-  max-height: 100vh;
+  max-height: calc(100vh - 40px);
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) #f1f1f1;
 }
 
 .auth-form-container::-webkit-scrollbar {
-  width: 10px;
+  width: 14px;
   height: 10px;
 }
 
@@ -320,7 +322,7 @@ body {
 
 .form-wrapper {
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   animation: fadeInRight 0.6s ease-out 0.2s both;
 }
 
@@ -731,14 +733,16 @@ select:disabled::placeholder {
   }
 
   .auth-form-container {
-    padding: 40px 30px;
-    min-height: 60vh;
+    padding: 30px 20px;
+    min-height: auto;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
     flex: 1;
-    max-height: auto;
   }
 
   .form-wrapper {
     max-width: 100%;
+    padding: 0;
   }
 }
 

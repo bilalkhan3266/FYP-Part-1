@@ -7,7 +7,7 @@ const messageSchema = new mongoose.Schema({
   sender_name: String,
   sender_role: String,
   sender_sapid: { type: String, index: true },
-  recipient_sapid: { type: String, required: true, index: true }, // ✅ INDEXED FOR FAST LOOKUP
+  recipient_sapid: { type: String, index: true }, // Optional - will be set when available
   recipient_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
   recipient_department: { type: String, index: true },
   subject: { type: String, required: true },

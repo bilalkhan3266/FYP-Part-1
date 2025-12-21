@@ -18,6 +18,19 @@ export default function HODDashboard() {
   const axiosConfig = { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } };
   const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
+  // Role-based access control
+  useEffect(() => {
+    if (!user) return;
+    
+    const userRole = user.role ? user.role.toLowerCase() : "";
+    const isHOD = userRole.includes("head") || userRole.includes("hod") || userRole.includes("department head");
+    
+    if (!isHOD) {
+      setError("❌ Access denied. Only HOD users can access this page.");
+      setTimeout(() => navigate("/student-dashboard"), 1500);
+    }
+  }, [user, navigate]);
+
   const fetchRequests = async () => {
     setLoading(true);
     setError("");

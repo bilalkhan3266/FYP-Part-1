@@ -341,18 +341,24 @@ const resetCodes = new Map();
 app.post('/api/forgot-password-request', async (req, res) => {
   try {
     const { email } = req.body;
+    console.log(`📧 Forgot password request received for: ${email}`);
 
     if (!email) {
+      console.log(`❌ No email provided`);
       return res.status(400).json({
         success: false,
         message: 'Email is required'
       });
     }
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    console.log(`🔍 Searching for user with email: ${normalizedEmail}`);
+    const user = await User.findOne({ email: normalizedEmail });
+    console.log(`👤 User found:`, user ? `Yes (ID: ${user._id})` : 'No');
 
     if (!user) {
       // Don't reveal if email exists (security best practice)
+      console.log(`⚠️ Email not found, returning generic success message`);
       return res.json({
         success: true,
         message: 'If email exists, reset code has been sent'
@@ -363,7 +369,7 @@ app.post('/api/forgot-password-request', async (req, res) => {
     const resetCode = crypto.randomBytes(3).toString('hex').toUpperCase();
     const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
 
-    resetCodes.set(email, {
+    resetCodes.set(normalizedEmail, {
       code: resetCode,
       expiresAt,
       userId: user._id
@@ -389,10 +395,11 @@ app.post('/api/forgot-password-request', async (req, res) => {
       _testCode: process.env.NODE_ENV === 'development' ? resetCode : undefined
     });
   } catch (err) {
-    console.error('Forgot Password Error:', err);
+    console.error('❌ Forgot Password Error:', err.message);
+    console.error('Stack:', err.stack);
     res.status(500).json({
       success: false,
-      message: 'Failed to process request'
+      message: 'Failed to process request: ' + err.message
     });
   }
 });
@@ -409,7 +416,8 @@ app.post('/api/verify-reset-code', (req, res) => {
       });
     }
 
-    const resetData = resetCodes.get(email);
+    const normalizedEmail = email.trim().toLowerCase();
+    const resetData = resetCodes.get(normalizedEmail);
 
     if (!resetData) {
       return res.status(400).json({
@@ -432,6 +440,9 @@ app.post('/api/verify-reset-code', (req, res) => {
         message: 'Invalid verification code'
       });
     }
+
+    // Clean up the code after successful verification
+    resetCodes.delete(normalizedEmail);
 
     res.json({
       success: true,
@@ -465,7 +476,8 @@ app.post('/api/reset-password', async (req, res) => {
       });
     }
 
-    const resetData = resetCodes.get(email);
+    const normalizedEmail = email.trim().toLowerCase();
+    const resetData = resetCodes.get(normalizedEmail);
 
     if (!resetData) {
       return res.status(400).json({
@@ -482,7 +494,7 @@ app.post('/api/reset-password', async (req, res) => {
     }
 
     if (Date.now() > resetData.expiresAt) {
-      resetCodes.delete(email);
+      resetCodes.delete(normalizedEmail);
       return res.status(400).json({
         success: false,
         message: 'Reset code expired'
@@ -496,7 +508,7 @@ app.post('/api/reset-password', async (req, res) => {
     });
 
     // Clean up
-    resetCodes.delete(email);
+    resetCodes.delete(normalizedEmail);
 
     res.json({
       success: true,
@@ -1629,9 +1641,13 @@ app.post('/api/department/send-message', verifyToken, async (req, res) => {
 // ADMIN - SEND MESSAGE TO DEPARTMENTS/STUDENTS
 // --------------------
 app.post('/api/admin/send-message', verifyToken, async (req, res) => {
+  console.log('🚀 [ENDPOINT HIT] /api/admin/send-message request received');
+  console.log('🔑 User from token:', req.user ? { id: req.user.id, role: req.user.role } : 'NO USER');
+  
   try {
     // Verify admin role
     if (req.user.role !== 'admin') {
+      console.log('❌ User role is not admin:', req.user.role);
       return res.status(403).json({
         success: false,
         message: 'Access denied - Admin role required'
@@ -1641,6 +1657,8 @@ app.post('/api/admin/send-message', verifyToken, async (req, res) => {
     const { messageType, subject, message, priority, targetType, department, studentSapId, roleTarget } = req.body;
     const senderId = req.user.id;
     const senderName = req.user.full_name || 'Admin';
+
+    console.log('✅ Admin role verified');
 
     // Validation
     if (!subject || !message) {
@@ -1678,7 +1696,7 @@ app.post('/api/admin/send-message', verifyToken, async (req, res) => {
         sender_role: 'admin',
         sender_sapid: null,
         recipient_id: student._id,
-        recipient_sapid: studentSapId,
+        recipient_sapid: student.sap,
         recipient_department: 'admin',
         subject: subject.trim(),
         message: message.trim(),
@@ -1695,62 +1713,73 @@ app.post('/api/admin/send-message', verifyToken, async (req, res) => {
     
     // CASE 2: Send to all departments or specific department
     else if (messageType === 'department') {
-      let departmentUsers = [];
+      try {
+        let departmentUsers = [];
 
-      if (targetType === 'all') {
-        // Send to all department staff (case-insensitive)
-        departmentUsers = await User.find({
-          role: { $regex: /^(library|transport|laboratory|feedepartment|coordination|studentservice)$/i }
-        });
-      } else if (targetType === 'specific') {
-        if (!department) {
-          return res.status(400).json({
-            success: false,
-            message: 'Department is required'
+        if (targetType === 'all') {
+          // Send to all department staff (case-insensitive)
+          departmentUsers = await User.find({
+            role: { $regex: /^(library|transport|laboratory|feedepartment|coordination|studentservice)$/i }
           });
+          console.log(`Found ${departmentUsers.length} users for all departments`);
+        } else if (targetType === 'specific') {
+          if (!department) {
+            return res.status(400).json({
+              success: false,
+              message: 'Department is required'
+            });
+          }
+          // Map department name to role (case-insensitive)
+          const deptMapping = {
+            'Library': /^library$/i,
+            'Transport': /^transport$/i,
+            'Laboratory': /^laboratory$/i,
+            'Fee Department': /^feedepartment$/i,
+            'Coordination': /^coordination$/i,
+            'Student Service': /^studentservice$/i,
+            'Student Services': /^studentservice$/i
+          };
+          
+          const roleRegex = deptMapping[department];
+          if (!roleRegex) {
+            return res.status(400).json({
+              success: false,
+              message: `Invalid department: ${department}`
+            });
+          }
+          departmentUsers = await User.find({ role: roleRegex });
+          console.log(`Found ${departmentUsers.length} users for department: ${department}`);
         }
-        // Map department name to role (case-insensitive)
-        const deptMapping = {
-          'Library': /^library$/i,
-          'Transport': /^transport$/i,
-          'Laboratory': /^laboratory$/i,
-          'Fee Department': /^feedepartment$/i,
-          'Coordination': /^coordination$/i,
-          'Student Service': /^studentservice$/i,
-          'Student Services': /^studentservice$/i
-        };
-        
-        const roleRegex = deptMapping[department];
-        if (!roleRegex) {
-          return res.status(400).json({
-            success: false,
-            message: `Invalid department: ${department}`
-          });
+
+        // Send message to each department user
+        for (const user of departmentUsers) {
+          try {
+            const newMessage = new Message({
+              sender_id: senderId,
+              sender_name: senderName,
+              sender_role: 'admin',
+              sender_sapid: null,
+              recipient_id: user._id,
+              recipient_sapid: user.sap,
+              recipient_department: user.department,
+              subject: subject.trim(),
+              message: message.trim(),
+              message_type: 'notification',
+              priority: priority || 'normal',
+              is_read: false,
+              createdAt: new Date()
+            });
+
+            await newMessage.save();
+            messagesSent++;
+            recipients.push(`${user.full_name} (${user.department})`);
+          } catch (innerErr) {
+            console.error(`Error saving message for user ${user.full_name}:`, innerErr.message);
+          }
         }
-        departmentUsers = await User.find({ role: roleRegex });
-      }
-
-      // Send message to each department user
-      for (const user of departmentUsers) {
-        const newMessage = new Message({
-          sender_id: senderId,
-          sender_name: senderName,
-          sender_role: 'admin',
-          sender_sapid: null,
-          recipient_id: user._id,
-          recipient_sapid: user.sap,
-          recipient_department: user.department,
-          subject: subject.trim(),
-          message: message.trim(),
-          message_type: 'notification',
-          priority: priority || 'normal',
-          is_read: false,
-          createdAt: new Date()
-        });
-
-        await newMessage.save();
-        messagesSent++;
-        recipients.push(`${user.full_name} (${user.department})`);
+      } catch (deptErr) {
+        console.error('Department message error:', deptErr);
+        throw deptErr;
       }
     }
     
@@ -1791,6 +1820,7 @@ app.post('/api/admin/send-message', verifyToken, async (req, res) => {
 
     console.log(`✅ Admin message sent to ${messagesSent} recipients`);
 
+    console.log(`✅ Final response - sending ${messagesSent} messages to recipients:`, recipients);
     res.status(201).json({
       success: true,
       message: `✅ Message sent successfully to ${messagesSent} recipient(s)!`,
@@ -1798,7 +1828,8 @@ app.post('/api/admin/send-message', verifyToken, async (req, res) => {
       recipients
     });
   } catch (err) {
-    console.error('Admin Message Error:', err);
+    console.error('❌ Admin Message Error:', err);
+    console.error('Stack trace:', err.stack);
     res.status(500).json({
       success: false,
       message: 'Failed to send message: ' + err.message
@@ -1932,13 +1963,55 @@ app.get('/api/my-messages', verifyToken, async (req, res) => {
       ];
 
       // Add messages from students to their department (case-insensitive match)
+      // Support multiple ways to identify the department:
+      // 1. Exact match on department field
+      // 2. Match by role name if no department
+      // 3. Match common department name variations
+      
+      const departmentVariations = [];
+      
       if (userDept) {
         console.log(`📨 Adding student messages to department: "${userDept}"`);
-        orConditions.push({ 
-          recipient_department: { $regex: `^${userDept}$`, $options: 'i' }, 
-          sender_role: 'student' 
-        });
+        // Escape special regex characters in the department name
+        const escapedDept = userDept.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        departmentVariations.push(`^${escapedDept}$`);
+        
+        // Also add variations (e.g., "Fee Department" matches "fee" or "feedepartment")
+        const deptVariation = escapedDept.replace(/\s+department\s*$/i, '');
+        if (deptVariation !== escapedDept) {
+          departmentVariations.push(`^${deptVariation}$`);
+        }
       }
+      
+      // Also match by role if it's a department role
+      const deptRoleMap = {
+        'library': 'Library',
+        'transport': 'Transport',
+        'laboratory': 'Laboratory',
+        'lab': 'Laboratory',
+        'studentservice': 'Student Service',
+        'feedepartment': 'Fee Department',
+        'coordination': 'Coordination',
+        'admin': 'Admin'
+      };
+      
+      if (deptRoleMap[userRole]) {
+        const roleVariation = deptRoleMap[userRole];
+        const escapedRole = roleVariation.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        departmentVariations.push(`^${escapedRole}$`);
+        console.log(`📨 Added role mapping: ${userRole} -> ${roleVariation}`);
+      }
+
+      // Build the OR conditions for all department variations
+      console.log(`📨 Department variations to search for: ${JSON.stringify(departmentVariations)}`);
+      departmentVariations.forEach(variation => {
+        orConditions.push({ 
+          $and: [
+            { recipient_department: { $regex: variation, $options: 'i' } },
+            { sender_role: 'student' }
+          ]
+        });
+      });
 
       query = { $or: orConditions };
     }

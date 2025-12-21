@@ -18,8 +18,19 @@ export default function ClearanceApprovalPanel() {
   const token = localStorage.getItem("token");
 
   useEffect(() => {
+    // Check if user is HOD
+    if (!user) return;
+    
+    const userRole = user.role ? user.role.toLowerCase() : "";
+    const isHOD = userRole.includes("head") || userRole.includes("hod") || userRole.includes("department head");
+    
+    if (!isHOD) {
+      setError("❌ Access denied. Only HOD users can view this page.");
+      navigate("/student-dashboard");
+      return;
+    }
     fetchPendingApprovals();
-  }, []);
+  }, [user, navigate]);
 
   const fetchPendingApprovals = async () => {
     try {

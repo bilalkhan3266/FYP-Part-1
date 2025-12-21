@@ -34,11 +34,7 @@ export const AuthProvider = ({ children }) => {
       );
 
       if (response.data.success) {
-        const { token, user } = response.data;
-        setToken(token);
-        setUser(user);
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
+        // ✅ After signup, DO NOT log in user - let them go to login page
         return { success: true, message: response.data.message };
       }
     } catch (err) {

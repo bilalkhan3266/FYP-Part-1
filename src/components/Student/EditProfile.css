@@ -110,8 +110,48 @@
   overflow-y: auto;
 }
 
+/* Edit Form Main Container with Scrollbar */
+.edit-form-main {
+  margin-left: 280px;
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  scrollbar-width: thin;
+  scrollbar-color: #667eea #f1f1f1;
+}
+
+/* Chrome, Safari and Edge Scrollbar */
+.edit-form-main::-webkit-scrollbar {
+  width: 12px;
+}
+
+.edit-form-main::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.edit-form-main::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  border: 2px solid #f1f1f1;
+}
+
+.edit-form-main::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #764ba2 0%, #667eea 100%);
+  box-shadow: 0 0 6px rgba(102, 126, 234, 0.4);
+}
+
 .sd-header {
   margin-bottom: 40px;
+  margin-top: 20px;
+  padding-top: 30px;
+  padding-left: 40px;
+  padding-right: 40px;
+  flex-shrink: 0;
 }
 
 .sd-header h1 {
@@ -194,6 +234,7 @@
   padding: 40px;
   border-radius: 12px;
   box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+  margin: 0 40px 40px 40px;
 }
 
 .form-row {

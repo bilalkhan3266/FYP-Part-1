@@ -48,5 +48,9 @@
   "main": "index.js",
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "html-pdf": "^3.0.1",
+    "marked": "^17.0.1"
+  }
 }

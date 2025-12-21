@@ -23,6 +23,19 @@ export default function HODMessages() {
     priority: "normal"
   });
 
+  // Role-based access control
+  useEffect(() => {
+    if (!user) return;
+    
+    const userRole = user.role ? user.role.toLowerCase() : "";
+    const isHOD = userRole.includes("head") || userRole.includes("hod") || userRole.includes("department head");
+    
+    if (!isHOD) {
+      setError("❌ Access denied. Only HOD users can access this page.");
+      setTimeout(() => navigate("/student-dashboard"), 1500);
+    }
+  }, [user, navigate]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
