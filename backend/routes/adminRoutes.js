@@ -654,4 +654,108 @@ router.get('/student-messages/:studentSapId', verifyToken, async (req, res) => {
   }
 });
 
+// =====================
+// USER MANAGEMENT ROUTES
+// =====================
+
+const bcrypt = require('bcryptjs');
+
+// GET ALL USERS (admin only)
+router.get('/users', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('-password')
+      .sort({ createdAt: -1 });
+
+    console.log(`📊 Admin - Retrieved ${users.length} users`);
+    res.status(200).json({ success: true, data: users });
+  } catch (error) {
+    console.error('Get Users Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to fetch users' });
+  }
+});
+
+// CREATE NEW USER (admin only)
+router.post('/create-user', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { full_name, email, password, role, department, sap } = req.body;
+
+    // Validation
+    if (!full_name || !email || !password || !role) {
+      return res.status(400).json({ success: false, message: '❌ Missing required fields' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: '❌ Password must be at least 6 characters' });
+    }
+
+    // Check if email already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: '❌ Email already exists' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user
+    const newUser = new User({
+      full_name: full_name.trim(),
+      email: email.toLowerCase().trim(),
+      password: hashedPassword,
+      role: role.toLowerCase(),
+      department: department || null,
+      sap: sap || null,
+      created_at: new Date()
+    });
+
+    await newUser.save();
+
+    console.log(`✅ Admin - Created new user: ${newUser.email} (${newUser.role})`);
+
+    const userResponse = newUser.toObject();
+    delete userResponse.password;
+
+    res.status(201).json({
+      success: true,
+      message: `✅ User ${full_name} created successfully`,
+      data: userResponse
+    });
+  } catch (error) {
+    console.error('Create User Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to create user' });
+  }
+});
+
+// DELETE USER (admin only, cannot delete students)
+router.delete('/users/:userId', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: '❌ User not found' });
+    }
+
+    // Prevent deletion of students
+    if (user.role === 'student') {
+      return res.status(400).json({ success: false, message: '❌ Cannot delete student users' });
+    }
+
+    // Delete user
+    await User.findByIdAndDelete(userId);
+
+    console.log(`🗑️ Admin - Deleted user: ${user.email} (${user.role})`);
+
+    res.status(200).json({
+      success: true,
+      message: `✅ User ${user.full_name} deleted successfully`
+    });
+  } catch (error) {
+    console.error('Delete User Error:', error);
+    res.status(500).json({ success: false, message: '❌ Failed to delete user' });
+  }
+});
+
 module.exports = router;
