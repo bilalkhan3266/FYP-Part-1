@@ -211,4 +211,54 @@ router.put("/mark-read/:messageId", verifyToken, async (req, res) => {
   }
 });
 
+// ====== GET ALL MESSAGES FOR ADMIN ======
+router.get("/admin/message-log", verifyToken, async (req, res) => {
+  try {
+    // Verify user is admin
+    const userRole = req.user.role || req.user.user_type || "";
+    
+    if (!userRole.toLowerCase().includes("admin")) {
+      return res.status(403).json({
+        success: false,
+        message: "Only admins can view message logs"
+      });
+    }
+
+    console.log(`📨 Fetching message log for admin`);
+
+    // Get all messages in the system
+    const messages = await Message.find({})
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Format messages for admin view
+    const formattedMessages = messages.map(msg => ({
+      _id: msg._id,
+      subject: msg.subject,
+      message: msg.message,
+      sender_name: msg.sender_name,
+      sender_role: msg.sender_role,
+      recipient_department: msg.recipient_department,
+      sender_type: msg.sender_role && msg.sender_role.toLowerCase().includes("admin") ? "admin" : "student",
+      created_at: msg.createdAt,
+      status: msg.status,
+      is_read: msg.is_read
+    }));
+
+    console.log(`✅ Found ${formattedMessages.length} messages for admin`);
+
+    res.json({
+      success: true,
+      data: formattedMessages || [],
+      count: formattedMessages.length
+    });
+  } catch (err) {
+    console.error("Admin Message Log Error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch message log"
+    });
+  }
+});
+
 module.exports = router;
