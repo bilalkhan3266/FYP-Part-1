@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import "./ClearanceRequest.css";
@@ -22,6 +22,55 @@ export default function ClearanceRequest() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [existingRequests, setExistingRequests] = useState([]);
+  const [fetchingRequests, setFetchingRequests] = useState(true);
+  const [departmentStatuses, setDepartmentStatuses] = useState({});
+  const [resubmittingDept, setResubmittingDept] = useState(null);
+
+  // Fetch existing clearance requests for the student
+  useEffect(() => {
+    const fetchExistingRequests = async () => {
+      try {
+        setFetchingRequests(true);
+        const token = localStorage.getItem("token");
+        const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+        if (!token) {
+          setFetchingRequests(false);
+          return;
+        }
+
+        const response = await axios.get(apiUrl + "/api/clearance-requests", {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        });
+
+        if (response.data.success && response.data.requests) {
+          setExistingRequests(response.data.requests);
+          
+          // Build department statuses map
+          const statuses = {};
+          response.data.requests.forEach((req) => {
+            statuses[req.department] = req.status;
+          });
+          setDepartmentStatuses(statuses);
+        }
+      } catch (err) {
+        console.error("Error fetching existing requests:", err);
+        setExistingRequests([]);
+      } finally {
+        setFetchingRequests(false);
+      }
+    };
+
+    fetchExistingRequests();
+  }, []);
+
+  const hasActiveRequest = existingRequests.length > 0 && 
+    existingRequests.some(req => req.status !== "Rejected");
+  const hasRejectedRequests = Object.values(departmentStatuses).some(status => status === "Rejected");
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,8 +78,99 @@ export default function ClearanceRequest() {
     setError("");
   };
 
+  const handleResubmit = async (department) => {
+    setResubmittingDept(department);
+    setError("");
+    setSuccess("");
+
+    try {
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      if (!token) {
+        setError("❌ No authentication token found. Please login again.");
+        setResubmittingDept(null);
+        return;
+      }
+
+      // Resubmit only to the specific department
+      const response = await axios.post(
+        apiUrl + "/api/clearance-requests/resubmit",
+        {
+          sapid: formData.sapid,
+          student_name: formData.student_name,
+          registration_no: formData.registration_no.trim(),
+          father_name: formData.father_name.trim(),
+          program: formData.program.trim(),
+          semester: formData.semester.trim(),
+          degree_status: formData.degree_status.trim(),
+          department: department,
+        },
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setSuccess(`✅ Resubmit request sent to ${department}!`);
+        
+        // Update department status
+        setDepartmentStatuses({
+          ...departmentStatuses,
+          [department]: "Pending"
+        });
+
+        // Refresh existing requests
+        const updatedResponse = await axios.get(apiUrl + "/api/clearance-requests", {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        });
+
+        if (updatedResponse.data.success) {
+          setExistingRequests(updatedResponse.data.requests);
+          const statuses = {};
+          updatedResponse.data.requests.forEach((req) => {
+            statuses[req.department] = req.status;
+          });
+          setDepartmentStatuses(statuses);
+        }
+
+        setTimeout(() => {
+          setSuccess("");
+        }, 3000);
+      } else {
+        setError(response.data.message || "❌ Resubmit failed. Please try again.");
+      }
+    } catch (err) {
+      console.error("Resubmit Error:", err);
+      
+      if (err.response?.status === 401) {
+        setError("❌ Invalid or expired token. Please login again.");
+      } else if (err.response?.status === 400) {
+        setError("❌ " + (err.response?.data?.message || "Invalid request data."));
+      } else if (err.response?.status === 500) {
+        setError("❌ Server error: " + (err.response?.data?.message || "Failed to resubmit."));
+      } else {
+        setError("❌ Unable to resubmit: " + (err.message || "Unknown error"));
+      }
+    } finally {
+      setResubmittingDept(null);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Prevent submission if there's already an active request
+    if (hasActiveRequest) {
+      setError("❌ You already have an active clearance request. You cannot submit another one.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setSuccess("");
@@ -111,6 +251,22 @@ export default function ClearanceRequest() {
           degree_status: "",
           department: user?.department || "",
         });
+
+        // Refresh existing requests
+        const updatedResponse = await axios.get(apiUrl + "/api/clearance-requests", {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        });
+
+        if (updatedResponse.data.success) {
+          setExistingRequests(updatedResponse.data.requests);
+          const statuses = {};
+          updatedResponse.data.requests.forEach((req) => {
+            statuses[req.department] = req.status;
+          });
+          setDepartmentStatuses(statuses);
+        }
 
         // Redirect to clearance status after 2 seconds
         setTimeout(() => {
@@ -328,31 +484,90 @@ export default function ClearanceRequest() {
             </div>
           </div>
 
-          <button type="submit" className="submit-btn" disabled={loading}>
+          <button 
+            type="submit" 
+            className="submit-btn" 
+            disabled={loading || hasActiveRequest || fetchingRequests}
+            title={hasActiveRequest ? "You already have an active clearance request" : ""}
+          >
             {loading ? (
               <>
                 <span className="spinner"></span>
                 Submitting...
               </>
+            ) : hasActiveRequest ? (
+              "🔒 Request Already Submitted (Pending/Approved)"
+            ) : fetchingRequests ? (
+              "Loading..."
             ) : (
               "✅ Submit Clearance Request"
             )}
           </button>
+
+          {hasRejectedRequests && (
+            <div className="resubmit-section">
+              <h3>🔄 Resubmit Requests (Rejected)</h3>
+              <p className="resubmit-info">
+                The following departments rejected your request. You can resubmit to them:
+              </p>
+              <div className="resubmit-buttons">
+                {Object.entries(departmentStatuses).map(([dept, status]) => 
+                  status === "Rejected" ? (
+                    <button
+                      key={dept}
+                      type="button"
+                      className="resubmit-btn"
+                      onClick={() => handleResubmit(dept)}
+                      disabled={resubmittingDept !== null}
+                    >
+                      {resubmittingDept === dept ? (
+                        <>
+                          <span className="spinner"></span>
+                          Resubmitting...
+                        </>
+                      ) : (
+                        `🔄 Resubmit to ${dept}`
+                      )}
+                    </button>
+                  ) : null
+                )}
+              </div>
+            </div>
+          )}
         </form>
 
         <div className="info-box">
           <h3>📢 Important Information</h3>
-          <p>Your clearance request will be sent to all departments:</p>
-          <ul>
-            <li>📚 Library Department</li>
-            <li>🚌 Transport Department</li>
-            <li>🔬 Laboratory Department</li>
-            <li>👥 Student Service Department</li>
-            <li>💰 Fee Department</li>
-            <li>📋 Coordination Office</li>
-            <li>👨‍💼 HOD (Head of Department)</li>
-          </ul>
-          <p>Each department will review and approve/reject your request independently.</p>
+          {existingRequests.length > 0 ? (
+            <>
+              <p><strong>Your Current Request Status:</strong></p>
+              <ul>
+                {existingRequests.map((req, idx) => (
+                  <li key={idx}>
+                    {req.department}: <span className={`status-${req.status.toLowerCase()}`}>{req.status}</span>
+                  </li>
+                ))}
+              </ul>
+              <p style={{marginTop: '10px', fontSize: '0.9em', color: '#666'}}>
+                ℹ️ You cannot submit a new request until all departments respond. 
+                If a department rejects your request, you can resubmit to that department only.
+              </p>
+            </>
+          ) : (
+            <>
+              <p>Your clearance request will be sent to all departments:</p>
+              <ul>
+                <li>📚 Library Department</li>
+                <li>🚌 Transport Department</li>
+                <li>🔬 Laboratory Department</li>
+                <li>👥 Student Service Department</li>
+                <li>💰 Fee Department</li>
+                <li>📋 Coordination Office</li>
+                <li>👨‍💼 HOD (Head of Department)</li>
+              </ul>
+              <p>Each department will review and approve/reject your request independently.</p>
+            </>
+          )}
         </div>
       </main>
     </div>
