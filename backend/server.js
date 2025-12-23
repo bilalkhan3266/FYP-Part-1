@@ -860,6 +860,29 @@ async function checkAllDepartmentsApproved(clearanceRequestId) {
   return allRecords.every(d => d.status === 'Approved');
 }
 
+// Get Student's Existing Clearance Requests
+app.get('/api/clearance-requests', verifyToken, async (req, res) => {
+  try {
+    console.log('📋 Fetching clearance requests for student:', req.user.id);
+
+    const requests = await DepartmentClearance.find({
+      student_id: req.user.id
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      requests: requests || [],
+      count: requests.length
+    });
+  } catch (err) {
+    console.error('❌ Fetch Requests Error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch requests: ' + err.message
+    });
+  }
+});
+
 // Update Clearance Status
 app.put('/api/clearance-requests/:id', verifyToken, async (req, res) => {
   try {
@@ -891,58 +914,102 @@ app.put('/api/clearance-requests/:id', verifyToken, async (req, res) => {
 // Resubmit Clearance Request (after rejection)
 app.post('/api/clearance-requests/resubmit', verifyToken, async (req, res) => {
   try {
-    console.log('🔄 Resubmitting clearance request for student:', req.user.id);
+    const { department } = req.body;
+    console.log('🔄 Resubmitting clearance request for student:', req.user.id, 'Department:', department);
 
-    // Find all rejected requests for this student
-    const rejectedRecords = await DepartmentClearance.find({
-      student_id: req.user.id,
-      status: 'Rejected'
-    });
-
-    if (rejectedRecords.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No rejected requests to resubmit'
+    if (department) {
+      // Resubmit to a specific department only
+      const rejectedRecord = await DepartmentClearance.findOne({
+        student_id: req.user.id,
+        department_name: department,
+        status: 'Rejected'
       });
-    }
 
-    // Check if student has any pending requests (cannot resubmit if already pending)
-    const pendingRecords = await DepartmentClearance.find({
-      student_id: req.user.id,
-      status: 'Pending'
-    });
+      if (!rejectedRecord) {
+        return res.status(400).json({
+          success: false,
+          message: `No rejected request found for ${department}`
+        });
+      }
 
-    if (pendingRecords.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'You already have a pending clearance request. Please wait for it to be reviewed.'
-      });
-    }
-
-    // Update all rejected records back to Pending
-    const updateResult = await DepartmentClearance.updateMany(
-      { student_id: req.user.id, status: 'Rejected' },
-      {
-        $set: {
+      // Update the specific rejected record back to Pending
+      await DepartmentClearance.findByIdAndUpdate(
+        rejectedRecord._id,
+        {
           status: 'Pending',
           remarks: '',
           approved_by: '',
           approved_at: null,
           createdAt: new Date()
         }
-      }
-    );
+      );
 
-    console.log(`✅ Updated ${updateResult.modifiedCount} rejected records to Pending`);
+      console.log(`✅ Resubmitted to ${department}`);
 
-    res.json({
-      success: true,
-      message: 'Clearance request resubmitted successfully to all departments',
-      details: {
-        resubmittedCount: updateResult.modifiedCount,
-        timestamp: new Date()
+      res.json({
+        success: true,
+        message: `Clearance request resubmitted successfully to ${department}`,
+        details: {
+          department: department,
+          newStatus: 'Pending',
+          timestamp: new Date()
+        }
+      });
+    } else {
+      // Original behavior: resubmit to all rejected departments
+      console.log('🔄 Resubmitting clearance request for all rejected departments');
+
+      // Find all rejected requests for this student
+      const rejectedRecords = await DepartmentClearance.find({
+        student_id: req.user.id,
+        status: 'Rejected'
+      });
+
+      if (rejectedRecords.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'No rejected requests to resubmit'
+        });
       }
-    });
+
+      // Check if student has any pending requests (cannot resubmit if already pending)
+      const pendingRecords = await DepartmentClearance.find({
+        student_id: req.user.id,
+        status: 'Pending'
+      });
+
+      if (pendingRecords.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'You already have a pending clearance request. Please wait for it to be reviewed.'
+        });
+      }
+
+      // Update all rejected records back to Pending
+      const updateResult = await DepartmentClearance.updateMany(
+        { student_id: req.user.id, status: 'Rejected' },
+        {
+          $set: {
+            status: 'Pending',
+            remarks: '',
+            approved_by: '',
+            approved_at: null,
+            createdAt: new Date()
+          }
+        }
+      );
+
+      console.log(`✅ Updated ${updateResult.modifiedCount} rejected records to Pending`);
+
+      res.json({
+        success: true,
+        message: 'Clearance request resubmitted successfully to all departments',
+        details: {
+          resubmittedCount: updateResult.modifiedCount,
+          timestamp: new Date()
+        }
+      });
+    }
   } catch (err) {
     console.error('❌ Resubmit Error:', err);
     res.status(500).json({
@@ -2039,6 +2106,54 @@ app.get('/api/my-messages', verifyToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: '❌ Failed to fetch messages'
+    });
+  }
+});
+
+// ========== MARK MESSAGE AS READ ==========
+app.put('/api/mark-message-read/:messageId', verifyToken, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const userId = req.user.id;
+
+    console.log('✓ Marking message as read:', messageId, 'by user:', userId);
+
+    // Find the message
+    const message = await Message.findById(messageId);
+    
+    if (!message) {
+      return res.status(404).json({
+        success: false,
+        message: 'Message not found'
+      });
+    }
+
+    // Only the recipient can mark a message as read
+    if (message.recipient_id !== userId && message.recipient_department !== req.user.department) {
+      console.log('❌ Unauthorized: User is not the recipient');
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized'
+      });
+    }
+
+    // Update is_read to true
+    message.is_read = true;
+    message.read_at = new Date();
+    await message.save();
+
+    console.log('✅ Message marked as read');
+
+    res.json({
+      success: true,
+      message: 'Message marked as read',
+      data: message
+    });
+  } catch (err) {
+    console.error('❌ Mark Message Read Error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to mark message as read'
     });
   }
 });
