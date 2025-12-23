@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import "./Messages.css";
 import axios from "axios";
@@ -7,6 +7,7 @@ import axios from "axios";
 export default function Messages() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [messages, setMessages] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -15,6 +16,7 @@ export default function Messages() {
   const [success, setSuccess] = useState("");
   const [sending, setSending] = useState(false);
   const [showNewMessageForm, setShowNewMessageForm] = useState(false);
+  const [messageFilter, setMessageFilter] = useState("all"); // all, sent, received
   const [newMessage, setNewMessage] = useState({
     recipientDepartment: "",
     subject: "",
@@ -26,10 +28,16 @@ export default function Messages() {
     if (user) {
       fetchDepartments();
       fetchMessages();
+      
+      // If coming from dashboard with a department, auto-open form for that dept
+      if (location.state?.dept) {
+        setShowNewMessageForm(true);
+      }
+      
       const interval = setInterval(fetchMessages, 20000);
       return () => clearInterval(interval);
     }
-  }, [user]);
+  }, [user, location]);
 
   // ✅ FETCH DEPARTMENTS FROM BACKEND
   const fetchDepartments = async () => {
@@ -41,8 +49,37 @@ export default function Messages() {
       if (response.data.success) {
         console.log('✅ Departments fetched:', response.data.data);
         setDepartments(response.data.data || []);
-        // Set first department as default
-        if (response.data.data && response.data.data.length > 0) {
+        
+        // Department mapping from key to actual department name
+        const deptKeyMap = {
+          "library": "Library",
+          "fee": "Fee Department",
+          "transport": "Transport",
+          "laboratory": "Laboratory",
+          "studentServices": "Student Service",
+          "coordination": "Coordination",
+          "hod": "HOD",
+          "hostel": "Hostel"
+        };
+        
+        // If coming from dashboard, set the selected department
+        if (location.state?.dept) {
+          const deptName = deptKeyMap[location.state.dept];
+          const dept = response.data.data.find(d => d === deptName);
+          if (dept) {
+            setNewMessage(prev => ({
+              ...prev,
+              recipientDepartment: dept
+            }));
+          } else if (response.data.data && response.data.data.length > 0) {
+            // Fallback to first department if mapping not found
+            setNewMessage(prev => ({
+              ...prev,
+              recipientDepartment: response.data.data[0]
+            }));
+          }
+        } else if (response.data.data && response.data.data.length > 0) {
+          // Set first department as default
           setNewMessage(prev => ({
             ...prev,
             recipientDepartment: response.data.data[0]
@@ -98,6 +135,7 @@ export default function Messages() {
       });
 
       if (response.data.success) {
+        console.log('📨 Messages fetched:', response.data.data);
         setMessages(response.data.data || []);
         setError("");
       } else {
@@ -115,6 +153,36 @@ export default function Messages() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ✅ MARK MESSAGE AS READ (when student views it)
+  const markMessageAsRead = async (messageId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      if (!token) return;
+
+      await axios.put(
+        apiUrl + `/api/mark-message-read/${messageId}`,
+        {},
+        {
+          headers: { 
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      // Update local state to show the message as read
+      setMessages(prevMessages =>
+        prevMessages.map(msg =>
+          msg._id === messageId ? { ...msg, is_read: true } : msg
+        )
+      );
+    } catch (err) {
+      console.error("Error marking message as read:", err);
     }
   };
 
@@ -281,15 +349,50 @@ export default function Messages() {
         ) : (
           <div className="messages-container">
             <div className="messages-header">
-              <span>{messages.length} message{messages.length !== 1 ? 's' : ''}</span>
-              <span className="unread-count">
-                {messages.filter(m => !m.is_read).length} unread
-              </span>
+              <div className="messages-info">
+                <span>{messages.length} message{messages.length !== 1 ? 's' : ''}</span>
+                <span className="unread-count">
+                  {messages.filter(m => !m.is_read).length} unread
+                </span>
+              </div>
+              <div className="messages-filter-buttons">
+                <button 
+                  className={`filter-btn ${messageFilter === 'all' ? 'active' : ''}`}
+                  onClick={() => setMessageFilter('all')}
+                >
+                  📬 All Messages
+                </button>
+                <button 
+                  className={`filter-btn ${messageFilter === 'sent' ? 'active' : ''}`}
+                  onClick={() => setMessageFilter('sent')}
+                >
+                  📤 Sent
+                </button>
+                <button 
+                  className={`filter-btn ${messageFilter === 'received' ? 'active' : ''}`}
+                  onClick={() => setMessageFilter('received')}
+                >
+                  📥 Received
+                </button>
+              </div>
             </div>
             
             <div className="messages-list">
-              {messages.map((msg) => {
+              {messages.filter(msg => {
                 const isSent = msg.sender_id === user?.id;
+                if (messageFilter === 'all') return true;
+                if (messageFilter === 'sent') return isSent;
+                if (messageFilter === 'received') return !isSent;
+                return true;
+              }).map((msg) => {
+                const isSent = msg.sender_id === user?.id;
+                
+                // Mark as read when displayed (if it's a received message and not yet read)
+                if (!isSent && !msg.is_read) {
+                  // Use setTimeout to avoid marking during render
+                  setTimeout(() => markMessageAsRead(msg._id), 500);
+                }
+                
                 return (
                   <div
                     key={msg._id}
@@ -317,8 +420,8 @@ export default function Messages() {
                             minute: '2-digit'
                           })}
                         </span>
-                        <span className={`status-badge ${msg.is_read ? 'read' : 'unread'}`}>
-                          {msg.is_read ? '✓ Read' : '● Unread'}
+                        <span className={`message-status-tick ${msg.is_read ? 'read' : 'unread'}`} title={msg.is_read ? 'Read' : 'Sent'}>
+                          {msg.is_read ? '✓✓' : '✓'}
                         </span>
                       </div>
                     </div>
