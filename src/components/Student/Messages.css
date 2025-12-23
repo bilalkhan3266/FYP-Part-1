@@ -1391,12 +1391,51 @@
   padding: 20px 24px;
   border-bottom: 1px solid var(--border);
   background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.messages-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .messages-header span {
   font-size: 14px;
   font-weight: 600;
   color: var(--gray);
+}
+
+/* Message Filter Buttons */
+.messages-filter-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.filter-btn {
+  padding: 8px 14px;
+  background: #f3f4f6;
+  border: 2px solid transparent;
+  color: #6b7280;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.filter-btn:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.filter-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
 }
 
 .unread-count {
@@ -1521,6 +1560,32 @@
 .status-badge.read {
   background: #e0e7ff;
   color: #4f46e5;
+}
+
+/* ============================================
+   MESSAGE STATUS TICK
+   ============================================ */
+.message-status-tick {
+  font-size: 14px;
+  font-weight: 700;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  min-width: 20px;
+  text-align: center;
+  display: inline-block;
+}
+
+.message-status-tick.unread {
+  color: #6b7280;  /* Gray for unread */
+}
+
+.message-status-tick.read {
+  color: #2563eb;  /* Blue for read */
+}
+
+.message-status-tick:hover {
+  opacity: 0.8;
 }
 
 .message-body {
