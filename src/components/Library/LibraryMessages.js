@@ -15,6 +15,9 @@ export default function LibraryMessages() {
   const [sentMessages, setSentMessages] = useState([]);
   const [receivedMessages, setReceivedMessages] = useState([]);
   const [adminBroadcasts, setAdminBroadcasts] = useState([]);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [replyLoading, setReplyLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     recipient_sapid: "",
@@ -29,6 +32,55 @@ export default function LibraryMessages() {
       ...prev,
       [name]: value
     }));
+  };
+
+  // ✅ HANDLE REPLY TO MESSAGE
+  const handleReply = async (messageId) => {
+    if (!replyText.trim()) {
+      setError("❌ Reply message cannot be empty");
+      return;
+    }
+
+    setReplyLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      console.log(`📨 Sending reply to message: ${messageId}`);
+      console.log(`📝 Reply text: ${replyText.trim()}`);
+
+      const response = await axios.post(
+        apiUrl + `/api/messages/reply/${messageId}`,
+        { message: replyText.trim() },
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      console.log(`✅ Reply response:`, response.data);
+
+      if (response.data.success) {
+        setSuccess("✅ Reply sent successfully!");
+        setReplyingTo(null);
+        setReplyText("");
+        setTimeout(() => setSuccess(""), 2000);
+        // Refresh messages
+        fetchReceivedMessages();
+      } else {
+        setError(response.data.message || "❌ Failed to send reply");
+      }
+    } catch (err) {
+      console.error("❌ Error sending reply:", err);
+      console.error("Response status:", err.response?.status);
+      console.error("Response data:", err.response?.data);
+      const errorMsg = err.response?.data?.message || err.message || "❌ Failed to send reply";
+      setError(errorMsg);
+    } finally {
+      setReplyLoading(false);
+    }
   };
 
   // ✅ FETCH RECEIVED MESSAGES FROM STUDENTS
@@ -376,6 +428,89 @@ export default function LibraryMessages() {
                     <p style={{ margin: "10px 0 0 0", color: "#999", fontSize: "13px" }}>
                       📅 {new Date(msg.createdAt).toLocaleString()}
                     </p>
+
+                    {/* 💬 REPLY BUTTON */}
+                    <div style={{ marginTop: "10px" }}>
+                      <button
+                        type="button"
+                        onClick={() => setReplyingTo(replyingTo === msg._id ? null : msg._id)}
+                        style={{
+                          background: "#2196F3",
+                          color: "white",
+                          border: "none",
+                          padding: "8px 15px",
+                          borderRadius: "5px",
+                          cursor: "pointer",
+                          fontSize: "14px",
+                          fontWeight: "600",
+                          transition: "all 0.3s"
+                        }}
+                        onMouseOver={(e) => e.target.style.background = "#1976D2"}
+                        onMouseOut={(e) => e.target.style.background = "#2196F3"}
+                      >
+                        💬 {replyingTo === msg._id ? "Cancel" : "Reply"}
+                      </button>
+                    </div>
+
+                    {/* ✅ REPLY FORM */}
+                    {replyingTo === msg._id && (
+                      <div style={{ marginTop: "15px", padding: "15px", backgroundColor: "#f5f5f5", borderRadius: "5px", borderLeft: "4px solid #2196F3" }}>
+                        <textarea
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder="Type your reply here..."
+                          style={{
+                            width: "100%",
+                            height: "100px",
+                            padding: "10px",
+                            borderRadius: "5px",
+                            border: "1px solid #ddd",
+                            fontFamily: "Arial, sans-serif",
+                            fontSize: "14px",
+                            boxSizing: "border-box"
+                          }}
+                        />
+                        <div style={{ marginTop: "10px", display: "flex", gap: "10px" }}>
+                          <button
+                            type="button"
+                            onClick={() => handleReply(msg._id)}
+                            disabled={replyLoading}
+                            style={{
+                              background: "#4CAF50",
+                              color: "white",
+                              border: "none",
+                              padding: "10px 20px",
+                              borderRadius: "5px",
+                              cursor: replyLoading ? "not-allowed" : "pointer",
+                              fontSize: "14px",
+                              fontWeight: "600",
+                              opacity: replyLoading ? 0.6 : 1
+                            }}
+                          >
+                            {replyLoading ? "Sending..." : "✅ Send Reply"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReplyingTo(null);
+                              setReplyText("");
+                            }}
+                            style={{
+                              background: "#f44336",
+                              color: "white",
+                              border: "none",
+                              padding: "10px 20px",
+                              borderRadius: "5px",
+                              cursor: "pointer",
+                              fontSize: "14px",
+                              fontWeight: "600"
+                            }}
+                          >
+                            ❌ Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
