@@ -134,6 +134,12 @@ export default function AdminEditProfile() {
           </button>
           <button 
             className="admin-nav-btn"
+            onClick={() => navigate("/admin-users")}
+          >
+            👥 User Management
+          </button>
+          <button 
+            className="admin-nav-btn"
             onClick={() => navigate("/admin-messages")}
           >
             💬 Messages

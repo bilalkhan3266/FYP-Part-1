@@ -28,6 +28,9 @@ export default function AdminMessages() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showMessageLog, setShowMessageLog] = useState(false);
+  const [messageLog, setMessageLog] = useState([]);
+  const [messageFilter, setMessageFilter] = useState("all"); // all, sent, received
 
   const departments = [
     "Library",
@@ -129,6 +132,37 @@ export default function AdminMessages() {
     }
   };
 
+  // Fetch message log
+  const fetchMessageLog = async () => {
+    try {
+      const response = await axios.get(apiUrl + "/api/admin/message-log", axiosConfig);
+      console.log('📋 Message log response:', response.data);
+      if (response.data.success) {
+        setMessageLog(response.data.data || []);
+        setShowMessageLog(true);
+        setError("");
+      } else {
+        const errorMsg = response.data.message || "Failed to load message log";
+        console.error('❌ Server response error:', errorMsg);
+        setError("❌ " + errorMsg);
+      }
+    } catch (err) {
+      console.error("❌ Error fetching message log:", err);
+      console.error('❌ Error status:', err.response?.status);
+      console.error('❌ Error data:', err.response?.data);
+      
+      if (err.response?.status === 404) {
+        setError("❌ Message log endpoint not found. Make sure the backend is updated.");
+      } else if (err.response?.status === 401) {
+        setError("❌ Authentication failed. Please login again.");
+      } else if (err.response?.data?.message) {
+        setError("❌ " + err.response.data.message);
+      } else {
+        setError("❌ Failed to load message log. Please try again.");
+      }
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -162,6 +196,12 @@ export default function AdminMessages() {
           >
             📊 Dashboard
           </button>
+          <button 
+            className="admin-nav-btn"
+            onClick={() => navigate("/admin-users")}
+          >
+            👥 User Management
+          </button>
           <button className="admin-nav-btn active">
             💬 Messages
           </button>
@@ -187,6 +227,12 @@ export default function AdminMessages() {
             <h1>📨 Send Messages</h1>
             <p>Communicate with departments and students from the admin panel</p>
           </div>
+          <button 
+            className="btn-view-messages"
+            onClick={fetchMessageLog}
+          >
+            📬 View Messages
+          </button>
         </header>
 
         {error && <div className="alert alert-error">{error}</div>}
@@ -381,6 +427,79 @@ export default function AdminMessages() {
             </button>
           </div>
         </form>
+
+        {showMessageLog && (
+          <div className="message-log-section">
+            <div className="log-header">
+              <h2>📬 Message Log</h2>
+              <div className="filter-buttons">
+                <button 
+                  className={`filter-btn ${messageFilter === 'all' ? 'active' : ''}`}
+                  onClick={() => setMessageFilter('all')}
+                >
+                  📬 All
+                </button>
+                <button 
+                  className={`filter-btn ${messageFilter === 'sent' ? 'active' : ''}`}
+                  onClick={() => setMessageFilter('sent')}
+                >
+                  📤 Sent
+                </button>
+                <button 
+                  className={`filter-btn ${messageFilter === 'received' ? 'active' : ''}`}
+                  onClick={() => setMessageFilter('received')}
+                >
+                  📥 Received
+                </button>
+              </div>
+              <button 
+                className="btn-close-log"
+                onClick={() => setShowMessageLog(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            {error && (
+              <div className="alert alert-error" style={{ margin: '16px 0' }}>
+                {error}
+              </div>
+            )}
+
+            {messageLog && messageLog.filter(msg => {
+              if (messageFilter === 'all') return true;
+              if (messageFilter === 'sent') return msg.sender_type === 'admin';
+              if (messageFilter === 'received') return msg.sender_type !== 'admin';
+              return true;
+            }).length === 0 ? (
+              <div className="empty-log">
+                <p>{error ? '⚠️ Unable to load messages' : '📭 No messages in this filter'}</p>
+                {error && <p style={{ fontSize: '12px', marginTop: '8px', color: '#6b7280' }}>Check the browser console for more details</p>}
+
+              </div>
+            ) : (
+              <div className="log-messages">
+                {messageLog.filter(msg => {
+                  if (messageFilter === 'all') return true;
+                  if (messageFilter === 'sent') return msg.sender_type === 'admin';
+                  if (messageFilter === 'received') return msg.sender_type !== 'admin';
+                  return true;
+                }).map((msg, idx) => (
+                  <div key={idx} className={`log-message ${msg.sender_type === 'admin' ? 'sent' : 'received'}`}>
+                    <div className="log-msg-header">
+                      <strong>{msg.subject}</strong>
+                      <span className="log-date">{new Date(msg.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <p className="log-msg-body">{msg.message}</p>
+                    <span className="log-recipient">
+                      {msg.sender_type === 'admin' ? '→' : '←'} {msg.recipient || 'System'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
@@ -532,6 +651,149 @@ const styles = `
     color: #0369a1;
     font-size: 13px;
     border-radius: 4px;
+  }
+
+  .btn-view-messages {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn-view-messages:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+  }
+
+  .message-log-section {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-top: 32px;
+  }
+
+  .log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .log-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .filter-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .filter-btn {
+    padding: 8px 14px;
+    background: #f3f4f6;
+    border: 2px solid transparent;
+    color: #6b7280;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .filter-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+  }
+
+  .filter-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+  }
+
+  .btn-close-log {
+    padding: 8px 12px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-close-log:hover {
+    background: #e5e7eb;
+  }
+
+  .log-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .log-message {
+    padding: 16px;
+    background: #f9fafb;
+    border-left: 4px solid #e5e7eb;
+    border-radius: 8px;
+  }
+
+  .log-message.sent {
+    border-left-color: #10b981;
+    background: #ecfdf5;
+  }
+
+  .log-message.received {
+    border-left-color: #0ea5e9;
+    background: #f0f9ff;
+  }
+
+  .log-msg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .log-msg-header strong {
+    color: #1e293b;
+    font-size: 14px;
+  }
+
+  .log-date {
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .log-msg-body {
+    margin: 8px 0;
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.4;
+  }
+
+  .log-recipient {
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .empty-log {
+    text-align: center;
+    padding: 40px;
+    color: #64748b;
   }
 `;
 

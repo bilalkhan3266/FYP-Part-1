@@ -137,6 +137,12 @@ export default function AdminDashboard() {
           </button>
           <button 
             className="admin-nav-btn"
+            onClick={() => navigate("/admin-users")}
+          >
+            👥 User Management
+          </button>
+          <button 
+            className="admin-nav-btn"
             onClick={() => navigate("/admin-messages")}
           >
             💬 Messages
