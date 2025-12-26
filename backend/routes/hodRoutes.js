@@ -38,7 +38,12 @@ const verifyToken = (req, res, next) => {
 
 // Middleware: Verify HOD Role
 const verifyHOD = (req, res, next) => {
-  if (!req.user || req.user.role?.toLowerCase() !== 'hod') {
+  const userRole = req.user?.role?.toLowerCase() || '';
+  
+  // Allow flexible HOD role matching: "hod", "head of department", "head of computing department", etc.
+  const isHOD = userRole.includes('hod') || userRole.includes('head');
+  
+  if (!isHOD) {
     return res.status(403).json({
       success: false,
       message: 'Access denied. HOD privileges required.',
@@ -97,6 +102,220 @@ router.get('/department-requests', verifyToken, verifyHOD, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch department requests'
+    });
+  }
+});
+
+/**
+ * GET /api/hod/pending-requests
+ * Get all pending clearance requests
+ */
+router.get('/pending-requests', verifyToken, verifyHOD, async (req, res) => {
+  try {
+    const requests = await ClearanceRequest.find({ status: 'pending' })
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      success: true,
+      data: requests || []
+    });
+  } catch (error) {
+    console.error('Error fetching pending requests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch pending requests'
+    });
+  }
+});
+
+/**
+ * GET /api/hod/approved-requests
+ * Get all approved clearance requests
+ */
+router.get('/approved-requests', verifyToken, verifyHOD, async (req, res) => {
+  try {
+    const requests = await ClearanceRequest.find({ status: 'approved' })
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      success: true,
+      data: requests || []
+    });
+  } catch (error) {
+    console.error('Error fetching approved requests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch approved requests'
+    });
+  }
+});
+
+/**
+ * GET /api/hod/rejected-requests
+ * Get all rejected clearance requests
+ */
+router.get('/rejected-requests', verifyToken, verifyHOD, async (req, res) => {
+  try {
+    const requests = await ClearanceRequest.find({ status: 'rejected' })
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      success: true,
+      data: requests || []
+    });
+  } catch (error) {
+    console.error('Error fetching rejected requests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch rejected requests'
+    });
+  }
+});
+
+/**
+ * GET /api/hod/pending-approvals
+ * Get all pending clearance approvals for HOD
+ */
+router.get('/pending-approvals', verifyToken, verifyHOD, async (req, res) => {
+  try {
+    const approvals = await ClearanceRequest.find({ 
+      status: 'pending',
+      hodApproved: false 
+    })
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      success: true,
+      data: approvals || []
+    });
+  } catch (error) {
+    console.error('Error fetching pending approvals:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch pending approvals'
+    });
+  }
+});
+
+/**
+ * PUT /api/hod/requests/:requestId/approve
+ * Approve a clearance request
+ */
+router.put('/requests/:requestId/approve', verifyToken, verifyHOD, async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { remarks } = req.body;
+    
+    const request = await ClearanceRequest.findByIdAndUpdate(
+      requestId,
+      {
+        status: 'approved',
+        hodRemarks: remarks,
+        hodApproved: true,
+        hodApprovedAt: new Date()
+      },
+      { new: true }
+    );
+    
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'Request not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: request,
+      message: 'Request approved successfully'
+    });
+  } catch (error) {
+    console.error('Error approving request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to approve request'
+    });
+  }
+});
+
+/**
+ * PUT /api/hod/requests/:requestId/reject
+ * Reject a clearance request
+ */
+router.put('/requests/:requestId/reject', verifyToken, verifyHOD, async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { remarks } = req.body;
+    
+    const request = await ClearanceRequest.findByIdAndUpdate(
+      requestId,
+      {
+        status: 'rejected',
+        hodRemarks: remarks,
+        hodApproved: false,
+        hodRejectedAt: new Date()
+      },
+      { new: true }
+    );
+    
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'Request not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: request,
+      message: 'Request rejected successfully'
+    });
+  } catch (error) {
+    console.error('Error rejecting request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reject request'
+    });
+  }
+});
+
+/**
+ * PUT /api/hod/approve-clearance/:requestId
+ * Approve clearance for a student
+ */
+router.put('/approve-clearance/:requestId', verifyToken, verifyHOD, async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { remarks } = req.body;
+    
+    const request = await ClearanceRequest.findByIdAndUpdate(
+      requestId,
+      {
+        status: 'approved',
+        hodApproved: true,
+        hodApprovedAt: new Date(),
+        remarks: remarks || ''
+      },
+      { new: true }
+    );
+    
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'Clearance request not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: request,
+      message: 'Clearance approved successfully'
+    });
+  } catch (error) {
+    console.error('Error approving clearance:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to approve clearance'
     });
   }
 });

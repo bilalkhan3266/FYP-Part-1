@@ -436,7 +436,7 @@ export default function ClearanceStatus() {
           </div>
         )}
 
-        <div className="status-info">
+        <div className="status-info1">
           <div className="status-info-header">
             <h3>📊 Status Information</h3>
             <p className="status-info-subtitle">How clearance requests are processed</p>

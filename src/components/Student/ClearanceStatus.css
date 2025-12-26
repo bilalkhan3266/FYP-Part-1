@@ -1299,7 +1299,7 @@ body {
 }
 
 /* ---- Status Info Section ---- */
-.status-info {
+.status-info1 {
   background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
   border: 1.5px solid #e5e7eb;
   border-radius: 16px;
@@ -1307,6 +1307,7 @@ body {
   margin-top: 40px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.08);
   animation: slideInDown 0.5s ease-out;
+  min-height: 510px;
 }
 
 .status-info-header {

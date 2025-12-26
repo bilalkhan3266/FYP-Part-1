@@ -126,6 +126,12 @@ export default function CoordinationEditProfile() {
           <button className="sd-nav-btn" onClick={() => navigate("/coordination-dashboard")}>
             🏠 Dashboard
           </button>
+          <button className="sd-nav-btn" onClick={() => navigate("/coordination-approved")}>
+            ✅ Approved
+          </button>
+          <button className="sd-nav-btn" onClick={() => navigate("/coordination-rejected")}>
+            ❌ Rejected
+          </button>
           <button className="sd-nav-btn active">📝 Edit Profile</button>
           <button className="sd-nav-btn" onClick={() => navigate("/coordination-messages")}>
             💬 Messages

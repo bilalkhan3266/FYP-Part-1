@@ -124,6 +124,12 @@ export default function ServiceEditProfile() {
           >
             📋 Dashboard
           </button>
+          <button className="sd-nav-btn">
+            ✅ Approved
+          </button>
+          <button className="sd-nav-btn">
+            ❌ Rejected
+          </button>
           <button
             className="sd-nav-btn"
             onClick={() => navigate("/service-messages")}

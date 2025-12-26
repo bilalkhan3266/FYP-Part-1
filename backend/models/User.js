@@ -6,9 +6,8 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, required: true },
   sap: { type: String, default: null },
-  department: { type: String, default: null },
-  created_at: { type: Date, default: Date.now }
-});
+  department: { type: String, default: null }
+}, { timestamps: true });
 
 // Prevent model overwrite
 const User = mongoose.models.User || mongoose.model("User", userSchema);

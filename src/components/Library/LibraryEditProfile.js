@@ -126,6 +126,8 @@ export default function LibraryEditProfile() {
           <button className="sd-nav-btn" onClick={() => navigate("/library-dashboard")}>
             🏠 Dashboard
           </button>
+            <button className="sd-nav-btn" onClick={() => navigate("/library-approved")}>✅ Approved</button>
+          <button className="sd-nav-btn" onClick={() => navigate("/library-rejected")}>❌ Rejected</button>
           <button className="sd-nav-btn active">📝 Edit Profile</button>
           <button className="sd-nav-btn" onClick={() => navigate("/library-messages")}>
             💬 Messages

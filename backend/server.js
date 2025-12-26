@@ -6,11 +6,13 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 // Import Routes
 const libraryRoutes = require("./routes/libraryRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const hodRoutes = require("./routes/hodRoutes");
+const messagesRoutes = require("./routes/messages.routes");
 
 // Import Models
 const User = require("./models/User");
@@ -378,15 +380,53 @@ app.post('/api/forgot-password-request', async (req, res) => {
     console.log(`📧 Reset code for ${email}: ${resetCode}`);
     console.log(`⏱️ Code expires in 15 minutes`);
 
-    // TODO: In production, send this code via email using nodemailer or similar
-    // For now, log it for testing
-    // Example implementation:
-    // const transporter = nodemailer.createTransport({...});
-    // await transporter.sendMail({
-    //   to: email,
-    //   subject: 'Password Reset Code',
-    //   html: `Your password reset code is: ${resetCode}. It expires in 15 minutes.`
-    // });
+    // Send email with reset code
+    try {
+      const transporter = nodemailer.createTransport({
+        service: process.env.EMAIL_SERVICE || 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD
+        }
+      });
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Riphah University - Password Reset Code',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #003366 0%, #00509e 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+              <h1 style="margin: 0; font-size: 28px;">Password Reset Code</h1>
+            </div>
+            <div style="background: #f4f7fc; padding: 30px; border-radius: 0 0 8px 8px;">
+              <p style="font-size: 16px; color: #333; margin-bottom: 20px;">Hello ${user.full_name},</p>
+              <p style="font-size: 16px; color: #333; margin-bottom: 30px;">We received a request to reset your password. Use the code below to proceed:</p>
+              
+              <div style="background: white; border: 2px solid #003366; border-radius: 8px; padding: 20px; text-align: center; margin: 30px 0;">
+                <p style="margin: 0; font-size: 12px; color: #666; margin-bottom: 10px;">YOUR RESET CODE</p>
+                <p style="margin: 0; font-size: 36px; font-weight: bold; color: #003366; letter-spacing: 5px;">${resetCode}</p>
+              </div>
+              
+              <p style="font-size: 14px; color: #666; margin: 20px 0;">This code will expire in <strong>15 minutes</strong>.</p>
+              <p style="font-size: 14px; color: #666; margin: 20px 0;">If you didn't request a password reset, please ignore this email or contact support if you have concerns.</p>
+              
+              <div style="border-top: 1px solid #ddd; margin-top: 30px; padding-top: 20px; font-size: 12px; color: #999;">
+                <p style="margin: 5px 0;">© 2025 Riphah International University</p>
+                <p style="margin: 5px 0;">Student Clearance Management System</p>
+              </div>
+            </div>
+          </div>
+        `
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log(`✅ Reset code email sent to ${email}`);
+    } catch (emailError) {
+      console.error('❌ Email sending error:', emailError.message);
+      // Don't fail the request if email fails, but log the issue
+      // In development, the code is logged to console anyway
+    }
 
     res.json({
       success: true,
@@ -1397,11 +1437,12 @@ app.post('/api/send', verifyToken, async (req, res) => {
     const senderId = req.user.id;
     const senderName = req.user.full_name;
     const senderRole = req.user.role;
-    const senderSapid = req.user.sap;
+    const senderSapid = req.user.sapid || req.user.sap_id || req.user.sap;
     const { recipientDepartment, subject, message } = req.body;
 
     console.log('📨 Send Message via /api/send:');
     console.log('  - Sender:', senderName, '(' + senderSapid + ')');
+    console.log('  - Sender SAP available:', !!senderSapid);
     console.log('  - Department:', recipientDepartment);
     console.log('  - Subject:', subject);
     console.log('  - Full body:', JSON.stringify(req.body));
@@ -1428,8 +1469,8 @@ app.post('/api/send', verifyToken, async (req, res) => {
       sender_name: senderName,
       sender_role: senderRole,
       sender_sapid: senderSapid,
-      recipient_sapid: senderSapid,
-      recipient_id: senderId,
+      recipient_sapid: null,
+      recipient_id: null,
       recipient_department: recipientDepartment,
       subject: subject.trim(),
       message: message.trim(),
@@ -1447,6 +1488,9 @@ app.post('/api/send', verifyToken, async (req, res) => {
     const savedMessage = await newMessage.save();
 
     console.log(`✅ Message saved successfully - ID: ${savedMessage._id}`);
+    console.log(`   sender_sapid: ${savedMessage.sender_sapid}`);
+    console.log(`   recipient_sapid: ${savedMessage.recipient_sapid}`);
+    console.log(`   recipient_department: ${savedMessage.recipient_department}`);
 
     res.status(201).json({
       success: true,
@@ -1474,7 +1518,7 @@ app.post('/api/send-message', verifyToken, async (req, res) => {
     const senderId = req.user.id;
     const senderName = req.user.full_name;
     const senderRole = req.user.role;
-    const senderSapid = req.user.sap;
+    const senderSapid = req.user.sapid || req.user.sap_id || req.user.sap;
     const { recipient_department, recipient_sapid, subject, message, message_type } = req.body;
 
     console.log('📨 Message Received:');
@@ -1580,64 +1624,6 @@ app.post('/api/send-message', verifyToken, async (req, res) => {
   }
 });
 
-// Reply to a message in conversation
-app.post('/api/messages/:conversation_id/reply', verifyToken, async (req, res) => {
-  try {
-    const { conversation_id } = req.params;
-    const senderId = req.user.id;
-    const senderName = req.user.full_name;
-    const senderRole = req.user.role;
-    const { message } = req.body;
-
-    if (!message) {
-      return res.status(400).json({
-        success: false,
-        message: '❌ Message is required'
-      });
-    }
-
-    // Find the original message to get details
-    const originalMessage = await Message.findOne({ conversation_id }).sort({ createdAt: -1 });
-    
-    if (!originalMessage) {
-      return res.status(404).json({
-        success: false,
-        message: '❌ Conversation not found'
-      });
-    }
-
-    // Create reply message
-    const replyMessage = new Message({
-      conversation_id,
-      sender_id: senderId,
-      sender_name: senderName,
-      sender_role: senderRole,
-      sender_sapid: senderRole === 'student' ? req.user.sap : originalMessage.sender_sapid,
-      recipient_sapid: senderRole === 'student' ? req.user.sap : originalMessage.sender_sapid,
-      recipient_id: senderRole === 'student' ? senderId : originalMessage.sender_id,
-      recipient_department: originalMessage.recipient_department,
-      subject: `Re: ${originalMessage.subject}`,
-      message,
-      message_type: 'reply',
-      parent_message_id: originalMessage._id
-    });
-
-    await replyMessage.save();
-
-    res.status(201).json({
-      success: true,
-      message: `✅ Reply sent`,
-      messageId: replyMessage._id
-    });
-  } catch (err) {
-    console.error('Reply Error:', err);
-    res.status(500).json({
-      success: false,
-      message: '❌ Failed to send reply'
-    });
-  }
-});
-
 // --------------------
 // DEPARTMENT STAFF - SEND MESSAGE TO STUDENT
 // --------------------
@@ -1676,7 +1662,7 @@ app.post('/api/department/send-message', verifyToken, async (req, res) => {
       sender_id: senderId,
       sender_name: senderName,
       sender_role: senderRole,
-      sender_sapid: senderRole === 'student' ? req.user.sap : null,
+      sender_sapid: req.user.sapid || req.user.sap_id || req.user.sap,
       recipient_sapid: student_sapid,
       recipient_id: student._id,
       recipient_department: senderDept,
@@ -1708,13 +1694,9 @@ app.post('/api/department/send-message', verifyToken, async (req, res) => {
 // ADMIN - SEND MESSAGE TO DEPARTMENTS/STUDENTS
 // --------------------
 app.post('/api/admin/send-message', verifyToken, async (req, res) => {
-  console.log('🚀 [ENDPOINT HIT] /api/admin/send-message request received');
-  console.log('🔑 User from token:', req.user ? { id: req.user.id, role: req.user.role } : 'NO USER');
-  
   try {
     // Verify admin role
     if (req.user.role !== 'admin') {
-      console.log('❌ User role is not admin:', req.user.role);
       return res.status(403).json({
         success: false,
         message: 'Access denied - Admin role required'
@@ -1724,8 +1706,6 @@ app.post('/api/admin/send-message', verifyToken, async (req, res) => {
     const { messageType, subject, message, priority, targetType, department, studentSapId, roleTarget } = req.body;
     const senderId = req.user.id;
     const senderName = req.user.full_name || 'Admin';
-
-    console.log('✅ Admin role verified');
 
     // Validation
     if (!subject || !message) {
@@ -1780,73 +1760,62 @@ app.post('/api/admin/send-message', verifyToken, async (req, res) => {
     
     // CASE 2: Send to all departments or specific department
     else if (messageType === 'department') {
-      try {
-        let departmentUsers = [];
+      let departmentUsers = [];
 
-        if (targetType === 'all') {
-          // Send to all department staff (case-insensitive)
-          departmentUsers = await User.find({
-            role: { $regex: /^(library|transport|laboratory|feedepartment|coordination|studentservice)$/i }
+      if (targetType === 'all') {
+        // Send to all department staff (case-insensitive)
+        departmentUsers = await User.find({
+          role: { $regex: /^(library|transport|laboratory|feedepartment|coordination|studentservice)$/i }
+        });
+      } else if (targetType === 'specific') {
+        if (!department) {
+          return res.status(400).json({
+            success: false,
+            message: 'Department is required'
           });
-          console.log(`Found ${departmentUsers.length} users for all departments`);
-        } else if (targetType === 'specific') {
-          if (!department) {
-            return res.status(400).json({
-              success: false,
-              message: 'Department is required'
-            });
-          }
-          // Map department name to role (case-insensitive)
-          const deptMapping = {
-            'Library': /^library$/i,
-            'Transport': /^transport$/i,
-            'Laboratory': /^laboratory$/i,
-            'Fee Department': /^feedepartment$/i,
-            'Coordination': /^coordination$/i,
-            'Student Service': /^studentservice$/i,
-            'Student Services': /^studentservice$/i
-          };
-          
-          const roleRegex = deptMapping[department];
-          if (!roleRegex) {
-            return res.status(400).json({
-              success: false,
-              message: `Invalid department: ${department}`
-            });
-          }
-          departmentUsers = await User.find({ role: roleRegex });
-          console.log(`Found ${departmentUsers.length} users for department: ${department}`);
         }
-
-        // Send message to each department user
-        for (const user of departmentUsers) {
-          try {
-            const newMessage = new Message({
-              sender_id: senderId,
-              sender_name: senderName,
-              sender_role: 'admin',
-              sender_sapid: null,
-              recipient_id: user._id,
-              recipient_sapid: user.sap,
-              recipient_department: user.department,
-              subject: subject.trim(),
-              message: message.trim(),
-              message_type: 'notification',
-              priority: priority || 'normal',
-              is_read: false,
-              createdAt: new Date()
-            });
-
-            await newMessage.save();
-            messagesSent++;
-            recipients.push(`${user.full_name} (${user.department})`);
-          } catch (innerErr) {
-            console.error(`Error saving message for user ${user.full_name}:`, innerErr.message);
-          }
+        // Map department name to role (case-insensitive)
+        const deptMapping = {
+          'Library': /^library$/i,
+          'Transport': /^transport$/i,
+          'Laboratory': /^laboratory$/i,
+          'Fee Department': /^feedepartment$/i,
+          'Coordination': /^coordination$/i,
+          'Student Service': /^studentservice$/i,
+          'Student Services': /^studentservice$/i
+        };
+        
+        const roleRegex = deptMapping[department];
+        if (!roleRegex) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid department: ${department}`
+          });
         }
-      } catch (deptErr) {
-        console.error('Department message error:', deptErr);
-        throw deptErr;
+        departmentUsers = await User.find({ role: roleRegex });
+      }
+
+      // Send message to each department user
+      for (const user of departmentUsers) {
+        const newMessage = new Message({
+          sender_id: senderId,
+          sender_name: senderName,
+          sender_role: 'admin',
+          sender_sapid: null,
+          recipient_id: user._id,
+          recipient_sapid: user.sap,
+          recipient_department: user.department,
+          subject: subject.trim(),
+          message: message.trim(),
+          message_type: 'notification',
+          priority: priority || 'normal',
+          is_read: false,
+          createdAt: new Date()
+        });
+
+        await newMessage.save();
+        messagesSent++;
+        recipients.push(`${user.full_name} (${user.department})`);
       }
     }
     
@@ -1887,7 +1856,6 @@ app.post('/api/admin/send-message', verifyToken, async (req, res) => {
 
     console.log(`✅ Admin message sent to ${messagesSent} recipients`);
 
-    console.log(`✅ Final response - sending ${messagesSent} messages to recipients:`, recipients);
     res.status(201).json({
       success: true,
       message: `✅ Message sent successfully to ${messagesSent} recipient(s)!`,
@@ -1895,8 +1863,7 @@ app.post('/api/admin/send-message', verifyToken, async (req, res) => {
       recipients
     });
   } catch (err) {
-    console.error('❌ Admin Message Error:', err);
-    console.error('Stack trace:', err.stack);
+    console.error('Admin Message Error:', err);
     res.status(500).json({
       success: false,
       message: 'Failed to send message: ' + err.message
@@ -2011,10 +1978,15 @@ app.get('/api/my-messages', verifyToken, async (req, res) => {
     
     if (userRole === 'student') {
       // Students see both messages they sent AND received
+      const userSapid = req.user.sapid || req.user.sap_id || req.user.sap;
+      
+      console.log(`📨 Student query - userId: ${userId}, sapid: ${userSapid}`);
+      
       query = {
         $or: [
           { sender_id: userId },        // Messages they sent
-          { recipient_id: userId }       // Messages they received
+          { recipient_id: userId },      // Messages they received (by MongoDB ID)
+          { recipient_sapid: userSapid } // Messages they received (by SAP ID fallback)
         ]
       };
     } else {
@@ -2128,9 +2100,13 @@ app.put('/api/mark-message-read/:messageId', verifyToken, async (req, res) => {
       });
     }
 
-    // Only the recipient can mark a message as read
-    if (message.recipient_id !== userId && message.recipient_department !== req.user.department) {
-      console.log('❌ Unauthorized: User is not the recipient');
+    // Allow both sender and recipient to mark as read
+    const isRecipient = message.recipient_id.toString() === userId.toString() || 
+                        message.recipient_department === req.user.department;
+    const isSender = message.sender_id.toString() === userId.toString();
+
+    if (!isRecipient && !isSender) {
+      console.log('❌ Unauthorized: User is not the recipient or sender');
       return res.status(403).json({
         success: false,
         message: 'Unauthorized'
@@ -2992,6 +2968,11 @@ app.put('/api/fee/requests/:id/reject', verifyToken, async (req, res) => {
 // Mount Library Routes
 // --------------------
 app.use('/api', libraryRoutes);
+
+// --------------------
+// Mount Messages Routes
+// --------------------
+app.use('/api/messages', messagesRoutes);
 
 // --------------------
 // Health Check

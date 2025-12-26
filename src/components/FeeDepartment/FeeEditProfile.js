@@ -126,6 +126,12 @@ export default function FeeEditProfile() {
           <button className="sd-nav-btn" onClick={() => navigate("/fee-dashboard")}>
             🏠 Dashboard
           </button>
+          <button className="sd-nav-btn" onClick={() => navigate("/fee-view-student-request")}>
+            📋 View Student Request
+          </button>
+          <button className="sd-nav-btn" onClick={() => navigate("/fee-approved-requests")}>
+            ✅ Approved Requests
+          </button>
           <button className="sd-nav-btn active">📝 Edit Profile</button>
           <button className="sd-nav-btn" onClick={() => navigate("/fee-messages")}>
             💬 Messages

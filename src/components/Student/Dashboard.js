@@ -255,9 +255,9 @@ export default function StudentDashboard() {
             >
               {isRefreshing ? '⟳ Updating...' : '🔄 Refresh'}
             </button>
-            <button className="btn-submit" onClick={() => navigate("/student-clearance-request")}>
+            {/* <button className="btn-submit" onClick={() => navigate("/student-clearance-request")}>
               Submit New Request
-            </button>
+            </button> */}
             <span className="last-updated">
               Last updated: {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </span>

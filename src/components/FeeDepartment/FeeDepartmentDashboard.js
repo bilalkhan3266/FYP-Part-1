@@ -173,7 +173,7 @@ export default function FeeDepartmentDashboard() {
             className="sd-nav-btn"
             onClick={() => setActiveTab("pending")}
           >
-            📄 View Student Requests
+             📋 View Student Request
           </button>
 
           <button

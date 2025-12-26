@@ -36,6 +36,12 @@ function MessagePage() {
         <h2>🏫 Riphah</h2>
         <nav>
           <button className="active">🏠 Dashboard</button>
+          <button>
+            ✅ Approved
+          </button>
+          <button>
+            ❌ Rejected
+          </button>
           <button onClick={() => navigate("/student-clearance-request")}>
             📋 Submit Request
           </button>

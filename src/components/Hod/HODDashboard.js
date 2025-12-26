@@ -6,7 +6,7 @@ import "../Library/LibraryDashboard.css";
 
 export default function HODDashboard() {
   const navigate = useNavigate();
-  const { user, logout } = useAuthContext();
+  const { user, logout, loading: authLoading } = useAuthContext();
   
   const [activeTab, setActiveTab] = useState("pending");
   const [requests, setRequests] = useState([]);
@@ -14,22 +14,35 @@ export default function HODDashboard() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [modal, setModal] = useState({ show: false, type: "", requestId: "", remarks: "" });
+  const [accessDenied, setAccessDenied] = useState(false);
 
   const axiosConfig = { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } };
   const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
   // Role-based access control
   useEffect(() => {
-    if (!user) return;
+    if (authLoading) return; // Wait for auth context to load
+    
+    if (!user) {
+      setAccessDenied(true);
+      setError("❌ Access denied. Not authenticated.");
+      setTimeout(() => navigate("/login"), 1500);
+      return;
+    }
     
     const userRole = user.role ? user.role.toLowerCase() : "";
-    const isHOD = userRole.includes("head") || userRole.includes("hod") || userRole.includes("department head");
+    const isHOD = userRole.includes("head") || userRole.includes("hod");
     
     if (!isHOD) {
+      setAccessDenied(true);
       setError("❌ Access denied. Only HOD users can access this page.");
       setTimeout(() => navigate("/student-dashboard"), 1500);
+    } else {
+      // Access granted - clear any errors
+      setAccessDenied(false);
+      setError("");
     }
-  }, [user, navigate]);
+  }, [authLoading, user, navigate]);
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -101,14 +114,39 @@ export default function HODDashboard() {
     navigate("/login");
   };
 
+  if (authLoading) {
+    return (
+      <div className="student-dashboard-page">
+        <div className="loading-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div className="spinner"></div>
+            <p>⏳ Loading user data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (accessDenied || !user) {
+    return (
+      <div className="student-dashboard-page">
+        <div className="loading-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontSize: '18px', color: '#d32f2f' }}>❌ {error || "Access denied. Redirecting..."}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="student-dashboard-page">
       {/* Sidebar */}
       <aside className="sd-sidebar">
         <div className="sd-profile">
-          <div className="sd-avatar">{user.email?.[0]?.toUpperCase() || "H"}</div>
+          <div className="sd-avatar">{user?.email?.[0]?.toUpperCase() || "H"}</div>
           <div>
-            <h3 className="sd-name">{user.email?.split("@")[0]}</h3>
+            <h3 className="sd-name">{user?.email?.split("@")[0] || "HOD User"}</h3>
             <p className="sd-small">Head of Department</p>
           </div>
         </div>

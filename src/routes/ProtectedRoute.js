@@ -33,8 +33,14 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     const userRole = user.role ? user.role.toLowerCase() : "";
     const allowedRolesLower = allowedRoles.map(r => r.toLowerCase());
     
-    if (!allowedRolesLower.includes(userRole)) {
-      console.log("User role not allowed, redirecting to login");
+    // Special handling for HOD role (can match: hod, head, head of department, department head)
+    let hasAccess = allowedRolesLower.includes(userRole);
+    if (!hasAccess && allowedRolesLower.includes("hod")) {
+      hasAccess = userRole.includes("head") || userRole.includes("hod");
+    }
+    
+    if (!hasAccess) {
+      console.log(`Access denied. User role: ${userRole}, Allowed: ${allowedRolesLower.join(", ")}`);
       return <Navigate to="/login" replace />;
     }
   }

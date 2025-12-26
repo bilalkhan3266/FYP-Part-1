@@ -1,0 +1,229 @@
+/* Laboratory Message Styles */
+
+/* ============================================
+   TAB BUTTONS
+   ============================================ */
+
+.tab-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  border: 2px solid #ddd;
+  background: white;
+  color: #333;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.tab-btn.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+/* ============================================
+   MESSAGES CONTAINER
+   ============================================ */
+
+.messages-container {
+  max-width: 900px;
+}
+
+.loading-text,
+.no-messages {
+  text-align: center;
+  color: #999;
+  padding: 40px 20px;
+  font-size: 16px;
+}
+
+.messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.message-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.message-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  border-color: #667eea;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.message-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.message-header small {
+  color: #999;
+  font-size: 12px;
+}
+
+.message-sender {
+  font-size: 13px;
+  color: #666;
+  margin: 8px 0;
+  font-weight: 500;
+}
+
+.message-body {
+  color: #555;
+  line-height: 1.6;
+  margin: 12px 0;
+  font-size: 14px;
+}
+
+.message-type {
+  font-size: 12px;
+  color: #999;
+  margin: 8px 0 0 0;
+}
+
+.message-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.btn-reply {
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-reply:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+}
+
+.reply-form {
+  width: 100%;
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.reply-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+  margin-bottom: 10px;
+}
+
+.reply-form textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.reply-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-send-reply {
+  padding: 8px 16px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-send-reply:hover {
+  background: #45a049;
+}
+
+.btn-send-reply:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-cancel-reply {
+  padding: 8px 16px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel-reply:hover {
+  background: #da190b;
+}
+
+.btn-cancel-reply:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .tab-buttons {
+    flex-direction: column;
+  }
+
+  .tab-btn {
+    width: 100%;
+  }
+
+  .message-header {
+    flex-direction: column;
+  }
+
+  .reply-actions {
+    flex-direction: column;
+  }
+
+  .btn-reply,
+  .btn-send-reply,
+  .btn-cancel-reply {
+    width: 100%;
+  }
+}

@@ -57,6 +57,14 @@ async function seedDatabase() {
         department: "Fee"
       },
       {
+        full_name: "HOD User",
+        email: "hod@example.com",
+        password: "password123",
+        role: "Hod",
+        sap: "HOD001",
+        department: "Computer Science"
+      },
+      {
         full_name: "Admin User",
         email: "admin@example.com",
         password: "password123",
@@ -99,6 +107,11 @@ async function seedDatabase() {
     console.log("  Email: fee@example.com");
     console.log("  Password: password123");
     console.log("  SAP ID: FEE001");
+    console.log();
+    console.log("HOD:");
+    console.log("  Email: hod@example.com");
+    console.log("  Password: password123");
+    console.log("  SAP ID: HOD001");
     console.log();
     console.log("Admin:");
     console.log("  Email: admin@example.com");

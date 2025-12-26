@@ -17,6 +17,9 @@ export default function Messages() {
   const [sending, setSending] = useState(false);
   const [showNewMessageForm, setShowNewMessageForm] = useState(false);
   const [messageFilter, setMessageFilter] = useState("all"); // all, sent, received
+  const [replyingToId, setReplyingToId] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [replySending, setReplySending] = useState(false);
   const [newMessage, setNewMessage] = useState({
     recipientDepartment: "",
     subject: "",
@@ -37,6 +40,7 @@ export default function Messages() {
       const interval = setInterval(fetchMessages, 20000);
       return () => clearInterval(interval);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, location]);
 
   // ✅ FETCH DEPARTMENTS FROM BACKEND
@@ -275,6 +279,59 @@ export default function Messages() {
     }
   };
 
+  // ✅ REPLY TO A MESSAGE
+  const handleReplySubmit = async (messageId) => {
+    if (!replyText.trim()) {
+      setError("❌ Please enter your reply");
+      return;
+    }
+
+    setReplySending(true);
+    setError("");
+    try {
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      if (!token) {
+        setError("❌ No authentication token. Please login again.");
+        setReplySending(false);
+        return;
+      }
+
+      const response = await axios.post(
+        apiUrl + `/api/messages/reply/${messageId}`,
+        { message: replyText.trim() },
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setReplyText("");
+        setReplyingToId(null);
+        setSuccess("✅ Reply sent successfully!");
+        await fetchMessages();
+        setTimeout(() => setSuccess(""), 3000);
+      } else {
+        setError(response.data.message || "❌ Failed to send reply");
+      }
+    } catch (err) {
+      console.error("❌ Reply Error:", err);
+      if (err.response?.data?.message) {
+        setError("❌ " + err.response.data.message);
+      } else if (err.message) {
+        setError("❌ " + err.message);
+      } else {
+        setError("❌ Failed to send reply. Please try again.");
+      }
+    } finally {
+      setReplySending(false);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -282,6 +339,8 @@ export default function Messages() {
 
   const displayName = user?.full_name || "Student";
   const displaySap = user?.sap || "N/A";
+  const displayDepartment = user?.department || "N/A";
+  const displayUniversity = user?.university || "Riphah International University";
 
   return (
     <div className="student-dashboard-page">
@@ -290,7 +349,8 @@ export default function Messages() {
           <div className="sd-avatar">{displayName.charAt(0).toUpperCase()}</div>
           <div>
             <h3 className="sd-name">{displayName}</h3>
-            <p className="sd-small">{displaySap} • Riphah</p>
+            <p className="sd-small">{displaySap} • {displayDepartment}</p>
+            <p className="sd-small" style={{fontSize: '0.75rem', marginTop: '4px'}}>{displayUniversity}</p>
           </div>
         </div>
 
@@ -298,11 +358,17 @@ export default function Messages() {
           <button onClick={() => navigate("/student-dashboard")} className="sd-nav-btn">
             🏠 Dashboard
           </button>
-          <button onClick={() => navigate("/student-clearance-request")} className="sd-nav-btn">
-            📋 Submit Request
-          </button>
           <button onClick={() => navigate("/student-messages")} className="sd-nav-btn active">
             💬 Messages
+          </button>
+          <button onClick={() => navigate("/student-edit-profile")} className="sd-nav-btn">
+            📝 Edit Profile
+          </button>
+          <button onClick={() => navigate("/student-submit-request")} className="sd-nav-btn">
+            📋 Submit Request
+          </button>
+          <button onClick={() => navigate("/student-clearance-status")} className="sd-nav-btn">
+            ✅ Clearance Status
           </button>
           <button onClick={handleLogout} className="sd-nav-btn logout">
             🚪 Logout
@@ -347,7 +413,7 @@ export default function Messages() {
             </button>
           </div>
         ) : (
-          <div className="messages-container">
+          <div className="messages-container" style={{ width: '100%' }}>
             <div className="messages-header">
               <div className="messages-info">
                 <span>{messages.length} message{messages.length !== 1 ? 's' : ''}</span>
@@ -433,6 +499,52 @@ export default function Messages() {
                     {msg.remarks && (
                       <div className="message-remarks">
                         <strong>💬 Remarks:</strong> {msg.remarks}
+                      </div>
+                    )}
+
+                    {/* ✅ REPLY SECTION - ONLY FOR RECEIVED MESSAGES */}
+                    {!isSent && (
+                      <div className="message-reply-section">
+                        {replyingToId === msg._id ? (
+                          <form onSubmit={(e) => { e.preventDefault(); handleReplySubmit(msg._id); }}>
+                            <div className="reply-input-group">
+                              <textarea
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                                placeholder="Type your reply here..."
+                                rows="3"
+                                className="reply-textarea"
+                              />
+                              <div className="reply-actions">
+                                <button
+                                  type="submit"
+                                  className="btn-reply-send"
+                                  disabled={replySending || !replyText.trim()}
+                                >
+                                  {replySending ? '⟳ Sending...' : '✉️ Send Reply'}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-reply-cancel"
+                                  onClick={() => {
+                                    setReplyingToId(null);
+                                    setReplyText("");
+                                  }}
+                                  disabled={replySending}
+                                >
+                                  ✕ Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </form>
+                        ) : (
+                          <button
+                            className="btn-reply"
+                            onClick={() => setReplyingToId(msg._id)}
+                          >
+                            ↩️ Reply to this message
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>

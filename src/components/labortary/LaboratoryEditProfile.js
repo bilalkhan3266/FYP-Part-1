@@ -126,6 +126,12 @@ export default function LaboratoryEditProfile() {
           <button className="sd-nav-btn" onClick={() => navigate("/laboratory-dashboard")}>
             🏠 Dashboard
           </button>
+          <button className="sd-nav-btn" onClick={() => navigate("/laboratory-approved")}>
+            ✅ Approved
+          </button>
+          <button className="sd-nav-btn" onClick={() => navigate("/laboratory-rejected")}>
+            ❌ Rejected
+          </button>
           <button className="sd-nav-btn active">📝 Edit Profile</button>
           <button className="sd-nav-btn" onClick={() => navigate("/laboratory-messages")}>
             💬 Messages

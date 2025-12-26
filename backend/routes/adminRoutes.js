@@ -61,6 +61,70 @@ router.get('/health', (req, res) => {
 });
 
 /**
+ * GET /api/admin/diagnostics
+ * Diagnostic endpoint to check system state (admin only)
+ */
+router.get('/diagnostics', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    console.log('🔍 [diagnostics] Running system diagnostics...');
+    
+    // Count staff members by role
+    const staffByRole = await User.aggregate([
+      { $match: { role: { $in: ['library', 'transport', 'laboratory', 'feedepartment', 'coordination', 'studentservice'] } } },
+      { $group: { _id: '$role', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    
+    // Count messages by recipient_department
+    const messagesByDept = await Message.aggregate([
+      { $group: { _id: '$recipient_department', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    
+    // Count messages by recipient_id
+    const messagesByRecipient = await Message.countDocuments({ recipient_id: { $exists: true, $ne: null } });
+    
+    // Count messages by type
+    const messagesByType = await Message.aggregate([
+      { $group: { _id: '$message_type', count: { $sum: 1 } } }
+    ]);
+    
+    // Get total messages
+    const totalMessages = await Message.countDocuments();
+    
+    // Get total users
+    const totalUsers = await User.countDocuments();
+    
+    // Get sample messages
+    const sampleMessages = await Message.find().limit(5).lean();
+
+    res.json({
+      success: true,
+      data: {
+        staffByRole,
+        messagesByDept,
+        messagesByRecipient,
+        messagesByType,
+        totalMessages,
+        totalUsers,
+        sampleMessages: sampleMessages.map(m => ({
+          _id: m._id,
+          subject: m.subject,
+          sender_name: m.sender_name,
+          recipient_id: m.recipient_id,
+          recipient_department: m.recipient_department,
+          message_type: m.message_type,
+          createdAt: m.createdAt
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Diagnostics Error:', error);
+    res.status(500).json({ success: false, message: 'Diagnostics failed', error: error.message });
+  }
+});
+
+/**
  * POST /api/admin/send-message
  * Send message to departments, staff roles, or students
  */
@@ -192,7 +256,11 @@ router.post('/send-message', verifyToken, verifyAdmin, async (req, res) => {
       }));
 
       if (departmentMessages.length > 0) {
-        await Message.insertMany(departmentMessages);
+        const createdMessages = await Message.insertMany(departmentMessages);
+        console.log(`✅ [send-message] Created ${createdMessages.length} messages for ${departmentMessages.length} department users`);
+        if (createdMessages.length > 0) {
+          console.log('📧 Sample message:', JSON.stringify(createdMessages[0], null, 2));
+        }
 
         // Update department stats if specific department
         if (departmentName) {
@@ -245,7 +313,13 @@ router.post('/send-message', verifyToken, verifyAdmin, async (req, res) => {
       }));
 
       if (roleMessages.length > 0) {
-        await Message.insertMany(roleMessages);
+        const createdRoleMessages = await Message.insertMany(roleMessages);
+        console.log(`✅ [send-message] Created ${createdRoleMessages.length} role-based broadcast messages to ${roleUsers.length} staff`);
+        if (createdRoleMessages.length > 0) {
+          console.log('📧 Sample role message:', JSON.stringify(createdRoleMessages[0], null, 2));
+        }
+      } else {
+        console.log(`⚠️ [send-message] No role messages created - checked ${roleUsers.length} users with role: ${roleTarget}`);
       }
     }
 
@@ -660,6 +734,38 @@ router.get('/student-messages/:studentSapId', verifyToken, async (req, res) => {
 
 const bcrypt = require('bcryptjs');
 
+// MIGRATE: Add timestamps to existing users (admin only)
+router.post('/migrate-timestamps', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const now = new Date();
+    
+    // Find all users without createdAt
+    const usersWithoutTimestamps = await User.find({ createdAt: { $exists: false } });
+    
+    console.log(`🔍 Found ${usersWithoutTimestamps.length} users without timestamps`);
+    
+    let migratedCount = 0;
+    
+    // Update each user individually to ensure timestamps are set
+    for (let user of usersWithoutTimestamps) {
+      user.createdAt = now;
+      user.updatedAt = now;
+      await user.save();
+      migratedCount++;
+    }
+
+    console.log(`✅ Successfully migrated ${migratedCount} users with timestamps`);
+    res.status(200).json({ 
+      success: true, 
+      message: `✅ Added timestamps to ${migratedCount} users`,
+      migratedCount: migratedCount
+    });
+  } catch (error) {
+    console.error('Migration Error:', error);
+    res.status(500).json({ success: false, message: '❌ Migration failed: ' + error.message });
+  }
+});
+
 // GET ALL USERS (admin only)
 router.get('/users', verifyToken, verifyAdmin, async (req, res) => {
   try {
@@ -676,6 +782,31 @@ router.get('/users', verifyToken, verifyAdmin, async (req, res) => {
 });
 
 // CREATE NEW USER (admin only)
+/**
+ * POST /api/admin/check-email
+ * Check if email already exists in database
+ */
+router.post('/check-email', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    // Check if email already exists (case-insensitive)
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+
+    res.json({
+      success: true,
+      exists: !!existingUser
+    });
+  } catch (error) {
+    console.error('Check Email Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to check email' });
+  }
+});
+
 router.post('/create-user', verifyToken, verifyAdmin, async (req, res) => {
   try {
     const { full_name, email, password, role, department, sap } = req.body;
@@ -705,8 +836,7 @@ router.post('/create-user', verifyToken, verifyAdmin, async (req, res) => {
       password: hashedPassword,
       role: role.toLowerCase(),
       department: department || null,
-      sap: sap || null,
-      created_at: new Date()
+      sap: sap || null
     });
 
     await newUser.save();
@@ -755,6 +885,61 @@ router.delete('/users/:userId', verifyToken, verifyAdmin, async (req, res) => {
   } catch (error) {
     console.error('Delete User Error:', error);
     res.status(500).json({ success: false, message: '❌ Failed to delete user' });
+  }
+});
+
+// =====================
+// GET ALL MESSAGES FOR ADMIN
+// =====================
+router.get("/message-log", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const adminId = req.user._id || req.user.id;
+    console.log(`📨 Fetching message log for admin:`, adminId);
+
+    // Get messages that are:
+    // 1. Sent BY admin TO departments (sender_id === admin's id AND recipient_department is set)
+    // 2. Received BY admin FROM departments (recipient_department === "Admin")
+    const messages = await Message.find({
+      $or: [
+        { 
+          sender_id: adminId,
+          recipient_department: { $exists: true, $ne: null }  // Admin sent to a department
+        },
+        { recipient_department: "Admin" }  // Messages received from departments to admin
+      ]
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Format messages for admin view
+    const formattedMessages = messages.map(msg => ({
+      _id: msg._id,
+      subject: msg.subject,
+      message: msg.message,
+      sender_name: msg.sender_name,
+      sender_role: msg.sender_role,
+      sender_id: msg.sender_id,
+      recipient_department: msg.recipient_department,
+      recipient_id: msg.recipient_id,
+      sender_type: msg.sender_id?.toString() === adminId.toString() ? "admin" : "student",
+      created_at: msg.createdAt,
+      status: msg.status,
+      is_read: msg.is_read
+    }));
+
+    console.log(`✅ Found ${formattedMessages.length} messages for admin (sent to departments + received from departments)`);
+
+    res.json({
+      success: true,
+      data: formattedMessages || [],
+      count: formattedMessages.length
+    });
+  } catch (err) {
+    console.error("Admin Message Log Error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch message log"
+    });
   }
 });
 

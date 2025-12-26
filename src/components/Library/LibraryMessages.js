@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import axios from "axios";
 import "../Student/EditProfile.css";
+import "../DepartmentMessageTabs.css";
 
 export default function LibraryMessages() {
   const { user, logout } = useAuthContext();
@@ -180,8 +181,8 @@ export default function LibraryMessages() {
       );
 
       if (response.data.success) {
-        // Filter to show only admin broadcast messages
-        const broadcasts = response.data.data.filter(msg => msg.messageType === 'admin-broadcast' || msg.message_type === 'admin-broadcast');
+        // Filter to show only admin notification messages
+        const broadcasts = response.data.data.filter(msg => msg.message_type === 'notification');
         setAdminBroadcasts(broadcasts);
         setError("");
       } else {
@@ -280,6 +281,9 @@ export default function LibraryMessages() {
           >
             📋 Dashboard
           </button>
+          <button 
+           className="sd-nav-btn"  onClick={() => navigate("/library-approved")}>✅ Approved</button>
+          <button className="sd-nav-btn" onClick={() => navigate("/library-rejected")}>❌ Rejected</button>
           <button
             className="sd-nav-btn active"
             onClick={() => navigate("/library-messages")}
@@ -520,61 +524,280 @@ export default function LibraryMessages() {
 
         {/* ✅ SEND MESSAGE TAB */}
         {activeTab === "send" && (
-          <form className="edit-form" onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Student SAP ID *</label>
-              <input
-                type="text"
-                name="recipient_sapid"
-                value={formData.recipient_sapid}
-                onChange={handleChange}
-                placeholder="Enter student's SAP ID"
-                required
-              />
+          <div style={{ width: "100%", padding: "0" }}>
+            <div style={{ 
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              padding: "40px",
+              borderRadius: "15px 15px 0 0",
+              marginBottom: "0",
+              color: "white",
+              boxShadow: "0 10px 30px rgba(102, 126, 234, 0.25)"
+            }}>
+              <h2 style={{ margin: "0 0 12px 0", fontSize: "28px", fontWeight: "700", letterSpacing: "-0.5px" }}>📤 Compose New Message</h2>
+              <p style={{ margin: "0", fontSize: "15px", opacity: "0.95", fontWeight: "500" }}>Send important notifications to students with a professional message</p>
             </div>
 
-            <div className="form-group">
-              <label>Subject *</label>
-              <input
-                type="text"
-                name="subject"
-                value={formData.subject}
-                onChange={handleChange}
-                placeholder="Message subject"
-                required
-              />
-            </div>
+            <form onSubmit={handleSubmit} style={{
+              background: "white",
+              padding: "45px",
+              borderRadius: "0 0 15px 15px",
+              boxShadow: "0 10px 30px rgba(102, 126, 234, 0.15)",
+              border: "1px solid #e8e8f0",
+              borderTop: "none"
+            }}>
+              
+              {/* Row 1: SAP ID and Message Type */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "30px", marginBottom: "30px" }}>
+                <div className="form-group">
+                  <label style={{ 
+                    display: "block",
+                    fontWeight: "700",
+                    marginBottom: "10px",
+                    color: "#2c3e50",
+                    fontSize: "15px",
+                    letterSpacing: "0.3px"
+                  }}>
+                    👤 Student SAP ID <span style={{ color: "#e74c3c", fontWeight: "800" }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="recipient_sapid"
+                    value={formData.recipient_sapid}
+                    onChange={handleChange}
+                    placeholder="e.g., 03-001234"
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "14px 16px",
+                      border: "2px solid #e8e8f0",
+                      borderRadius: "10px",
+                      fontSize: "15px",
+                      fontFamily: "inherit",
+                      transition: "all 0.3s ease",
+                      boxSizing: "border-box",
+                      outline: "none",
+                      backgroundColor: "#f8f9fc",
+                      color: "#333"
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = "#667eea";
+                      e.target.style.backgroundColor = "white";
+                      e.target.style.boxShadow = "0 0 0 4px rgba(102, 126, 234, 0.15)";
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = "#e8e8f0";
+                      e.target.style.backgroundColor = "#f8f9fc";
+                      e.target.style.boxShadow = "none";
+                    }}
+                  />
+                </div>
 
-          <div className="form-group">
-              <label>Message Type</label>
-              <select
-                name="message_type"
-                value={formData.message_type}
-                onChange={handleChange}
-              >
-                <option value="info">ℹ️ Information</option>
-                <option value="success">✅ Approved</option>
-                <option value="warning">⚠️ Warning</option>
-                <option value="error">❌ Rejection</option>
-              </select>
-            </div>
+                <div className="form-group">
+                  <label style={{ 
+                    display: "block",
+                    fontWeight: "700",
+                    marginBottom: "10px",
+                    color: "#2c3e50",
+                    fontSize: "15px",
+                    letterSpacing: "0.3px"
+                  }}>
+                    🏷️ Message Type
+                  </label>
+                  <select
+                    name="message_type"
+                    value={formData.message_type}
+                    onChange={handleChange}
+                    style={{
+                      width: "100%",
+                      padding: "14px 16px",
+                      border: "2px solid #e8e8f0",
+                      borderRadius: "10px",
+                      fontSize: "15px",
+                      fontFamily: "inherit",
+                      transition: "all 0.3s ease",
+                      boxSizing: "border-box",
+                      outline: "none",
+                      cursor: "pointer",
+                      backgroundColor: "#f8f9fc",
+                      color: "#333"
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = "#667eea";
+                      e.target.style.backgroundColor = "white";
+                      e.target.style.boxShadow = "0 0 0 4px rgba(102, 126, 234, 0.15)";
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = "#e8e8f0";
+                      e.target.style.backgroundColor = "#f8f9fc";
+                      e.target.style.boxShadow = "none";
+                    }}
+                  >
+                    <option value="info">ℹ️ Information</option>
+                    <option value="success">✅ Approved</option>
+                    <option value="warning">⚠️ Warning</option>
+                    <option value="error">❌ Rejection</option>
+                  </select>
+                </div>
+              </div>
 
-            <div className="form-group">
-              <label>Message *</label>
-              <textarea
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                placeholder="Type your message..."
-                rows="8"
-                required
-              />
-            </div>
+              {/* Subject */}
+              <div className="form-group" style={{ marginBottom: "30px" }}>
+                <label style={{ 
+                  display: "block",
+                  fontWeight: "700",
+                  marginBottom: "10px",
+                  color: "#2c3e50",
+                  fontSize: "15px",
+                  letterSpacing: "0.3px"
+                }}>
+                  📋 Subject <span style={{ color: "#e74c3c", fontWeight: "800" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  placeholder="e.g., Late Fee Reminder, Document Verification Required"
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "14px 16px",
+                    border: "2px solid #e8e8f0",
+                    borderRadius: "10px",
+                    fontSize: "15px",
+                    fontFamily: "inherit",
+                    transition: "all 0.3s ease",
+                    boxSizing: "border-box",
+                    outline: "none",
+                    backgroundColor: "#f8f9fc",
+                    color: "#333"
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#667eea";
+                    e.target.style.backgroundColor = "white";
+                    e.target.style.boxShadow = "0 0 0 4px rgba(102, 126, 234, 0.15)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e8e8f0";
+                    e.target.style.backgroundColor = "#f8f9fc";
+                    e.target.style.boxShadow = "none";
+                  }}
+                />
+              </div>
 
-            <button type="submit" className="submit-btn">
-              📤 Send Message
-            </button>
-          </form>
+              {/* Message Body */}
+              <div className="form-group" style={{ marginBottom: "35px" }}>
+                <label style={{ 
+                  display: "block",
+                  fontWeight: "700",
+                  marginBottom: "10px",
+                  color: "#2c3e50",
+                  fontSize: "15px",
+                  letterSpacing: "0.3px"
+                }}>
+                  💬 Message Content <span style={{ color: "#e74c3c", fontWeight: "800" }}>*</span>
+                </label>
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  placeholder="Type your detailed message here..."
+                  rows="6"
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "16px",
+                    border: "2px solid #e8e8f0",
+                    borderRadius: "10px",
+                    fontSize: "15px",
+                    fontFamily: "inherit",
+                    transition: "all 0.3s ease",
+                    boxSizing: "border-box",
+                    outline: "none",
+                    resize: "vertical",
+                    lineHeight: "1.7",
+                    backgroundColor: "#f8f9fc",
+                    color: "#333"
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#667eea";
+                    e.target.style.backgroundColor = "white";
+                    e.target.style.boxShadow = "0 0 0 4px rgba(102, 126, 234, 0.15)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e8e8f0";
+                    e.target.style.backgroundColor = "#f8f9fc";
+                    e.target.style.boxShadow = "none";
+                  }}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: "flex", gap: "15px", justifyContent: "flex-end", paddingTop: "20px", borderTop: "2px solid #e8e8f0" }}>
+                <button
+                  type="reset"
+                  onClick={() => setFormData({
+                    recipient_sapid: "",
+                    subject: "",
+                    message: "",
+                    message_type: "info"
+                  })}
+                  style={{
+                    padding: "13px 32px",
+                    background: "#f0f0f0",
+                    color: "#555",
+                    border: "2px solid #e0e0e0",
+                    borderRadius: "10px",
+                    fontSize: "15px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    letterSpacing: "0.3px"
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.background = "#e0e0e0";
+                    e.target.style.borderColor = "#999";
+                    e.target.style.transform = "translateY(-2px)";
+                    e.target.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.background = "#f0f0f0";
+                    e.target.style.borderColor = "#e0e0e0";
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "none";
+                  }}
+                >
+                  🔄 Clear Form
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: "13px 45px",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "10px",
+                    fontSize: "15px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    boxShadow: "0 6px 20px rgba(102, 126, 234, 0.35)",
+                    letterSpacing: "0.3px"
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.transform = "translateY(-3px)";
+                    e.target.style.boxShadow = "0 8px 28px rgba(102, 126, 234, 0.45)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.35)";
+                  }}
+                >
+                  ✈️ Send Message
+                </button>
+              </div>
+            </form>
+          </div>
         )}
 
         {/* ✅ SENT MESSAGES HISTORY TAB */}
@@ -690,6 +913,106 @@ export default function LibraryMessages() {
                         {msg.priority === "urgent" ? "🔥 Urgent" : msg.priority === "high" ? "⚠️ High" : msg.priority === "normal" ? "📌 Normal" : "📍 Low"}
                       </span>
                     )}
+
+                    {/* 💬 REPLY SECTION */}
+                    <div style={{ marginTop: "15px", paddingTop: "15px", borderTop: "1px solid #ddd" }}>
+                      {!replyingTo || replyingTo !== msg._id ? (
+                        <button
+                          type="button"
+                          onClick={() => setReplyingTo(msg._id)}
+                          style={{
+                            background: "#9C27B0",
+                            color: "white",
+                            border: "none",
+                            padding: "10px 20px",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            fontSize: "14px",
+                            fontWeight: "600",
+                            transition: "all 0.3s ease"
+                          }}
+                          onMouseOver={(e) => {
+                            e.target.style.background = "#7b1fa2";
+                            e.target.style.transform = "translateY(-2px)";
+                            e.target.style.boxShadow = "0 4px 12px rgba(156, 39, 176, 0.3)";
+                          }}
+                          onMouseOut={(e) => {
+                            e.target.style.background = "#9C27B0";
+                            e.target.style.transform = "translateY(0)";
+                            e.target.style.boxShadow = "none";
+                          }}
+                        >
+                          💬 Reply
+                        </button>
+                      ) : (
+                        <div style={{ backgroundColor: "#e1bee7", padding: "15px", borderRadius: "6px" }}>
+                          <textarea
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder="Write your reply..."
+                            rows="4"
+                            disabled={replyLoading}
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              border: "1px solid #ce93d8",
+                              borderRadius: "4px",
+                              fontFamily: "inherit",
+                              fontSize: "14px",
+                              boxSizing: "border-box",
+                              outline: "none"
+                            }}
+                          />
+                          <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                            <button
+                              type="button"
+                              onClick={() => handleReply(msg._id)}
+                              disabled={replyLoading}
+                              style={{
+                                background: "#4CAF50",
+                                color: "white",
+                                border: "none",
+                                padding: "10px 20px",
+                                borderRadius: "6px",
+                                cursor: replyLoading ? "not-allowed" : "pointer",
+                                fontSize: "14px",
+                                fontWeight: "600",
+                                opacity: replyLoading ? 0.6 : 1,
+                                transition: "all 0.3s ease"
+                              }}
+                              onMouseOver={(e) => !replyLoading && (e.target.style.background = "#45a049")}
+                              onMouseOut={(e) => (e.target.style.background = "#4CAF50")}
+                            >
+                              {replyLoading ? "Sending..." : "✉️ Send Reply"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setReplyingTo(null);
+                                setReplyText("");
+                              }}
+                              disabled={replyLoading}
+                              style={{
+                                background: "#f44336",
+                                color: "white",
+                                border: "none",
+                                padding: "10px 20px",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                                fontSize: "14px",
+                                fontWeight: "600",
+                                opacity: replyLoading ? 0.6 : 1,
+                                transition: "all 0.3s ease"
+                              }}
+                              onMouseOver={(e) => !replyLoading && (e.target.style.background = "#da190b")}
+                              onMouseOut={(e) => (e.target.style.background = "#f44336")}
+                            >
+                              ✕ Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

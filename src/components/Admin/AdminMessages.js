@@ -31,6 +31,9 @@ export default function AdminMessages() {
   const [showMessageLog, setShowMessageLog] = useState(false);
   const [messageLog, setMessageLog] = useState([]);
   const [messageFilter, setMessageFilter] = useState("all"); // all, sent, received
+  const [selectedMessage, setSelectedMessage] = useState(null); // For detailed view
+  const [replyText, setReplyText] = useState("");
+  const [replyLoading, setReplyLoading] = useState(false);
 
   const departments = [
     "Library",
@@ -160,6 +163,40 @@ export default function AdminMessages() {
       } else {
         setError("❌ Failed to load message log. Please try again.");
       }
+    }
+  };
+
+  // Handle Reply to Message
+  const handleReply = async () => {
+    if (!replyText.trim()) {
+      setError("❌ Reply message cannot be empty");
+      return;
+    }
+
+    setReplyLoading(true);
+    try {
+      const response = await axios.post(
+        apiUrl + `/api/messages/reply/${selectedMessage._id}`,
+        { message: replyText.trim() },
+        axiosConfig
+      );
+
+      if (response.data.success) {
+        setSuccess("✅ Reply sent successfully!");
+        setReplyText("");
+        setTimeout(() => {
+          setSuccess("");
+          setSelectedMessage(null);
+          fetchMessageLog();
+        }, 2000);
+      } else {
+        setError("❌ Failed to send reply");
+      }
+    } catch (err) {
+      console.error("Error sending reply:", err);
+      setError(err.response?.data?.message || "❌ Failed to send reply");
+    } finally {
+      setReplyLoading(false);
     }
   };
 
@@ -429,81 +466,354 @@ export default function AdminMessages() {
         </form>
 
         {showMessageLog && (
-          <div className="message-log-section">
-            <div className="log-header">
-              <h2>📬 Message Log</h2>
-              <div className="filter-buttons">
+          <div className="message-log-modal-overlay" onClick={() => setShowMessageLog(false)}>
+            <div className="message-log-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="log-header">
+                <h2>📬 Message Log</h2>
+                <div className="filter-buttons">
+                  <button 
+                    className={`filter-btn ${messageFilter === 'all' ? 'active' : ''}`}
+                    onClick={() => setMessageFilter('all')}
+                  >
+                    📬 All
+                  </button>
+                  <button 
+                    className={`filter-btn ${messageFilter === 'sent' ? 'active' : ''}`}
+                    onClick={() => setMessageFilter('sent')}
+                  >
+                    📤 Sent
+                  </button>
+                  <button 
+                    className={`filter-btn ${messageFilter === 'received' ? 'active' : ''}`}
+                    onClick={() => setMessageFilter('received')}
+                  >
+                    📥 Received
+                  </button>
+                </div>
                 <button 
-                  className={`filter-btn ${messageFilter === 'all' ? 'active' : ''}`}
-                  onClick={() => setMessageFilter('all')}
+                  className="btn-close-log"
+                  onClick={() => setShowMessageLog(false)}
                 >
-                  📬 All
-                </button>
-                <button 
-                  className={`filter-btn ${messageFilter === 'sent' ? 'active' : ''}`}
-                  onClick={() => setMessageFilter('sent')}
-                >
-                  📤 Sent
-                </button>
-                <button 
-                  className={`filter-btn ${messageFilter === 'received' ? 'active' : ''}`}
-                  onClick={() => setMessageFilter('received')}
-                >
-                  📥 Received
+                  ✕
                 </button>
               </div>
-              <button 
-                className="btn-close-log"
-                onClick={() => setShowMessageLog(false)}
-              >
-                ✕
-              </button>
-            </div>
 
-            {error && (
-              <div className="alert alert-error" style={{ margin: '16px 0' }}>
-                {error}
-              </div>
-            )}
+              {error && (
+                <div className="alert alert-error" style={{ margin: '16px 0' }}>
+                  {error}
+                </div>
+              )}
 
-            {messageLog && messageLog.filter(msg => {
-              if (messageFilter === 'all') return true;
-              if (messageFilter === 'sent') return msg.sender_type === 'admin';
-              if (messageFilter === 'received') return msg.sender_type !== 'admin';
-              return true;
-            }).length === 0 ? (
-              <div className="empty-log">
-                <p>{error ? '⚠️ Unable to load messages' : '📭 No messages in this filter'}</p>
-                {error && <p style={{ fontSize: '12px', marginTop: '8px', color: '#6b7280' }}>Check the browser console for more details</p>}
+              {messageLog && messageLog.filter(msg => {
+                if (messageFilter === 'all') return true;
+                if (messageFilter === 'sent') return msg.sender_type === 'admin';
+                if (messageFilter === 'received') return msg.sender_type !== 'admin';
+                return true;
+              }).length === 0 ? (
+                <div className="empty-log">
+                  <p>{error ? '⚠️ Unable to load messages' : '📭 No messages in this filter'}</p>
+                  {error && <p style={{ fontSize: '12px', marginTop: '8px', color: '#6b7280' }}>Check the browser console for more details</p>}
 
-              </div>
-            ) : (
-              <div className="log-messages">
-                {messageLog.filter(msg => {
-                  if (messageFilter === 'all') return true;
-                  if (messageFilter === 'sent') return msg.sender_type === 'admin';
-                  if (messageFilter === 'received') return msg.sender_type !== 'admin';
-                  return true;
-                }).map((msg, idx) => (
-                  <div key={idx} className={`log-message ${msg.sender_type === 'admin' ? 'sent' : 'received'}`}>
+                </div>
+              ) : (
+                <div className="log-messages">
+                  {messageLog.filter(msg => {
+                    if (messageFilter === 'all') return true;
+                    if (messageFilter === 'sent') return msg.sender_type === 'admin';
+                    if (messageFilter === 'received') return msg.sender_type !== 'admin';
+                    return true;
+                  }).map((msg, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`log-message ${msg.sender_type === 'admin' ? 'sent' : 'received'}`}
+                      onClick={() => setSelectedMessage(msg)}
+                      style={{ cursor: 'pointer' }}
+                    >
                     <div className="log-msg-header">
                       <strong>{msg.subject}</strong>
                       <span className="log-date">{new Date(msg.created_at).toLocaleDateString()}</span>
                     </div>
                     <p className="log-msg-body">{msg.message}</p>
                     <span className="log-recipient">
-                      {msg.sender_type === 'admin' ? '→' : '←'} {msg.recipient || 'System'}
+                      {msg.sender_type === 'admin' ? '→' : '←'} {msg.sender_type === 'admin' ? (msg.recipient_department || 'System') : (msg.sender_name || 'System')}
                     </span>
                   </div>
                 ))}
               </div>
-            )}
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* DETAILED MESSAGE VIEW - SEPARATE PAGE */}
+        {selectedMessage && (
+          <div className="message-detail-overlay">
+            <div className="message-detail-container">
+              <div className="detail-header">
+                <h2>{selectedMessage.subject}</h2>
+                <button 
+                  className="btn-close-detail"
+                  onClick={() => {
+                    setSelectedMessage(null);
+                    setReplyText("");
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="detail-info">
+                <div className="info-row">
+                  <span className="info-label">From:</span>
+                  <span className="info-value">{selectedMessage.sender_name || 'System'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Sent:</span>
+                  <span className="info-value">{new Date(selectedMessage.created_at).toLocaleString()}</span>
+                </div>
+                {selectedMessage.recipient_department && (
+                  <div className="info-row">
+                    <span className="info-label">Department:</span>
+                    <span className="info-value">{selectedMessage.recipient_department}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="detail-body">
+                <p>{selectedMessage.message}</p>
+              </div>
+
+              {/* REPLY SECTION - Only for received messages from departments */}
+              {selectedMessage.sender_type !== 'admin' && (
+                <div className="reply-section">
+                  <h3>💬 Reply to This Message</h3>
+                  {error && (
+                    <div className="alert alert-error" style={{ marginBottom: '16px' }}>
+                      {error}
+                    </div>
+                  )}
+                  {success && (
+                    <div className="alert alert-success" style={{ marginBottom: '16px' }}>
+                      {success}
+                    </div>
+                  )}
+                  <textarea
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder="Type your reply message here..."
+                    rows="5"
+                    disabled={replyLoading}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      fontFamily: 'inherit',
+                      fontSize: '14px',
+                      marginBottom: '16px',
+                      resize: 'vertical'
+                    }}
+                  />
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button
+                      onClick={handleReply}
+                      disabled={replyLoading}
+                      style={{
+                        padding: '10px 20px',
+                        background: '#667eea',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: replyLoading ? 'not-allowed' : 'pointer',
+                        fontWeight: '600',
+                        opacity: replyLoading ? 0.6 : 1
+                      }}
+                    >
+                      {replyLoading ? '⏳ Sending...' : '✉️ Send Reply'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedMessage(null);
+                        setReplyText("");
+                      }}
+                      disabled={replyLoading}
+                      style={{
+                        padding: '10px 20px',
+                        background: '#e5e7eb',
+                        color: '#374151',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: '600'
+                      }}
+                    >
+                      ✕ Close
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {selectedMessage.sender_type === 'admin' && (
+                <div className="detail-footer" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #e5e7eb', textAlign: 'center', color: '#6b7280', fontSize: '14px' }}>
+                  <p>This is a message you sent. No reply option available.</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>
     </div>
   );
 }
+
+/* DETAILED MESSAGE VIEW STYLES */
+const detailStyles = `
+  .message-detail-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .message-detail-container {
+    background: white;
+    border-radius: 12px;
+    max-width: 700px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+  }
+
+  .detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .detail-header h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .btn-close-detail {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.2s ease;
+  }
+
+  .btn-close-detail:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+  }
+
+  .detail-info {
+    padding: 20px 24px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 14px;
+  }
+
+  .info-label {
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .info-value {
+    color: #6b7280;
+  }
+
+  .detail-body {
+    padding: 24px;
+    color: #374151;
+    line-height: 1.8;
+    font-size: 15px;
+  }
+
+  .detail-body p {
+    margin: 0;
+  }
+
+  .reply-section {
+    padding: 24px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+    border-radius: 0 0 12px 12px;
+  }
+
+  .reply-section h3 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .alert {
+    padding: 14px 16px;
+    border-radius: 8px;
+    border-left: 4px solid;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .alert-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border-left-color: #ef4444;
+  }
+
+  .alert-success {
+    background: #dcfce7;
+    color: #166534;
+    border-left-color: #16a34a;
+  }
+`;
 
 /* Add form styles */
 const styles = `
@@ -670,12 +980,46 @@ const styles = `
     box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
   }
 
+  .message-log-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1500;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .message-log-modal {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 900px;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+  }
+
   .message-log-section {
     background: white;
     padding: 24px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     margin-top: 32px;
+  }
+
+  .message-log-modal .log-header {
+    padding: 20px 24px;
+    border-bottom: 2px solid #f3f4f6;
+    background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
 
   .log-header {
@@ -740,8 +1084,13 @@ const styles = `
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-height: 500px;
+    padding: 24px;
+    max-height: calc(85vh - 150px);
     overflow-y: auto;
+  }
+
+  .message-log-modal .log-messages {
+    max-height: calc(85vh - 150px);
   }
 
   .log-message {
@@ -800,6 +1149,6 @@ const styles = `
 // Inject styles
 if (typeof document !== "undefined") {
   const styleSheet = document.createElement("style");
-  styleSheet.textContent = styles;
+  styleSheet.textContent = detailStyles + "\n" + styles;
   document.head.appendChild(styleSheet);
 }

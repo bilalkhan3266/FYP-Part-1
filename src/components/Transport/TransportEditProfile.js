@@ -124,14 +124,22 @@ export default function TransportEditProfile() {
 
         <nav className="sd-nav">
           <button className="sd-nav-btn" onClick={() => navigate("/transport-dashboard")}>
-            🏠 Dashboard
+            📋 Dashboard
           </button>
-          <button className="sd-nav-btn active">📝 Edit Profile</button>
+          <button className="sd-nav-btn">
+            ✅ Approved
+          </button>
+          <button className="sd-nav-btn">
+            ❌ Rejected
+          </button>
+          <button className="sd-nav-btn active">
+            📝 Edit Profile
+          </button>
           <button className="sd-nav-btn" onClick={() => navigate("/transport-messages")}>
             💬 Messages
           </button>
           <button className="sd-nav-btn" onClick={() => navigate("/transport-dashboard")}>
-            🚪 Back
+            🚪 Logout
           </button>
         </nav>
 

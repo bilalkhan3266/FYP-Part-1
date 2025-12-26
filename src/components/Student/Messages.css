@@ -44,7 +44,7 @@
 
 .sd-sidebar {
   width: 280px;
-  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+  background: linear-gradient(180deg, #0a0f24 0%, #1b2a56 50%, #182848 100%);
   color: white;
   padding: 25px 18px;
   position: fixed;
@@ -54,13 +54,8 @@
   top: 0;
   left: 0;
   z-index: 1000;
-  left: 0;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-  box-shadow: var(--shadow-lg);
-  z-index: 1000;
-  transition: var(--transition);
+  box-shadow: 4px 0 25px rgba(0, 0, 0, 0.25);
+  transition: all 0.25s ease;
 }
 
 .sd-sidebar::-webkit-scrollbar {
@@ -190,22 +185,36 @@
 }
 
 .sd-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  min-height: 100px;
+  position: relative;
+  background: linear-gradient(180deg, #0a0f24 0%, #1b2a56 50%, #182848 100%);
+  padding: 28px 20px;
+  border-radius: 12px;
+  color: white !important;
   margin-bottom: 25px;
 }
 
 .sd-header h1 {
-  margin: 0 0 8px 0;
-  font-size: 32px;
+  color: #ffffff !important;
+  font-size: 26px;
+  margin: 0;
+  text-align: center;
   font-weight: 700;
-  color: var(--primary);
-  letter-spacing: -0.5px;
 }
 
 .sd-header p {
-  margin: 0;
+  color: #ffffff !important;
   font-size: 15px;
-  color: var(--gray);
-  font-weight: 400;
+  margin: 0;
+  text-align: center;
+  font-weight: 500;
+  opacity: 1;
+  letter-spacing: 0.3px;
 }
 
 /* ============================================
@@ -1612,6 +1621,127 @@
 
 .message-remarks strong {
   color: #b45309;
+}
+
+/* ============================================
+   REPLY SECTION STYLING
+   ============================================ */
+
+.message-reply-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.btn-reply {
+  padding: 8px 14px;
+  background: var(--info);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-reply:hover {
+  background: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+}
+
+.btn-reply:active {
+  transform: translateY(0);
+}
+
+.reply-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.reply-textarea {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  background: #f9fafb;
+  color: var(--dark);
+  transition: var(--transition);
+  min-height: 80px;
+  box-sizing: border-box;
+}
+
+.reply-textarea::placeholder {
+  color: var(--gray);
+}
+
+.reply-textarea:focus {
+  outline: none;
+  border-color: var(--info);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+}
+
+.reply-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-reply-send,
+.btn-reply-cancel {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-reply-send {
+  background: var(--success);
+  color: white;
+}
+
+.btn-reply-send:hover:not(:disabled) {
+  background: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+}
+
+.btn-reply-send:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-reply-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-reply-cancel {
+  background: var(--border);
+  color: var(--gray);
+}
+
+.btn-reply-cancel:hover:not(:disabled) {
+  background: #d1d5db;
+}
+
+.btn-reply-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Modal Styling */

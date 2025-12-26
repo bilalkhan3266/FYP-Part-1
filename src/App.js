@@ -48,7 +48,7 @@ import AdminDashboard from "./components/Admin/AdminDashboard";
 import AdminEditProfile from "./components/Admin/AdminEditProfile";
 import AdminMessages from "./components/Admin/AdminMessages";
 import AdminUserManagement from "./components/Admin/AdminUserManagement";
-import AdminClearance from "./components/Admin/AdminClearance";
+// import AdminClearance from "./components/Admin/AdminClearance";
 import HODDashboard from "./components/Hod/HODDashboard";
 import HODEditProfile from "./components/Hod/HODEditProfile";
 import HODMessages from "./components/Hod/HODMessages";
@@ -316,14 +316,14 @@ function AppRoutes() {
         }
       />
 
-      <Route
+      {/* <Route
         path="/admin-clearance"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <AdminClearance />
           </ProtectedRoute>
         }
-      />
+      /> */}
 
       <Route
         path="/admin-messages"

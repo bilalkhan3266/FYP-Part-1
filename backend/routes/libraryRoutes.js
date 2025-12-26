@@ -339,19 +339,27 @@ router.post('/send-message', verifyToken, async (req, res) => {
 // ============================================
 router.get('/my-messages', verifyToken, async (req, res) => {
   try {
-    const senderId = req.user.id;
+    const userId = req.user.id;
+    const userRole = req.user.role;
 
+    // Query for messages SENT TO this staff member
+    // Admin sends messages with recipient_department = user's role
     const messages = await Message.find({
-      sender_id: senderId,
-      sender_role: 'Library'
+      recipient_id: userId,
+      // Also accept messages sent to the role as a broadcast
+      $or: [
+        { recipient_id: userId },
+        { recipient_department: new RegExp(`^${userRole}$`, 'i') }
+      ]
     })
       .sort({ createdAt: -1 })
-      .limit(50)
+      .limit(100)
       .exec();
 
     res.status(200).json({
       success: true,
-      data: messages || []
+      data: messages || [],
+      count: messages.length
     });
   } catch (err) {
     console.error('❌ Error fetching messages:', err);
