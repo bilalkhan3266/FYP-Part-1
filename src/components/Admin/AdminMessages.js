@@ -429,36 +429,37 @@ export default function AdminMessages() {
         </form>
 
         {showMessageLog && (
-          <div className="message-log-section">
-            <div className="log-header">
-              <h2>📬 Message Log</h2>
-              <div className="filter-buttons">
+          <div className="message-log-modal-overlay" onClick={() => setShowMessageLog(false)}>
+            <div className="message-log-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="log-header">
+                <h2>📬 Message Log</h2>
+                <div className="filter-buttons">
+                  <button 
+                    className={`filter-btn ${messageFilter === 'all' ? 'active' : ''}`}
+                    onClick={() => setMessageFilter('all')}
+                  >
+                    📬 All
+                  </button>
+                  <button 
+                    className={`filter-btn ${messageFilter === 'sent' ? 'active' : ''}`}
+                    onClick={() => setMessageFilter('sent')}
+                  >
+                    📤 Sent
+                  </button>
+                  <button 
+                    className={`filter-btn ${messageFilter === 'received' ? 'active' : ''}`}
+                    onClick={() => setMessageFilter('received')}
+                  >
+                    📥 Received
+                  </button>
+                </div>
                 <button 
-                  className={`filter-btn ${messageFilter === 'all' ? 'active' : ''}`}
-                  onClick={() => setMessageFilter('all')}
+                  className="btn-close-log"
+                  onClick={() => setShowMessageLog(false)}
                 >
-                  📬 All
-                </button>
-                <button 
-                  className={`filter-btn ${messageFilter === 'sent' ? 'active' : ''}`}
-                  onClick={() => setMessageFilter('sent')}
-                >
-                  📤 Sent
-                </button>
-                <button 
-                  className={`filter-btn ${messageFilter === 'received' ? 'active' : ''}`}
-                  onClick={() => setMessageFilter('received')}
-                >
-                  📥 Received
+                  ✕
                 </button>
               </div>
-              <button 
-                className="btn-close-log"
-                onClick={() => setShowMessageLog(false)}
-              >
-                ✕
-              </button>
-            </div>
 
             {error && (
               <div className="alert alert-error" style={{ margin: '16px 0' }}>
@@ -497,7 +498,8 @@ export default function AdminMessages() {
                   </div>
                 ))}
               </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </main>
@@ -670,12 +672,46 @@ const styles = `
     box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
   }
 
+  .message-log-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1500;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .message-log-modal {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 900px;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+  }
+
   .message-log-section {
     background: white;
     padding: 24px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     margin-top: 32px;
+  }
+
+  .message-log-modal .log-header {
+    padding: 20px 24px;
+    border-bottom: 2px solid #f3f4f6;
+    background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
 
   .log-header {
@@ -740,8 +776,13 @@ const styles = `
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-height: 500px;
+    padding: 24px;
+    max-height: calc(85vh - 150px);
     overflow-y: auto;
+  }
+
+  .message-log-modal .log-messages {
+    max-height: calc(85vh - 150px);
   }
 
   .log-message {

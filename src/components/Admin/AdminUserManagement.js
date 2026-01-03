@@ -73,8 +73,28 @@ export default function AdminUserManagement() {
     }
   };
 
+  // ====== MIGRATE TIMESTAMPS FOR EXISTING USERS ======
+  const migrateTimestamps = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(apiUrl + "/api/admin/migrate-timestamps", {}, {
+        headers: { Authorization: "Bearer " + token }
+      });
+
+      if (response.data.success) {
+        console.log("✅ Migration successful:", response.data.message);
+        // Refresh users after migration
+        await fetchUsers();
+      }
+    } catch (err) {
+      console.error("Migration Error:", err);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    // Run migration once on component mount
+    migrateTimestamps();
   }, []);
 
   // ====== CREATE NEW USER ======
@@ -84,6 +104,11 @@ export default function AdminUserManagement() {
     // Validation
     if (!newUser.full_name.trim()) {
       setError("❌ Full name is required");
+      return;
+    }
+    const alphabeticCount = (newUser.full_name.match(/[a-zA-Z]/g) || []).length;
+    if (alphabeticCount < 6) {
+      setError("❌ Full name must contain at least 6 alphabetic characters");
       return;
     }
     if (!newUser.email.trim()) {
@@ -454,7 +479,11 @@ export default function AdminUserManagement() {
                         </td>
                         <td>{u.department || "—"}</td>
                         <td>{u.sap || "—"}</td>
-                        <td>{new Date(u.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          <div className="created-date">
+                            {u.createdAt || u.updatedAt ? new Date(u.createdAt || u.updatedAt).toLocaleDateString() + ' ' + new Date(u.createdAt || u.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                          </div>
+                        </td>
                         <td>
                           <div className="action-buttons">
                             {u.role === "student" ? (

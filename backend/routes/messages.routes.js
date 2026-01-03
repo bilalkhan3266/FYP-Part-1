@@ -110,13 +110,14 @@ router.post("/reply/:messageId", verifyToken, async (req, res) => {
       });
     }
 
-    // Create reply using same conversation_id
+    // ✅ CRITICAL FIX: Get recipient_id from original message's sender_id
     const replyMessage = new Message({
       conversation_id: originalMessage.conversation_id,
       sender_id: req.user._id || req.user.id,
       sender_name: req.user.full_name || req.user.name,
       sender_role: req.user.role || "Student",
       sender_sapid: req.user.sapid || req.user.sap_id || req.user.sap,
+      recipient_id: originalMessage.sender_id, // ✅ SET recipient_id from original sender
       recipient_department: originalMessage.recipient_department,
       recipient_sapid: originalMessage.sender_sapid,
       subject: `Re: ${originalMessage.subject}`,

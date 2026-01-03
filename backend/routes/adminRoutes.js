@@ -660,6 +660,38 @@ router.get('/student-messages/:studentSapId', verifyToken, async (req, res) => {
 
 const bcrypt = require('bcryptjs');
 
+// MIGRATE: Add timestamps to existing users (admin only)
+router.post('/migrate-timestamps', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const now = new Date();
+    
+    // Find all users without createdAt
+    const usersWithoutTimestamps = await User.find({ createdAt: { $exists: false } });
+    
+    console.log(`🔍 Found ${usersWithoutTimestamps.length} users without timestamps`);
+    
+    let migratedCount = 0;
+    
+    // Update each user individually to ensure timestamps are set
+    for (let user of usersWithoutTimestamps) {
+      user.createdAt = now;
+      user.updatedAt = now;
+      await user.save();
+      migratedCount++;
+    }
+
+    console.log(`✅ Successfully migrated ${migratedCount} users with timestamps`);
+    res.status(200).json({ 
+      success: true, 
+      message: `✅ Added timestamps to ${migratedCount} users`,
+      migratedCount: migratedCount
+    });
+  } catch (error) {
+    console.error('Migration Error:', error);
+    res.status(500).json({ success: false, message: '❌ Migration failed: ' + error.message });
+  }
+});
+
 // GET ALL USERS (admin only)
 router.get('/users', verifyToken, verifyAdmin, async (req, res) => {
   try {
@@ -705,8 +737,7 @@ router.post('/create-user', verifyToken, verifyAdmin, async (req, res) => {
       password: hashedPassword,
       role: role.toLowerCase(),
       department: department || null,
-      sap: sap || null,
-      created_at: new Date()
+      sap: sap || null
     });
 
     await newUser.save();
