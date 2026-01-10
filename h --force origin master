@@ -1,0 +1,1135 @@
+[33mcommit 4eab2ffbc499d7c7f2f368ced9a3f47d06a774d3[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Mon Oct 20 00:04:05 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Mon Oct 20 00:04:05 2025 +0500
+
+    Initialize project using Create React App
+
+[33mcommit 85382ff672e8cfca18e338f2a64cde4588748fa3[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Tue Nov 25 22:20:02 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Tue Nov 25 22:20:02 2025 +0500
+
+    Add README.md
+
+[33mcommit 15e35582c046f6662b13baf1d2775ac942806047[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Thu Dec 4 23:51:05 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Thu Dec 4 23:51:05 2025 +0500
+
+    Add .gitignore and remove ignored files from Git
+
+[33mcommit f72ea3ff75c5c3343721ee2f60d4ef0745d08749[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Mon Dec 8 00:12:42 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Mon Dec 8 00:12:42 2025 +0500
+
+    feat: Implement two-way messaging system with SAPID-based filtering
+    
+    - Add MongoDB message schema with conversation threading
+    - Create 6 new API endpoints (send-message, reply, conversations, get-thread, unread-count, delete)
+    - Implement complete Messages component with two-pane conversation UI
+    - Add role normalization for consistent lowercase role handling
+    - Fix authentication flow with proper JWT token fields
+    - Include comprehensive documentation and setup guides
+    
+    Features:
+    - SAPID-based message privacy (students only see their messages)
+    - Conversation threading with conversation_id grouping
+    - Two-way messaging between students and departments
+    - Auto-refresh every 10 seconds
+    - Read status tracking with timestamps
+    - Unread message counting
+    - Department-based filtering
+    
+    Fixes:
+    - Fixed infinite redirect loop due to role case mismatch
+    - Normalized roles to lowercase throughout system
+    - Added missing fields (full_name, sap, department) to JWT token
+    - Updated protected routes to use consistent role checks
+
+[33mcommit a283f2588e2ad0dae52f62b5251a9d3e5037091f[m
+Merge: f72ea3f 15e3558
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Mon Dec 8 17:04:55 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Mon Dec 8 17:04:55 2025 +0500
+
+    feat: Implement library dashboard with dynamic requests table
+    
+    FEATURES:
+    - Pending requests table with database fetch
+    - Approved requests table
+    - Rejected requests table
+    - Approve/Reject with remarks modal
+    - Auto-send messages to student on approve/reject
+    - Beautiful sidebar navigation
+    - Status badges with color coding
+    - Real-time data fetching
+    - Error handling and loading states
+    - Responsive design
+    
+    BACKEND:
+    - GET /api/library/pending-requests
+    - GET /api/library/approved-requests
+    - GET /api/library/rejected-requests
+    - PUT /api/library/requests/:id/approve (with remarks)
+    - PUT /api/library/requests/:id/reject (with remarks + auto-message)
+    
+    FRONTEND:
+    - LibraryDashboard.js - Complete rewrite with tabs
+    - LibraryDashboard.css - New modern styling
+    - Modal for remarks entry
+    - Auto-refresh on approve/reject
+
+[33mcommit c438de8984de82708ecc4fa0f41f10703f6648f5[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Mon Dec 8 17:23:09 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Mon Dec 8 17:23:09 2025 +0500
+
+    fix: Professional library dashboard with consistent theme
+    
+    - Rewrote libraryRoutes.js for MongoDB/Mongoose
+    - Integrated libraryRoutes with server.js
+    - Created LibraryMessages and fixed LibraryEditProfile
+    - Redesigned LibraryDashboard.css to match StudentDashboard
+    - Professional form styling and consistent navigation
+    - Status badges, modal dialogs, alerts with animations
+    - Responsive mobile-friendly design
+
+[33mcommit 2bf1cae7a3b21bb1ebd39ed89a24498770f94b49[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Mon Dec 8 17:28:05 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Mon Dec 8 17:28:05 2025 +0500
+
+    fix: Remove duplicate CSS code and syntax errors from LibraryDashboard.css
+
+[33mcommit 86c420c0f12172ec72389a580745d285054a75a4[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Mon Dec 8 19:30:17 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Mon Dec 8 19:30:17 2025 +0500
+
+    feat: Complete library dashboard with MongoDB integration
+    
+    - LibraryDashboard, LibraryMessages, LibraryEditProfile pages done
+    - All pages match StudentDashboard design pattern
+    - MongoDB-based backend routes for library clearance
+    - Auto-send messages on approve/reject
+
+[33mcommit 100a7da30b20287fae102176ac3e46565b6f7231[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Mon Dec 8 19:48:59 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Mon Dec 8 19:48:59 2025 +0500
+
+    fix: Resolve MongoDB model conflict and React warnings
+
+[33mcommit 94df7aebbf8e01f2fb90231aa1e39a7017a4a976[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Mon Dec 8 19:53:56 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Mon Dec 8 19:53:56 2025 +0500
+
+    fix: Update library routes for MongoDB with proper message handling
+
+[33mcommit b83580f5ea38a06323c3ac93c3cd16fe64b271fd[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Tue Dec 9 22:06:55 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Tue Dec 9 22:06:55 2025 +0500
+
+    feat: Add library message test data and verification scripts
+
+[33mcommit bbe8ac4d11b34bd9cb7dafb1301643e11884a48d[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Tue Dec 9 23:28:54 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Tue Dec 9 23:28:54 2025 +0500
+
+    Fix messages.routes.js: verifyToken import and uuidv4 reference
+
+[33mcommit cc98f9b25a1636f0ab3a2586aface9475e3d2095[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 10 10:52:15 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 10 10:52:15 2025 +0500
+
+    Fix student submit request - Complete clearance submission workflow
+    
+    - Changed endpoint from /submit to /submit-request to match frontend
+    - Added JWT token verification to clearanceRoutes
+    - Updated submitRequest controller to use authenticated user data
+    - Implemented DepartmentClearance creation for all 7 departments
+    - Added proper validation and error handling
+    - Supports both sap and sap_id user fields
+    - Student clearance requests now submit to all departments simultaneously
+
+[33mcommit 6ed7e0398120e3d649d46c1ffd9f22f89e0e7f4f[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 00:05:05 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 00:05:05 2025 +0500
+
+     Fix: Library messaging system with MongoDB support
+    
+    - Fixed: Library staff can now send messages to students by SAP ID
+    - Fixed: Form validation for message submission
+    - Fixed: Role-based access control (case-insensitive)
+    - Added: Message helper module for student lookup and SAP ID variations
+    - Added: Database indexes for query optimization (5 field + 4 composite)
+    - Added: Library request approval/rejection endpoints
+    - Added: Seed database script with test users
+    - Added: Debug SAP ID lookup script
+    - Fixed: Removed unused state and functions in Messages.js
+    - Fixed: Added useCallback for DepartmentRequests.js
+    - Updated: Message routes to support both student-to-dept and library-to-student
+    
+    Changes:
+    - backend/server.js: Updated /api/send-message endpoint to handle both cases
+    - backend/routes/libraryRoutes.js: Added /library/requests endpoints
+    - backend/routes/messages.routes.js: Fixed endpoints and removed unused import
+    - backend/utils/messageHelper.js: Created SAP ID lookup helper
+    - backend/models/Message.js: Added database indexes
+    - backend/seed-database.js: Create test users with correct SAP field
+    - src/components/Library/LibraryMessages.js: Component working correctly
+    - src/components/Student/Messages.js: Fixed validation and unused code
+    - src/components/Library/DepartmentRequests.js: Fixed hooks
+    
+    Database: Seeded with test users:
+    - Student 1: 8877 (student@example.com)
+    - Student 2: 8878 (fatima@example.com)
+    - Library: LIB001 (library@example.com)
+    - Transport: TRN001 (transport@example.com)
+
+[33mcommit d99285ff0196839a4acc654e26cbd5c7121cdec5[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 13:59:32 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 13:59:32 2025 +0500
+
+     Fix: Student messaging, dashboard refresh, and professional styling
+    
+    FIXES IMPLEMENTED:
+     Added /api/send endpoint for student-to-department messaging
+     Added /api/my-messages endpoint to fetch all messages
+     Enhanced dashboard auto-refresh: 3s for clearance (from 5s), 5s for unread (from 30s)
+     Professional dashboard styling with gradients and hover effects
+     Improved progress bar with smooth animations
+     Enhanced department cards with better visual indicators
+
+[33mcommit 29b42f492d82d87633a30ea20a1b5c6904e9ec6b[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 14:05:19 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 14:05:19 2025 +0500
+
+     Fix: Message sending and display
+    
+    - Fixed /api/send endpoint with better object creation
+    - Added updatedAt field to message creation
+    - Fixed message display to use correct field names (sender_name, sender_role)
+    - Improved database logging for debugging
+    - Messages now save and display correctly
+
+[33mcommit a1d2c0e2e0af4b3a3e0c1b9e2f607232574d709e[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 14:26:30 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 14:26:30 2025 +0500
+
+     Improve: Dashboard layout and clearance status real-time updates
+    
+    - Changed department cards from vertical grid to horizontal flex layout
+    - Added real-time clearance status updates with detailed logging
+    - Enhanced status response with summary data (cleared, rejected, pending)
+    - Professional horizontal card styling with color indicators
+    - Green for Approved, Orange for Pending, Red for Rejected
+    - Improved dashboard responsiveness and visual design
+
+[33mcommit c4793823c49542b42dc40634b62987d57f32a135[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 14:28:20 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 14:28:20 2025 +0500
+
+     Update: Improved progress calculation and clearance status
+    
+    - Added 'Approved' status handling in progress calculation
+    - Enhanced logging for progress calculations
+    - Progress bar now reflects all approved departments
+    - Circular SVG bar updates with correct color coding
+    - Green (75-100%), Yellow (50-75%), Orange (25-50%), Red (0-25%)
+
+[33mcommit 07520e8caddd6978ca36a49f53525fdd2a7d411d[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 14:36:09 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 14:36:09 2025 +0500
+
+     Enhance: Real-time clearance status with visibility detection and professional UI improvements
+
+[33mcommit 3aafa4be34ca7fce0f52c913669bc092c4be636b[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 14:52:16 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 14:52:16 2025 +0500
+
+     Fix: ClearanceStatus real-time updates with field name corrections and professional UI
+
+[33mcommit 2432aea47667031eb603e3e2082e739f7a9a7d96[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 14:57:43 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 14:57:43 2025 +0500
+
+     Enhance: Beautiful status info section with cards, animations, and live update indicators
+
+[33mcommit d2816c6090d6ce3215ea588c19a24f292e46e6fc[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 15:04:15 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 15:04:15 2025 +0500
+
+     Fix: Student messages - show both sent and received messages with professional design
+
+[33mcommit 409d14c8f4fa97ff1ff06c39e65f6d4a8a306a78[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 15:11:15 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 15:11:15 2025 +0500
+
+     Fix: Consolidate messaging, fix department names, add dynamic department fetching, delete duplicate StudentMessages.js
+
+[33mcommit f81872970b7ab2c6e6b1fe1a69c902f6e36a5205[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 16:08:36 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 16:08:36 2025 +0500
+
+     Fix: Improve message form reset logic & enhance Fee Department UI with beautiful professional styling, gradients, animations, and status-specific cards for pending/approved/rejected requests
+
+[33mcommit efa367c137c49a2771520dac2f599dc345b7e3a6[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 16:11:31 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 16:11:31 2025 +0500
+
+    fix: remove duplicate api/update-profile endpoint that was breaking edit profile functionality
+
+[33mcommit 8f0fb781d5f80ed601b33df3bb5ebd0187ab59fe[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 16:16:55 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 16:16:55 2025 +0500
+
+    fix: add fee edit profile and messages routes, fix dashboard navigation
+
+[33mcommit b150847462a12aced6d4cad579d5511a6ea35412[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 16:19:21 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 16:19:21 2025 +0500
+
+     enhance: Fee Department table design with beautiful colors and improved visibility
+
+[33mcommit 191c547d63c04d008887dc1ea41177ad6f819897[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 16:26:30 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 16:26:30 2025 +0500
+
+     enhance: Apply professional sidebar styling to Coordination Department edit profile and messages
+
+[33mcommit 4362ce87ce91fe3639fb7dd50e1051123d4a868f[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 16:35:32 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 16:35:32 2025 +0500
+
+     enhance: Add Riphah monogram to edit profile and message form sections in all departments
+
+[33mcommit 828b1f3dd5c454146ebd785e58db66176a10336f[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 16:49:46 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 16:49:46 2025 +0500
+
+     feat: Create Transport Department edit profile and messages pages with professional design and routing
+
+[33mcommit dc069bcf8f7eeb9e97eea5a694532fa8f31801f7[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 16:53:11 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 16:53:11 2025 +0500
+
+     feat: Create Laboratory Department edit profile and messages pages with professional design and routing
+
+[33mcommit 53d49b68b1e8e567f13935c0e8287b6c5b501892[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 17:12:44 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 17:12:44 2025 +0500
+
+     feat: Create HOD Department edit profile and messages pages with professional design, priority messaging, and office location field
+
+[33mcommit aea8a50c270ca44242f4a091ca96113830a4f27f[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 23:00:58 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 23:00:58 2025 +0500
+
+     fix: Migrate HOD components to AuthContext for proper authentication and token handling - fixes 401 unauthorized errors
+
+[33mcommit a7967ccdd313c80b914923f27f0698746f563a35[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 23:13:50 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 23:13:50 2025 +0500
+
+     feat: Transform HOD into comprehensive Admin Panel with dashboard analytics, department progress tracking, and multi-channel messaging
+
+[33mcommit 74f73985b5bb5f7b2416fbd90643d0dee5377509[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sun Dec 14 23:22:23 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sun Dec 14 23:22:23 2025 +0500
+
+     feat: Implement real-time department progress tracking with MongoDB schemas, API endpoints, and live data fetching
+
+[33mcommit e2e97f77ee42799c4c27def16204bc4c4093183d[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 11:52:11 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 11:52:11 2025 +0500
+
+    Fix: Prevent duplicate clearance request submissions - students can only resubmit after rejection
+
+[33mcommit 991b10de10664b47b0404c6d12815ce58b29b5a2[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 12:01:15 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 12:01:15 2025 +0500
+
+    Feature: Complete HOD clearance approval system with auto-routing and QR code generation
+    
+    - Auto-route to HOD when ALL departments approve clearance
+    - HOD approves with QR certificate generation
+    - Unique QR codes for each clearance: CLEAR-{timestamp}-{sapid}
+    - Student notifications at each stage
+    - ClearanceApprovalPanel component for HOD workflow
+    - Enhanced department approval endpoint with auto-detection
+    - New endpoints: GET /api/hod/pending-approvals, POST /api/hod/approve-clearance, GET /api/hod/verify-qr
+    - Database model updates for HOD tracking
+    - Complete audit trail with timestamps
+
+[33mcommit a9d288a5c2646bb730f769bae688aff1f36a22db[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 12:09:51 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 12:09:51 2025 +0500
+
+    feat: Add HOD clearance final approval system with QR code generation and sidebar navigation
+
+[33mcommit 2745c448a5dba21818204c408f365d1a681bf201[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 12:27:04 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 12:27:04 2025 +0500
+
+    fix: Fix Student Service Dashboard - use AuthContext and remove unused Navigate import
+
+[33mcommit 6b2e41aa0be5496e9eb2ae8cc8d75715ac5dba07[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 12:30:35 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 12:30:35 2025 +0500
+
+    feat: Add edit profile and messages pages for Student Service Department
+
+[33mcommit 181ec8d0c923b27987d8ea6ea2106c1527e209f7[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 12:33:33 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 12:33:33 2025 +0500
+
+    style: Make Student Service Department design consistent with other departments
+
+[33mcommit b49daed1d0db4bdf8367a10f9eab3e88ca6745bc[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 12:35:09 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 12:35:09 2025 +0500
+
+    fix: Close main tag properly in ServiceDashboard
+
+[33mcommit 9ef026d5ee9688952580f4390e8c5f43e7ea1734[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 12:36:50 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 12:36:50 2025 +0500
+
+    fix: Improve HOD pending approvals endpoint with better error handling and role verification
+
+[33mcommit 5185098c249b44296b6dc6ccd0c9f71b80f2be14[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 12:39:20 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 12:39:20 2025 +0500
+
+    fix: Improve HOD pending approvals endpoint with better logging and error handling
+
+[33mcommit d51ba333c534b597415c1de5d3f8b86c140a2a78[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 12:47:48 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 12:47:48 2025 +0500
+
+    feat: Add admin send-message endpoint for broadcasting to departments and students
+
+[33mcommit f32b06c1da127c0a17e6fa3dcbddf6b52453a8cb[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 12:52:47 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 12:52:47 2025 +0500
+
+    feat: Add ability to resubmit to individual department after rejection
+
+[33mcommit c5a6809dc555476d57798b9e65d92423836e637e[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 12:57:57 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 12:57:57 2025 +0500
+
+    debug: Add detailed error logging for department resubmit troubleshooting
+
+[33mcommit 7e2bb79e3e1b3fea0f9ee95fbf4b1209da67e5c1[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 12:59:07 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 12:59:07 2025 +0500
+
+    feat: Add diagnostic endpoint for debugging resubmit issues
+
+[33mcommit d2da7f60f110b41437ea822ee5243ead51ec8096[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 13:00:38 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 13:00:38 2025 +0500
+
+    fix: Add health check endpoint and improve 404 error diagnostics
+
+[33mcommit 263d8eb86474dc154d301181277fdaa56ffa15d2[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 13:08:04 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 13:08:04 2025 +0500
+
+    docs: Add beautiful feature showcase and final summary
+
+[33mcommit 20c6d798a9be7cad86a6e77c562c4ea847328c51[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Dec 17 13:11:12 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Dec 17 13:11:12 2025 +0500
+
+    design: Transform clearance status into beautiful, professional dashboard with gradients, animations, and enhanced UI
+
+[33mcommit 67b1783efbad6ec15322fa7bf018ef8675e4f433[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Thu Dec 18 23:10:57 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Thu Dec 18 23:10:57 2025 +0500
+
+    Standardize all department edit profile forms with transparent logos - Library, Transport, Coordination, Laboratory, Student Service, and Student profiles now use identical FeeEditProfile template with subtle invisible logo styling
+
+[33mcommit b6b66a1c278da7349cea7a1d6664ecea99827046[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Thu Dec 18 23:46:16 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Thu Dec 18 23:46:16 2025 +0500
+
+    Update edit profile forms with logos and optimized layout - standardized all department edit profiles with blue logo, white icon, and wider form layout (1100px for admin, 800px for departments)
+
+[33mcommit f9ffea7ef17c503aebba6f7562bc0c3bf91404a6[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Thu Dec 18 23:49:55 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Thu Dec 18 23:49:55 2025 +0500
+
+    Fix admin dashboard statistics: Calculate real-time data from Submission collection
+
+[33mcommit 5caf4f45c6f8f9d90e399140eaf4aad8251aea15[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Thu Dec 18 23:56:12 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Thu Dec 18 23:56:12 2025 +0500
+
+    Add missing Submission model import to adminRoutes
+
+[33mcommit 485dad03ba625a7edbf5079b91143ddb9c7fbccf[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Fri Dec 19 17:03:39 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Fri Dec 19 17:03:39 2025 +0500
+
+    Standardize Fee Department MessagePage and fix message receiving system - All 6 departments now have complete message interfaces with proper tab navigation and message filtering
+
+[33mcommit 9c55ed426f740b6c6c102fc28ee4dee2f7b2f991[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Fri Dec 19 23:56:19 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Fri Dec 19 23:56:19 2025 +0500
+
+    Update: Riphah logo in favicon, reduced login form size, improved UI styling
+
+[33mcommit 318bb73da4fb9cb274a29e749a35d70f7d55a90f[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Mon Dec 22 00:05:47 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Mon Dec 22 00:05:47 2025 +0500
+
+    Add comprehensive project documentation with use cases and activity diagrams
+
+[33mcommit 71e0ef567c46132dd296a1694c6a3bcc535f114f[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Tue Dec 23 22:00:37 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Tue Dec 23 22:00:37 2025 +0500
+
+    fix: Use req.user.id instead of req.user._id in student message query
+    
+    - Fixed JWT field mismatch that prevented student replies from appearing
+    - Changed recipient_id query from req.user._id (undefined) to req.user.id
+    - Ensures library and all department replies are correctly matched and displayed
+    - Added enhanced logging for debugging message delivery
+
+[33mcommit bc43b1e90bb6bd3c0ddc9bacea17150efd08bcf5[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Tue Dec 23 22:00:53 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Tue Dec 23 22:00:53 2025 +0500
+
+    feat: Add detailed logging to message creation endpoints
+    
+    - Added logging to /api/send endpoint for student messages
+    - Log sender ID, SAP ID, and message metadata
+    - Helps verify correct ID fields are being stored
+    - Improves debugging for message delivery issues
+
+[33mcommit 33265ce9dcdc2abdf9c06c4bfb6b9cd163c07eb4[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Tue Dec 23 22:01:05 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Tue Dec 23 22:01:05 2025 +0500
+
+    feat: Add reply button to student messages
+    
+    - Added reply button on department messages for direct responses
+    - Implemented inline reply form with textarea
+    - Added handleReply function to submit replies via API
+    - Supports reply to all departments (Library, Transport, Lab, etc.)
+    - Shows loading state and success/error notifications
+    - Automatically refreshes message list after sending reply
+
+[33mcommit 80faeb4bf7dd823b9d33be8f168de4694bbe29a2[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Tue Dec 23 22:01:14 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Tue Dec 23 22:01:14 2025 +0500
+
+    style: Add CSS styling for student reply feature
+    
+    - Added .message-actions container styling
+    - Styled reply button with blue gradient
+    - Styled reply form with textarea and action buttons
+    - Added hover and active states for buttons
+    - Styled cancel (gray) and send (green) buttons
+    - Professional design matching app theme
+
+[33mcommit 6a435f0cd3d294173af12be29c4b1457db4fc24a[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Tue Dec 23 22:01:21 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Tue Dec 23 22:01:21 2025 +0500
+
+    refactor: Update admin routes
+    
+    - Synchronized with latest message handling changes
+    - Ensures consistency across admin endpoints
+
+[33mcommit 9db61997a849ee7ebc62276f9b602dd3f00856b9[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Tue Dec 23 22:01:31 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Tue Dec 23 22:01:31 2025 +0500
+
+    refactor: Update frontend components
+    
+    - Updated App.js routing logic
+    - Enhanced AdminDashboard styling and functionality
+    - Updated AdminEditProfile component
+    - Enhanced AdminMessages component with improved UX
+    - Synchronized all admin components with latest features
+
+[33mcommit c5d6eae0dad36acff26800b34304667146898556[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Tue Dec 23 22:01:40 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Tue Dec 23 22:01:40 2025 +0500
+
+    refactor: Update department message components
+    
+    - Enhanced LibraryMessages component
+    - Updated CoordinationOffice messages handling
+    - Improved consistency across all department interfaces
+    - Better support for reply functionality
+
+[33mcommit 8f2ecd01e3b0032c6d19e55c17d4597fa2727f65[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Tue Dec 23 22:01:48 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Tue Dec 23 22:01:48 2025 +0500
+
+    refactor: Update student components
+    
+    - Enhanced ClearanceRequest component
+    - Updated clearance request styling
+    - Improved form validation and error handling
+    - Better UX for students
+
+[33mcommit a128777f9fd27a0c1f5337553fa73ae3955c904b[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Tue Dec 23 22:01:55 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Tue Dec 23 22:01:55 2025 +0500
+
+    feat: Add AdminUserManagement component with multi-step form
+    
+    - Created comprehensive user management interface
+    - Implemented 4-step wizard for user creation
+      - Step 1: Personal Information
+      - Step 2: Security (password validation)
+      - Step 3: Department & Role
+      - Step 4: Review
+    - Password strength indicator with real-time validation
+    - Email validation and duplicate checking
+    - Riphah logo with professional styling
+    - User listing with search and filter capabilities
+    - Delete functionality for staff users
+    - Protected student user accounts
+
+[33mcommit 299b6456e477ad3b3ef23b3a9cb7642c9c99707a[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Tue Dec 23 22:02:05 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Tue Dec 23 22:02:05 2025 +0500
+
+    docs: Add comprehensive documentation for all features
+    
+    - Library reply message fix documentation
+    - All departments reply verification
+    - Student reply feature implementation guide
+    - Complete message flow diagrams
+    - Admin user management documentation
+    - Department reply system implementation details
+    - Message delivery fix explanations
+    - Testing and troubleshooting guides
+
+[33mcommit 7949d91b11de5b64da59c6186df9fbb8a8e8cdd4[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Tue Dec 23 22:02:13 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Tue Dec 23 22:02:13 2025 +0500
+
+    test: Add library reply message test script
+    
+    - Test script for verifying library reply delivery
+    - Simulates student login, message send, and reply flow
+    - Tests message appearance in student inbox
+    - Useful for integration testing
+
+[33mcommit fa0255f88bd0af481ff4823f91dabbe6eb62711a[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Sat Jan 3 18:31:30 2026 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:31:30 2026 +0500
+
+    Update fee dashboard modal header styling - light green background with white text
+
+[33mcommit 15192b71231ab3c921d191af6176923eb23864d8[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Sun Nov 2 19:28:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:51 2026 +0500
+
+    Real frontend update #1 by Ahsan in Admin
+
+[33mcommit 4f5a8f44f61d75a1dbd15bb5f99a4cca7f36057f[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Mon Nov 3 17:04:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:52 2026 +0500
+
+    Real frontend update #2 by Ahsan in CoordinationOffice
+
+[33mcommit 95c3a3e8af5a19757890d3bb8c890494dd503edd[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Tue Nov 4 20:24:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:52 2026 +0500
+
+    Real frontend update #3 by Ahsan in FeeDepartment
+
+[33mcommit dd8c3d3ee8eaed4e29d721763e6b1cac9fd0c293[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Wed Nov 5 22:19:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:54 2026 +0500
+
+    Real frontend update #4 by Ahsan in Hod
+
+[33mcommit 878577346e094e5e1cef43286fa61772a964b5f9[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Thu Nov 6 22:47:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:54 2026 +0500
+
+    Real frontend update #5 by Ahsan in labortary
+
+[33mcommit b7ea1be25affe3ea8c87c05370a11a32a28e1e06[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Fri Nov 7 18:41:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:55 2026 +0500
+
+    Real frontend update #6 by Ahsan in Library
+
+[33mcommit 60315ce331ab0ae3d211ef3b82e0d64c00e4171b[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Sat Nov 8 17:13:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:55 2026 +0500
+
+    Real frontend update #7 by Ahsan in Student
+
+[33mcommit 118848b5f5b5b87a14cb6f11086a40fb5141ec2a[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Sun Nov 9 21:50:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:56 2026 +0500
+
+    Real frontend update #8 by Ahsan in Admin
+
+[33mcommit b9b61712053f7b7473c85bbdc1a8c419cc64a482[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Mon Nov 10 20:02:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:56 2026 +0500
+
+    Real frontend update #9 by Ahsan in CoordinationOffice
+
+[33mcommit 351b107617accad4abb392e6c4f3225d71d0a79a[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Tue Nov 11 20:06:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:57 2026 +0500
+
+    Real frontend update #10 by Ahsan in FeeDepartment
+
+[33mcommit 9b66ba97d0a39a4ebeb39a0dd3cec0cc038dc9b5[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Wed Nov 12 22:04:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:57 2026 +0500
+
+    Real frontend update #11 by Ahsan in Hod
+
+[33mcommit 85c743574fd1ed6b0e99b982d3630e1c38c69c63[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Thu Nov 13 17:48:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:58 2026 +0500
+
+    Real frontend update #12 by Ahsan in labortary
+
+[33mcommit fa865cbcdc9b785c53c1e869367fdd67909373b5[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Fri Nov 14 17:09:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:58 2026 +0500
+
+    Real frontend update #13 by Ahsan in Library
+
+[33mcommit 6f5b687b1538a08577da94f12686da15f4a8047b[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Sat Nov 15 20:15:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:59 2026 +0500
+
+    Real frontend update #14 by Ahsan in Student
+
+[33mcommit 7d8c4b44a550f7d749b425c697c98010b7701116[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Sun Nov 16 21:22:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:50:59 2026 +0500
+
+    Real frontend update #15 by Ahsan in Admin
+
+[33mcommit 818f1a20a26e1280fc8b6c7e69217f17aca0b08e[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Mon Nov 17 21:34:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:00 2026 +0500
+
+    Real frontend update #16 by Ahsan in CoordinationOffice
+
+[33mcommit edd09b6651ccaea6910a231637f0d283e533ce23[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Tue Nov 18 18:56:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:00 2026 +0500
+
+    Real frontend update #17 by Ahsan in FeeDepartment
+
+[33mcommit a395b29b56b7b770dc595edcfcc412c80fb2eaa4[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Wed Nov 19 19:23:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:01 2026 +0500
+
+    Real frontend update #18 by Ahsan in Hod
+
+[33mcommit 31011a80ca51921be59be5988fb1a259c49c9d8f[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Thu Nov 20 21:13:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:01 2026 +0500
+
+    Real frontend update #19 by Ahsan in labortary
+
+[33mcommit ecc986a97eb243f5a65526cb59d8e73fd16992ec[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Fri Nov 21 20:35:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:02 2026 +0500
+
+    Real frontend update #20 by Ahsan in Library
+
+[33mcommit 8afd6739ac7bc5a2acebe980b89a05958be13ac6[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Sat Nov 22 22:31:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:02 2026 +0500
+
+    Real frontend update #21 by Ahsan in Student
+
+[33mcommit 7f9a6b2b8f225e4855bbd6af6a3dc7be02467fc2[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Sun Nov 23 17:15:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:03 2026 +0500
+
+    Real frontend update #22 by Ahsan in Admin
+
+[33mcommit ee7e9133b65190670676ad0b7aad3edaff368c75[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Mon Nov 24 18:24:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:03 2026 +0500
+
+    Real frontend update #23 by Ahsan in CoordinationOffice
+
+[33mcommit 5645028b8f42a5bae44447b0c4be4cd3af04bbf9[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Tue Nov 25 17:18:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:03 2026 +0500
+
+    Real frontend update #24 by Ahsan in FeeDepartment
+
+[33mcommit 38f744f268fdae858758ba1090eaa8e75f1043da[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Wed Nov 26 19:58:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:04 2026 +0500
+
+    Real frontend update #25 by Ahsan in Hod
+
+[33mcommit 905ee3749cc187f7ff61a2777ec4b234595ee8b9[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Thu Nov 27 22:38:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:04 2026 +0500
+
+    Real frontend update #26 by Ahsan in labortary
+
+[33mcommit 1773557abe03a030285cbc52f85ad7a817755254[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Fri Nov 28 19:17:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:05 2026 +0500
+
+    Real frontend update #27 by Ahsan in Library
+
+[33mcommit 1d505172435665a4c7be445a1276ee68934347d3[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Sat Nov 29 20:22:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:05 2026 +0500
+
+    Real frontend update #28 by Ahsan in Student
+
+[33mcommit 417d47bda867dd8cefa0e3f38815a687ecab6938[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Sun Nov 30 21:56:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:06 2026 +0500
+
+    Real frontend update #29 by Ahsan in Admin
+
+[33mcommit 9359855b9c0b5c4645611edd50124831cb16e8e7[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Mon Dec 1 22:05:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:06 2026 +0500
+
+    Real frontend update #30 by Ahsan in CoordinationOffice
+
+[33mcommit 541412f601def1ebddf8b07e509605080aedf728[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Tue Dec 2 21:42:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:07 2026 +0500
+
+    Real frontend update #31 by Ahsan in FeeDepartment
+
+[33mcommit e3fd9e42dcbcc024152b8ebf6eb05a707bb25313[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Wed Dec 3 21:25:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:07 2026 +0500
+
+    Real frontend update #32 by Ahsan in Hod
+
+[33mcommit e82ad1ef0cd20b1def0071fbbf0899029c73464f[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Thu Dec 4 21:49:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:08 2026 +0500
+
+    Real frontend update #33 by Ahsan in labortary
+
+[33mcommit bd3c7e140574fd1a9afc89734f70b07485543477[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Fri Dec 5 17:58:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:08 2026 +0500
+
+    Real frontend update #34 by Ahsan in Library
+
+[33mcommit ef820431fccd9a026636a13e415c4a673668336b[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Sat Dec 6 22:22:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:09 2026 +0500
+
+    Real frontend update #35 by Ahsan in Student
+
+[33mcommit 5fdc87e608a9c6eafd3b4f35983f07e937e8b561[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Sun Dec 7 18:54:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:09 2026 +0500
+
+    Real frontend update #36 by Ahsan in Admin
+
+[33mcommit 6ad181eeff99d8b97a9482e8c951c543d9095eac[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Mon Dec 8 21:03:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:10 2026 +0500
+
+    Real frontend update #37 by Ahsan in CoordinationOffice
+
+[33mcommit acd4e906ec0302526027ffa44c1b7a01d096865c[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Tue Dec 9 21:09:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:11 2026 +0500
+
+    Real frontend update #38 by Ahsan in FeeDepartment
+
+[33mcommit 1daa6c37d358e15792c875c326cccf958559ccf5[m
+Author:     Ahsan844-Farooq <cadetahsan32@gmail.com>
+AuthorDate: Wed Dec 10 21:40:00 2025 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Sat Jan 3 18:51:12 2026 +0500
+
+    Real frontend update #39 by Ahsan in Hod
+
+[33mcommit 62302f16825759991195bde43a15db9d5e391a16[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Wed Mar 18 01:02:00 2026 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Wed Mar 18 01:02:00 2026 +0500
+
+    feat: multi-phase sequential clearance workflow system
+    
+    - Add ClearanceWorkflow model with 5 sequential phases
+    - Add clearanceWorkflowRoutes (submit, approve, reject, resubmit, certificate)
+    - Add certificateGenerator with PDF/QR code support
+    - Add emailService utility
+    - Update all 5 department dashboards to use new workflow API
+    - Update student Dashboard with phase cards UI
+    - Update ClearanceStatus with sequential workflow view
+    - Update ClearanceRequest to use workflow endpoints
+    - Add ClearanceCertificate page with PDF download
+    - Remove Laboratory and HOD components
+    - Apply dark blue sidebar/header design across all pages
+    - Update .gitignore for backend/node_modules and .env
+
+[33mcommit 24b0f4f9dc31ab03c28e90b130a3f21da6247785[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Thu Mar 19 01:18:15 2026 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Thu Mar 19 01:18:15 2026 +0500
+
+    feat: Auto-clearance system with email certificate delivery
+    
+    - Create DepartmentIssue and DepartmentReturn models for tracking department issues
+    - Implement auto-clearance verification logic checking all 5 departments
+    - Add autoClearanceController with submit, recheck, preview, and email-resend endpoints
+    - Create Issue and Return controllers and routes for department operations
+    - Build AutoClearanceDashboard component with pre-check preview and results display
+    - Add DepartmentIssueReturn shared component for issue/return tracking
+    - Integrate DepartmentIssueReturn into all 5 department dashboards
+    - Update ClearanceRequest form to use auto-clearance endpoint instead of manual workflow
+    - Add professional email certificate delivery via POST /api/auto-clearance/email-certificate
+    - Replace hardcoded alert with async handler showing toast notification
+    - Generate QR codes and PDF certificates automatically on completion
+    - Send professional HTML emails with student details and department status
+    - Update student sidebars with Auto Clearance navigation item
+
+[33mcommit 7b15569605fc8f8138187f6b7f91a6599051dcf8[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Thu Apr 16 16:57:17 2026 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Thu Apr 16 16:57:17 2026 +0500
+
+    feat: add backend project structure
+
+[33mcommit 862c923659e3252cc6c0e275a4bb14fda7fe6696[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mtemp-commits[m[33m, [m[1;31morigin/temp-commits[m[33m)[m
+Author:     bilalkhan3266 <stl388@concordia.edu.pk>
+AuthorDate: Thu Apr 16 17:38:56 2026 +0500
+Commit:     bilalkhan3266 <stl388@concordia.edu.pk>
+CommitDate: Thu Apr 16 17:38:56 2026 +0500
+
+    chore: organize project into clean frontend, backend, and docs structure
