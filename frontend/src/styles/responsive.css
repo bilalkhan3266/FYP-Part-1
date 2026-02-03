@@ -1,0 +1,52 @@
+﻿/* Mobile First Approach */
+.container {
+  width: 100%;
+  padding: 0 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .container {
+    max-width: 750px;
+    margin: 0 auto;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .button-group {
+    flex-direction: row;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1200px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .container {
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+}
