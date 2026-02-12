@@ -1,0 +1,37 @@
+﻿{
+  "en": {
+    "common": {
+      "home": "Home",
+      "about": "About",
+      "contact": "Contact",
+      "login": "Login",
+      "logout": "Logout"
+    },
+    "dashboard": {
+      "welcome": "Welcome to Dashboard",
+      "analytics": "Analytics Overview"
+    }
+  },
+  "es": {
+    "common": {
+      "home": "Inicio",
+      "about": "Acerca de",
+      "contact": "Contacto",
+      "login": "Iniciar sesiÃ³n",
+      "logout": "Cerrar sesiÃ³n"
+    },
+    "dashboard": {
+      "welcome": "Bienvenido al Panel",
+      "analytics": "DescripciÃ³n general de anÃ¡lisis"
+    }
+  },
+  "fr": {
+    "common": {
+      "home": "Accueil",
+      "about": "Ã€ propos",
+      "contact": "Contact",
+      "login": "Connexion",
+      "logout": "DÃ©connexion"
+    }
+  }
+}
