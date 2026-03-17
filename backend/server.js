@@ -11,6 +11,7 @@ const crypto = require("crypto");
 const libraryRoutes = require("./routes/libraryRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const hodRoutes = require("./routes/hodRoutes");
+const clearanceWorkflowRoutes = require("./routes/clearanceWorkflowRoutes");
 
 // Import Models
 const User = require("./models/User");
@@ -20,6 +21,7 @@ const Message = require("./models/Message");
 const AdminMessage = require("./models/AdminMessage");
 const DepartmentStats = require("./models/DepartmentStats");
 const DocumentQRCode = require("./models/DocumentQRCode");
+const { sendClearanceCertificateEmail } = require("./utils/emailService");
 
 // --------------------
 // Express app
@@ -678,6 +680,61 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
 });
 
 // --------------------
+// Get Clearance Certificate Data (Student)
+// --------------------
+app.get('/api/clearance-certificate', verifyToken, async (req, res) => {
+  try {
+    const studentId = req.user.id;
+
+    // Get the clearance request
+    const clearanceReq = await ClearanceRequest.findOne({ student_id: studentId })
+      .sort({ createdAt: -1 });
+
+    if (!clearanceReq) {
+      return res.status(404).json({ success: false, message: 'No clearance request found' });
+    }
+
+    // Get all department statuses
+    const statuses = await DepartmentClearance.find({ student_id: studentId });
+    const allApproved = statuses.length > 0 && statuses.every(s => s.status === 'Approved' || s.status === 'Cleared');
+
+    if (!allApproved) {
+      return res.status(400).json({ success: false, message: 'Not all departments have approved your clearance' });
+    }
+
+    // Get student info
+    const student = await User.findById(studentId);
+
+    res.json({
+      success: true,
+      certificate: {
+        student_name: clearanceReq.student_name || student?.full_name,
+        sapid: clearanceReq.sapid || student?.sap,
+        registration_no: clearanceReq.registration_no,
+        father_name: clearanceReq.father_name,
+        program: clearanceReq.program,
+        semester: clearanceReq.semester,
+        department: clearanceReq.department || student?.department,
+        degree_status: clearanceReq.degree_status,
+        qr_code: clearanceReq.qr_code,
+        hod_approved_by: clearanceReq.hod_approved_by,
+        hod_approved_at: clearanceReq.hod_approved_at,
+        submitted_at: clearanceReq.submitted_at,
+        departments: statuses.map(s => ({
+          name: s.department_name,
+          status: s.status,
+          approved_by: s.approved_by,
+          approved_at: s.approved_at
+        }))
+      }
+    });
+  } catch (err) {
+    console.error('Certificate Error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch certificate data' });
+  }
+});
+
+// --------------------
 // View Clearance Status (Student)
 // --------------------
 app.get('/api/clearance-status', verifyToken, async (req, res) => {
@@ -1311,6 +1368,29 @@ app.post('/api/hod/approve-clearance/:clearanceRequestId', verifyToken, async (r
       message_type: 'notification'
     });
     await message.save();
+
+    // Send email notification to student (non-blocking)
+    try {
+      const student = await User.findById(clearanceReq.student_id);
+      if (student && student.email) {
+        const deptRecords = await DepartmentClearance.find({ clearance_request_id: clearanceRequestId });
+        const departments = deptRecords.map(d => ({ name: d.department_name || d.department, status: d.status || 'Approved' }));
+
+        sendClearanceCertificateEmail({
+          studentName: clearanceReq.student_name,
+          studentEmail: student.email,
+          sapId: clearanceReq.sapid,
+          department: clearanceReq.department,
+          program: clearanceReq.program,
+          qrCode: qrCodeId,
+          approvedBy: hodName,
+          approvedAt: new Date(),
+          departments,
+        }).catch(err => console.error('Email send error:', err.message));
+      }
+    } catch (emailErr) {
+      console.error('Email lookup error:', emailErr.message);
+    }
 
     res.json({
       success: true,
@@ -3414,6 +3494,11 @@ app.put('/api/hod/requests/:id/reject', verifyToken, async (req, res) => {
     res.status(500).json({ success: false, message: '❌ Failed to reject request' });
   }
 });
+
+// ============================================
+// CLEARANCE WORKFLOW ROUTES (Sequential 5-Phase)
+// ============================================
+app.use('/api/clearance', clearanceWorkflowRoutes);
 
 // ============================================
 // ADMIN PANEL ROUTES

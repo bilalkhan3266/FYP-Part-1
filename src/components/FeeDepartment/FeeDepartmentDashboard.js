@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { UserPen, ClipboardList, CheckCircle2, MessageSquare, LogOut } from "lucide-react";
 import axios from "axios";
 import "./FeeDashboard.css";
 
@@ -26,16 +27,7 @@ export default function FeeDepartmentDashboard() {
       const token = localStorage.getItem("token");
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-      let endpoint = "";
-      if (activeTab === "pending") {
-        endpoint = "/api/fee/pending-requests";
-      } else if (activeTab === "approved") {
-        endpoint = "/api/fee/approved-requests";
-      } else if (activeTab === "rejected") {
-        endpoint = "/api/fee/rejected-requests";
-      }
-
-      const response = await axios.get(apiUrl + endpoint, {
+      const response = await axios.get(apiUrl + "/api/clearance/department", {
         headers: {
           Authorization: "Bearer " + token,
           "Content-Type": "application/json"
@@ -43,7 +35,19 @@ export default function FeeDepartmentDashboard() {
       });
 
       if (response.data.success) {
-        setRequests(response.data.data || []);
+        const data = response.data[activeTab] || [];
+        setRequests(data.map(r => ({
+          _id: r._id,
+          student_name: r.studentName,
+          sapid: r.sapid,
+          registration_no: r.registrationNo,
+          program: r.program,
+          semester: r.semester,
+          status: r.phaseStatus,
+          remarks: r.phaseRemarks,
+          createdAt: r.submittedAt,
+          overallStatus: r.overallStatus,
+        })));
       } else {
         setError(response.data.message || "❌ Failed to fetch requests");
       }
@@ -74,7 +78,7 @@ export default function FeeDepartmentDashboard() {
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
       const response = await axios.put(
-        apiUrl + `/api/fee/requests/${modalRequestId}/approve`,
+        apiUrl + `/api/clearance/${modalRequestId}/approve`,
         { remarks: remarks.trim() },
         {
           headers: {
@@ -115,7 +119,7 @@ export default function FeeDepartmentDashboard() {
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
       const response = await axios.put(
-        apiUrl + `/api/fee/requests/${modalRequestId}/reject`,
+        apiUrl + `/api/clearance/${modalRequestId}/reject`,
         { remarks: remarks.trim() },
         {
           headers: {
@@ -166,32 +170,32 @@ export default function FeeDepartmentDashboard() {
 
         <nav className="sd-nav">
           <button className="sd-nav-btn" onClick={() => navigate("/fee-edit-profile")}>
-            📝 Edit Profile
+            <UserPen size={18} /> Edit Profile
           </button>
 
           <button
             className="sd-nav-btn"
             onClick={() => setActiveTab("pending")}
           >
-            📄 View Student Requests
+            <ClipboardList size={18} /> View Student Requests
           </button>
 
           <button
             className="sd-nav-btn"
             onClick={() => setActiveTab("approved")}
           >
-            ✅ Approved Requests
+            <CheckCircle2 size={18} /> Approved Requests
           </button>
 
           <button
             className="sd-nav-btn"
             onClick={() => navigate("/fee-messages")}
           >
-            💬 Messages
+            <MessageSquare size={18} /> Messages
           </button>
 
           <button className="sd-nav-btn" onClick={handleLogout}>
-            🚪 Logout
+            <LogOut size={18} /> Logout
           </button>
         </nav>
 

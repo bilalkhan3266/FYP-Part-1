@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { LayoutDashboard, MessageSquare, ClipboardList, CheckCircle2, XCircle, UserPen, LogOut } from "lucide-react";
 import "./LibraryMessage.css";
 
 export default function LibraryMessage() {
@@ -21,13 +22,13 @@ export default function LibraryMessage() {
       <aside className="left-sidebar">
         <h2>Library Portal</h2>
         <nav>
-          <button onClick={() => navigate("/library-dashboard")}>🏠 Dashboard</button>
-          <button className="active">💬 Message Student</button>
-          <button onClick={() => navigate("/library-requests")}>📄 Requests</button>
-          <button onClick={() => navigate("/library-approved")}>✅ Approved</button>
-          <button onClick={() => navigate("/library-rejected")}>❌ Rejected</button>
-          <button onClick={() => navigate("/library-edit-profile")}>📝 Edit Profile</button>
-          <button onClick={() => navigate("/login")}>🚪 Logout</button>
+          <button onClick={() => navigate("/library-dashboard")}><LayoutDashboard size={18} /> Dashboard</button>
+          <button className="active"><MessageSquare size={18} /> Message Student</button>
+          <button onClick={() => navigate("/library-requests")}><ClipboardList size={18} /> Requests</button>
+          <button onClick={() => navigate("/library-approved")}><CheckCircle2 size={18} /> Approved</button>
+          <button onClick={() => navigate("/library-rejected")}><XCircle size={18} /> Rejected</button>
+          <button onClick={() => navigate("/library-edit-profile")}><UserPen size={18} /> Edit Profile</button>
+          <button onClick={() => navigate("/login")}><LogOut size={18} /> Logout</button>
         </nav>
         <footer>© 2025 Library Portal</footer>
       </aside>

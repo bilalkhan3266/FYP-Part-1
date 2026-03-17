@@ -9,7 +9,7 @@
 /* ✅ Sidebar (Left Navigation) */
 .sd-sidebar {
   width: 240px;
-  background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+  background: #0a1e3d;
   color: white;
   padding: 25px 15px;
   display: flex;
@@ -109,18 +109,22 @@
 
 .sd-header {
   margin-bottom: 40px;
+  background: linear-gradient(135deg, #0a1e3d 0%, #122d5e 100%);
+  padding: 28px 32px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(10, 30, 61, 0.2);
 }
 
 .sd-header h1 {
   margin: 0 0 8px 0;
   font-size: 32px;
-  color: #1f2937;
+  color: #ffffff;
   font-weight: 800;
 }
 
 .sd-header p {
   margin: 0;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.85);
   font-size: 15px;
 }
 

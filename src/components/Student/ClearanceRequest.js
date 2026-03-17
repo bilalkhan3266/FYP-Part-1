@@ -1,8 +1,42 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { LayoutDashboard, ClipboardList, CheckCircle2, MessageSquare, UserPen, LogOut, GraduationCap } from "lucide-react";
 import "./ClearanceRequest.css";
+import "./Dashboard.css";
 import axios from "axios";
+
+/* Shared Sidebar Component */
+function StudentSidebar({ displayName, displaySap, displayDept, onLogout, className }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const navItems = [
+    { path: "/student-dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { path: "/student-clearance-request", icon: ClipboardList, label: "Submit Request" },
+    { path: "/student-clearance-status", icon: CheckCircle2, label: "Clearance Status" },
+    { path: "/student-messages", icon: MessageSquare, label: "Messages" },
+    { path: "/student-edit-profile", icon: UserPen, label: "Edit Profile" },
+  ];
+  return (
+    <aside className={`sd-sidebar${className ? " " + className : ""}`}>
+      <div className="sd-sidebar-top">
+        <div className="sd-brand"><div className="sd-brand-icon"><GraduationCap size={22} /></div><span className="sd-brand-text">Riphah Clearance</span></div>
+        <div className="sd-profile"><div className="sd-avatar">{displayName ? displayName.charAt(0).toUpperCase() : "?"}</div><div className="sd-profile-info"><h3 className="sd-name">{displayName}</h3><p className="sd-meta">{displaySap}</p><p className="sd-meta">{displayDept}</p></div></div>
+        <nav className="sd-nav">
+          {navItems.map((item) => { const Icon = item.icon; const isActive = location.pathname === item.path; return (
+            <button key={item.path} className={`sd-nav-btn${isActive ? " active" : ""}`} onClick={() => navigate(item.path)}>
+              <Icon size={18} strokeWidth={isActive ? 2.5 : 2} /><span>{item.label}</span>{isActive && <span className="sd-active-indicator" />}
+            </button>
+          ); })}
+        </nav>
+      </div>
+      <div className="sd-sidebar-bottom">
+        <button className="sd-nav-btn sd-logout-btn" onClick={onLogout}><LogOut size={18} /><span>Logout</span></button>
+        <footer className="sd-footer">© 2025 Riphah International University</footer>
+      </div>
+    </aside>
+  );
+}
 
 export default function ClearanceRequest() {
   const { user, logout } = useAuthContext();
@@ -22,14 +56,14 @@ export default function ClearanceRequest() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [existingRequests, setExistingRequests] = useState([]);
+  const [existingWorkflow, setExistingWorkflow] = useState(null);
   const [fetchingRequests, setFetchingRequests] = useState(true);
-  const [departmentStatuses, setDepartmentStatuses] = useState({});
-  const [resubmittingDept, setResubmittingDept] = useState(null);
 
-  // Fetch existing clearance requests for the student
+  const PHASE_ORDER = ["Coordination", "Library", "Transport", "Fee Department", "Student Service"];
+
+  // Fetch existing clearance workflow for the student
   useEffect(() => {
-    const fetchExistingRequests = async () => {
+    const fetchExistingWorkflow = async () => {
       try {
         setFetchingRequests(true);
         const token = localStorage.getItem("token");
@@ -40,37 +74,27 @@ export default function ClearanceRequest() {
           return;
         }
 
-        const response = await axios.get(apiUrl + "/api/clearance-requests", {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
+        const response = await axios.get(apiUrl + "/api/clearance/student", {
+          headers: { Authorization: "Bearer " + token },
         });
 
-        if (response.data.success && response.data.requests) {
-          setExistingRequests(response.data.requests);
-          
-          // Build department statuses map
-          const statuses = {};
-          response.data.requests.forEach((req) => {
-            statuses[req.department] = req.status;
-          });
-          setDepartmentStatuses(statuses);
+        if (response.data.success && response.data.data) {
+          setExistingWorkflow(response.data.data);
         }
       } catch (err) {
-        console.error("Error fetching existing requests:", err);
-        setExistingRequests([]);
+        console.error("Error fetching existing workflow:", err);
+        setExistingWorkflow(null);
       } finally {
         setFetchingRequests(false);
       }
     };
 
-    fetchExistingRequests();
+    fetchExistingWorkflow();
   }, []);
 
-  const hasActiveRequest = existingRequests.length > 0 && 
-    existingRequests.some(req => req.status !== "Rejected");
-  const hasRejectedRequests = Object.values(departmentStatuses).some(status => status === "Rejected");
-
+  const hasActiveRequest = existingWorkflow && 
+    (existingWorkflow.overallStatus === "In Progress" || existingWorkflow.overallStatus === "Pending");
+  const isRejected = existingWorkflow?.overallStatus === "Rejected";
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -78,8 +102,9 @@ export default function ClearanceRequest() {
     setError("");
   };
 
-  const handleResubmit = async (department) => {
-    setResubmittingDept(department);
+  const handleResubmit = async () => {
+    if (!existingWorkflow) return;
+    setLoading(true);
     setError("");
     setSuccess("");
 
@@ -89,76 +114,32 @@ export default function ClearanceRequest() {
 
       if (!token) {
         setError("❌ No authentication token found. Please login again.");
-        setResubmittingDept(null);
+        setLoading(false);
         return;
       }
 
-      // Resubmit only to the specific department
       const response = await axios.post(
-        apiUrl + "/api/clearance-requests/resubmit",
-        {
-          sapid: formData.sapid,
-          student_name: formData.student_name,
-          registration_no: formData.registration_no.trim(),
-          father_name: formData.father_name.trim(),
-          program: formData.program.trim(),
-          semester: formData.semester.trim(),
-          degree_status: formData.degree_status.trim(),
-          department: department,
-        },
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json",
-          },
-        }
+        apiUrl + "/api/clearance/" + existingWorkflow._id + "/resubmit",
+        {},
+        { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } }
       );
 
       if (response.data.success) {
-        setSuccess(`✅ Resubmit request sent to ${department}!`);
-        
-        // Update department status
-        setDepartmentStatuses({
-          ...departmentStatuses,
-          [department]: "Pending"
-        });
-
-        // Refresh existing requests
-        const updatedResponse = await axios.get(apiUrl + "/api/clearance-requests", {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
-        });
-
-        if (updatedResponse.data.success) {
-          setExistingRequests(updatedResponse.data.requests);
-          const statuses = {};
-          updatedResponse.data.requests.forEach((req) => {
-            statuses[req.department] = req.status;
-          });
-          setDepartmentStatuses(statuses);
-        }
-
-        setTimeout(() => {
-          setSuccess("");
-        }, 3000);
+        setSuccess("✅ " + response.data.message);
+        setExistingWorkflow(response.data.workflow);
+        setTimeout(() => navigate("/student-clearance-status"), 2000);
       } else {
-        setError(response.data.message || "❌ Resubmit failed. Please try again.");
+        setError(response.data.message || "❌ Resubmit failed.");
       }
     } catch (err) {
       console.error("Resubmit Error:", err);
-      
       if (err.response?.status === 401) {
         setError("❌ Invalid or expired token. Please login again.");
-      } else if (err.response?.status === 400) {
-        setError("❌ " + (err.response?.data?.message || "Invalid request data."));
-      } else if (err.response?.status === 500) {
-        setError("❌ Server error: " + (err.response?.data?.message || "Failed to resubmit."));
       } else {
-        setError("❌ Unable to resubmit: " + (err.message || "Unknown error"));
+        setError("❌ " + (err.response?.data?.message || err.message || "Failed to resubmit."));
       }
     } finally {
-      setResubmittingDept(null);
+      setLoading(false);
     }
   };
 
@@ -216,9 +197,9 @@ export default function ClearanceRequest() {
         degree_status: formData.degree_status,
       });
 
-      // Submit clearance request - will create records in all department tables
+      // Submit clearance request - new sequential workflow
       const response = await axios.post(
-        apiUrl + "/api/clearance-requests",
+        apiUrl + "/api/clearance",
         {
           sapid: formData.sapid,
           student_name: formData.student_name,
@@ -238,7 +219,7 @@ export default function ClearanceRequest() {
       );
 
       if (response.data.success) {
-        setSuccess("✅ Clearance Request Submitted Successfully to All Departments!");
+        setSuccess("✅ Clearance Request Submitted! It will proceed through departments sequentially.");
 
         // Reset form
         setFormData({
@@ -252,20 +233,13 @@ export default function ClearanceRequest() {
           department: user?.department || "",
         });
 
-        // Refresh existing requests
-        const updatedResponse = await axios.get(apiUrl + "/api/clearance-requests", {
-          headers: {
-            Authorization: "Bearer " + token,
-          },
+        // Refresh workflow state
+        const updatedResponse = await axios.get(apiUrl + "/api/clearance/student", {
+          headers: { Authorization: "Bearer " + token },
         });
 
-        if (updatedResponse.data.success) {
-          setExistingRequests(updatedResponse.data.requests);
-          const statuses = {};
-          updatedResponse.data.requests.forEach((req) => {
-            statuses[req.department] = req.status;
-          });
-          setDepartmentStatuses(statuses);
+        if (updatedResponse.data.success && updatedResponse.data.data) {
+          setExistingWorkflow(updatedResponse.data.data);
         }
 
         // Redirect to clearance status after 2 seconds
@@ -316,56 +290,7 @@ export default function ClearanceRequest() {
 
   return (
     <div className="student-dashboard-page">
-      <aside className="sd-sidebar">
-        <div className="sd-profile">
-          <div className="sd-avatar">
-            {displayName.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <h3 className="sd-name">{displayName}</h3>
-            <p className="sd-small">{displaySap} • {displayDept}</p>
-            <p className="sd-small">Riphah International University</p>
-          </div>
-        </div>
-
-        <nav className="sd-nav">
-          <button
-            onClick={() => navigate("/student-dashboard")}
-            className="sd-nav-btn"
-          >
-            🏠 Dashboard
-          </button>
-          <button
-            onClick={() => navigate("/student-clearance-request")}
-            className="sd-nav-btn active"
-          >
-            📋 Submit Request
-          </button>
-          <button
-            onClick={() => navigate("/student-clearance-status")}
-            className="sd-nav-btn"
-          >
-            ✅ Clearance Status
-          </button>
-          <button
-            onClick={() => navigate("/student-messages")}
-            className="sd-nav-btn"
-          >
-            💬 Messages
-          </button>
-          <button
-            onClick={() => navigate("/student-edit-profile")}
-            className="sd-nav-btn"
-          >
-            📝 Edit Profile
-          </button>
-          <button onClick={handleLogout} className="sd-nav-btn logout">
-            🚪 Logout
-          </button>
-        </nav>
-
-        <footer className="sd-footer">© 2025 Riphah</footer>
-      </aside>
+      <StudentSidebar displayName={displayName} displaySap={displaySap} displayDept={displayDept} onLogout={handleLogout} />
 
       <main className="sd-main">
         <header className="sd-header">
@@ -496,7 +421,7 @@ export default function ClearanceRequest() {
                 Submitting...
               </>
             ) : hasActiveRequest ? (
-              "🔒 Request Already Submitted (Pending/Approved)"
+              "🔒 Request Already Submitted (In Progress)"
             ) : fetchingRequests ? (
               "Loading..."
             ) : (
@@ -504,33 +429,31 @@ export default function ClearanceRequest() {
             )}
           </button>
 
-          {hasRejectedRequests && (
+          {isRejected && existingWorkflow && (
             <div className="resubmit-section">
-              <h3>🔄 Resubmit Requests (Rejected)</h3>
+              <h3>🔄 Resubmit Rejected Request</h3>
               <p className="resubmit-info">
-                The following departments rejected your request. You can resubmit to them:
+                Your clearance was rejected at <strong>{existingWorkflow.phases.find(p => p.status === "Rejected")?.name || "a department"}</strong>.
+                {existingWorkflow.phases.find(p => p.status === "Rejected")?.remarks && (
+                  <> Reason: <em>{existingWorkflow.phases.find(p => p.status === "Rejected").remarks}</em></>
+                )}
               </p>
               <div className="resubmit-buttons">
-                {Object.entries(departmentStatuses).map(([dept, status]) => 
-                  status === "Rejected" ? (
-                    <button
-                      key={dept}
-                      type="button"
-                      className="resubmit-btn"
-                      onClick={() => handleResubmit(dept)}
-                      disabled={resubmittingDept !== null}
-                    >
-                      {resubmittingDept === dept ? (
-                        <>
-                          <span className="spinner"></span>
-                          Resubmitting...
-                        </>
-                      ) : (
-                        `🔄 Resubmit to ${dept}`
-                      )}
-                    </button>
-                  ) : null
-                )}
+                <button
+                  type="button"
+                  className="resubmit-btn"
+                  onClick={handleResubmit}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <span className="spinner"></span>
+                      Resubmitting...
+                    </>
+                  ) : (
+                    "🔄 Resubmit for Review"
+                  )}
+                </button>
               </div>
             </div>
           )}
@@ -538,34 +461,33 @@ export default function ClearanceRequest() {
 
         <div className="info-box">
           <h3>📢 Important Information</h3>
-          {existingRequests.length > 0 ? (
+          {existingWorkflow ? (
             <>
-              <p><strong>Your Current Request Status:</strong></p>
+              <p><strong>Your Current Workflow Status: {existingWorkflow.overallStatus}</strong></p>
+              <p style={{marginTop: '8px', fontSize: '0.95em'}}>Sequential clearance progress:</p>
               <ul>
-                {existingRequests.map((req, idx) => (
+                {existingWorkflow.phases.map((phase, idx) => (
                   <li key={idx}>
-                    {req.department}: <span className={`status-${req.status.toLowerCase()}`}>{req.status}</span>
+                    {idx + 1}. {phase.name}: <span className={`status-${phase.status.toLowerCase()}`}>
+                      {phase.status === "Approved" ? "✅" : phase.status === "Rejected" ? "❌" : idx === existingWorkflow.currentPhase ? "⏳" : "⬜"} {phase.status}
+                    </span>
+                    {idx === existingWorkflow.currentPhase && existingWorkflow.overallStatus === "In Progress" && " ← Current"}
                   </li>
                 ))}
               </ul>
               <p style={{marginTop: '10px', fontSize: '0.9em', color: '#666'}}>
-                ℹ️ You cannot submit a new request until all departments respond. 
-                If a department rejects your request, you can resubmit to that department only.
+                ℹ️ Your request moves through departments one at a time. Each department must approve before the next can review.
               </p>
             </>
           ) : (
             <>
-              <p>Your clearance request will be sent to all departments:</p>
+              <p>Your clearance request will proceed through departments <strong>sequentially</strong>:</p>
               <ul>
-                <li>📚 Library Department</li>
-                <li>🚌 Transport Department</li>
-                <li>🔬 Laboratory Department</li>
-                <li>👥 Student Service Department</li>
-                <li>💰 Fee Department</li>
-                <li>📋 Coordination Office</li>
-                <li>👨‍💼 HOD (Head of Department)</li>
+                {PHASE_ORDER.map((phase, i) => (
+                  <li key={i}>{i + 1}. {phase}</li>
+                ))}
               </ul>
-              <p>Each department will review and approve/reject your request independently.</p>
+              <p>Each department reviews and approves in order. A certificate is generated once all departments approve.</p>
             </>
           )}
         </div>

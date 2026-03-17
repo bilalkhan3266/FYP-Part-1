@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut } from "lucide-react";
 import "../Student/EditProfile.css";
 
 export default function ServiceDashboard() {
@@ -26,16 +27,7 @@ export default function ServiceDashboard() {
       const token = localStorage.getItem("token");
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-      let endpoint = "";
-      if (activeTab === "pending") {
-        endpoint = "/api/studentservice/pending-requests";
-      } else if (activeTab === "approved") {
-        endpoint = "/api/studentservice/approved-requests";
-      } else if (activeTab === "rejected") {
-        endpoint = "/api/studentservice/rejected-requests";
-      }
-
-      const response = await axios.get(apiUrl + endpoint, {
+      const response = await axios.get(apiUrl + "/api/clearance/department", {
         headers: {
           Authorization: "Bearer " + token,
           "Content-Type": "application/json"
@@ -43,7 +35,18 @@ export default function ServiceDashboard() {
       });
 
       if (response.data.success) {
-        setRequests(response.data.data || []);
+        const data = response.data[activeTab] || [];
+        setRequests(data.map(r => ({
+          _id: r._id,
+          student_name: r.studentName,
+          sapid: r.sapid,
+          program: r.program,
+          semester: r.semester,
+          status: r.phaseStatus,
+          remarks: r.phaseRemarks,
+          createdAt: r.submittedAt,
+          overallStatus: r.overallStatus,
+        })));
       } else {
         setError(response.data.message || "❌ Failed to fetch requests");
       }
@@ -70,7 +73,7 @@ export default function ServiceDashboard() {
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
       const response = await axios.put(
-        `${apiUrl}/api/studentservice/requests/${modalRequestId}/approve`,
+        `${apiUrl}/api/clearance/${modalRequestId}/approve`,
         { remarks },
         {
           headers: {
@@ -108,7 +111,7 @@ export default function ServiceDashboard() {
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
       const response = await axios.put(
-        `${apiUrl}/api/studentservice/requests/${modalRequestId}/reject`,
+        `${apiUrl}/api/clearance/${modalRequestId}/reject`,
         { remarks },
         {
           headers: {
@@ -169,34 +172,34 @@ export default function ServiceDashboard() {
             className={`sd-nav-btn ${activeTab === "pending" ? "active" : ""}`}
             onClick={() => setActiveTab("pending")}
           >
-            📋 Pending
+            <ClipboardList size={18} /> Pending
           </button>
           <button
             className={`sd-nav-btn ${activeTab === "approved" ? "active" : ""}`}
             onClick={() => setActiveTab("approved")}
           >
-            ✅ Approved
+            <CheckCircle2 size={18} /> Approved
           </button>
           <button
             className={`sd-nav-btn ${activeTab === "rejected" ? "active" : ""}`}
             onClick={() => setActiveTab("rejected")}
           >
-            ❌ Rejected
+            <XCircle size={18} /> Rejected
           </button>
           <button
             className="sd-nav-btn"
             onClick={() => navigate("/service-messages")}
           >
-            💬 Messages
+            <MessageSquare size={18} /> Messages
           </button>
           <button
             className="sd-nav-btn"
             onClick={() => navigate("/service-edit-profile")}
           >
-            📝 Edit Profile
+            <UserPen size={18} /> Edit Profile
           </button>
           <button className="sd-nav-btn logout" onClick={handleLogout}>
-            🚪 Logout
+            <LogOut size={18} /> Logout
           </button>
         </nav>
 

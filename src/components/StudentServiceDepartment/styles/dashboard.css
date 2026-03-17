@@ -19,7 +19,7 @@
 /* Sidebar */
 .sidebar {
   width:260px;
-  background: linear-gradient(180deg,#0a0f24,#182848);
+  background: #0a1e3d;
   color: #fff;
   padding:25px 18px;
   display:flex;
@@ -58,14 +58,14 @@ footer{ text-align:center; font-size:12px; opacity:0.85; }
 
 /* header card */
 .dashboard-header{
-  background:var(--card);
+  background: linear-gradient(135deg, #0a1e3d 0%, #122d5e 100%);
   padding:28px;
   border-radius:var(--radius);
-  box-shadow:var(--shadow);
+  box-shadow: 0 10px 30px rgba(10, 30, 61, 0.2);
   margin-bottom:20px;
 }
-.dashboard-header h1{color:var(--primary); margin:0 0 6px}
-.dashboard-header p{margin:0; color:#6b7280}
+.dashboard-header h1{color:#ffffff; margin:0 0 6px}
+.dashboard-header p{margin:0; color:rgba(255, 255, 255, 0.85)}
 
 /* program/details containers (cards) */
 .program-details{

@@ -6,8 +6,8 @@
   --primary: #003366;
   --primary-light: #00509e;
   --primary-dark: #002147;
-  --secondary: #667eea;
-  --secondary-light: #764ba2;
+  --secondary: #0a1e3d;
+  --secondary-light: #122d5e;
   --success: #16a34a;
   --warning: #f59e0b;
   --danger: #ef4444;
@@ -43,9 +43,10 @@
    ============================================ */
 
 .sd-sidebar {
-  width: 280px;
-  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
-  color: white;
+  width: 264px;
+  min-width: 264px;
+  background: #0a1e3d;
+  color: #e2e8f0;
   padding: 25px 18px;
   position: fixed;
   box-sizing: border-box;
@@ -165,7 +166,7 @@
    ============================================ */
 
 .sd-main {
-  margin-left: 280px;
+  margin-left: 264px;
   flex: 1;
   padding: 30px;
   overflow-y: auto;
@@ -191,20 +192,25 @@
 
 .sd-header {
   margin-bottom: 25px;
+  background: linear-gradient(135deg, #0a1e3d 0%, #122d5e 100%);
+  padding: 30px 35px;
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 10px 30px rgba(10, 30, 61, 0.2);
 }
 
 .sd-header h1 {
   margin: 0 0 8px 0;
   font-size: 32px;
   font-weight: 700;
-  color: var(--primary);
+  color: #ffffff;
   letter-spacing: -0.5px;
 }
 
 .sd-header p {
   margin: 0;
   font-size: 15px;
-  color: var(--gray);
+  color: rgba(255, 255, 255, 0.85);
   font-weight: 400;
 }
 

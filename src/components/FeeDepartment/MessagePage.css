@@ -10,7 +10,7 @@
 /* Keeping sidebar buttons and theme exactly like student edit profile */
 .sidebar {
   width: 220px;
-  background: #1e3a8a;
+  background: #0a1e3d;
   color: white;
   display: flex;
   flex-direction: column;
@@ -73,18 +73,18 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  background: #2a4cb0; /* same as student edit profile */
+  background: rgba(255, 255, 255, 0.1);
   color: white;
   font-family: 'Poppins', sans-serif; /* same font */
   transition: 0.3s;
 }
 
 .sidebar nav button:hover {
-  background: #3b5fdc;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .sidebar nav button.active {
-  background: #3949ab;
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .sidebar footer {

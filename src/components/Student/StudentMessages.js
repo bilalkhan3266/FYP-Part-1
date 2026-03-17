@@ -1,8 +1,42 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { LayoutDashboard, ClipboardList, CheckCircle2, MessageSquare, UserPen, LogOut, GraduationCap } from "lucide-react";
 import axios from "axios";
 import "../Student/EditProfile.css"; // ✅ USE CONSISTENT STYLING
+import "./Dashboard.css";
+
+/* Shared Sidebar Component */
+function StudentSidebar({ displayName, displaySap, displayDept, onLogout, className }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const navItems = [
+    { path: "/student-dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { path: "/student-clearance-request", icon: ClipboardList, label: "Submit Request" },
+    { path: "/student-clearance-status", icon: CheckCircle2, label: "Clearance Status" },
+    { path: "/student-messages", icon: MessageSquare, label: "Messages" },
+    { path: "/student-edit-profile", icon: UserPen, label: "Edit Profile" },
+  ];
+  return (
+    <aside className={`sd-sidebar${className ? " " + className : ""}`}>
+      <div className="sd-sidebar-top">
+        <div className="sd-brand"><div className="sd-brand-icon"><GraduationCap size={22} /></div><span className="sd-brand-text">Riphah Clearance</span></div>
+        <div className="sd-profile"><div className="sd-avatar">{displayName ? displayName.charAt(0).toUpperCase() : "?"}</div><div className="sd-profile-info"><h3 className="sd-name">{displayName}</h3><p className="sd-meta">{displaySap}</p><p className="sd-meta">{displayDept}</p></div></div>
+        <nav className="sd-nav">
+          {navItems.map((item) => { const Icon = item.icon; const isActive = location.pathname === item.path; return (
+            <button key={item.path} className={`sd-nav-btn${isActive ? " active" : ""}`} onClick={() => navigate(item.path)}>
+              <Icon size={18} strokeWidth={isActive ? 2.5 : 2} /><span>{item.label}</span>{isActive && <span className="sd-active-indicator" />}
+            </button>
+          ); })}
+        </nav>
+      </div>
+      <div className="sd-sidebar-bottom">
+        <button className="sd-nav-btn sd-logout-btn" onClick={onLogout}><LogOut size={18} /><span>Logout</span></button>
+        <footer className="sd-footer">© 2025 Riphah International University</footer>
+      </div>
+    </aside>
+  );
+}
 
 export default function StudentMessages() {
   const navigate = useNavigate();
@@ -158,30 +192,7 @@ export default function StudentMessages() {
   return (
     <div className="student-dashboard-page">
       {/* ✅ SIDEBAR */}
-      <aside className="sd-sidebar">
-        <div className="sd-profile">
-          <div className="sd-avatar">{displayName.charAt(0).toUpperCase()}</div>
-          <div>
-            <h3 className="sd-name">{displayName}</h3>
-            <p className="sd-small">{user?.sap || user?.sap_id} • Riphah</p>
-          </div>
-        </div>
-
-        <nav className="sd-nav">
-          <button onClick={() => handleNavigate("/student-dashboard")} className="sd-nav-btn">
-            🏠 Dashboard
-          </button>
-          <button className="sd-nav-btn active">💬 Messages</button>
-          <button onClick={() => handleNavigate("/student-clearance-request")} className="sd-nav-btn">
-            📋 Clearance
-          </button>
-          <button onClick={handleLogout} className="sd-nav-btn logout">
-            🚪 Logout
-          </button>
-        </nav>
-
-        <footer className="sd-footer">© 2025 Riphah</footer>
-      </aside>
+      <StudentSidebar displayName={displayName} displaySap={user?.sap || user?.sap_id || "N/A"} displayDept={user?.department || "N/A"} onLogout={handleLogout} />
 
       {/* ✅ MAIN CONTENT */}
       <main className="sd-main">

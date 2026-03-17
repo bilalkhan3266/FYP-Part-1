@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { LayoutDashboard, MessageSquare, UserPen, LogOut } from "lucide-react";
 import axios from "axios";
 import "../Student/EditProfile.css";
 
@@ -122,22 +123,22 @@ export default function ServiceEditProfile() {
             className="sd-nav-btn"
             onClick={() => navigate("/service-dashboard")}
           >
-            📋 Dashboard
+            <LayoutDashboard size={18} /> Dashboard
           </button>
           <button
             className="sd-nav-btn"
             onClick={() => navigate("/service-messages")}
           >
-            💬 Messages
+            <MessageSquare size={18} /> Messages
           </button>
           <button
             className="sd-nav-btn active"
             onClick={() => navigate("/service-edit-profile")}
           >
-            📝 Edit Profile
+            <UserPen size={18} /> Edit Profile
           </button>
           <button className="sd-nav-btn logout" onClick={handleLogout}>
-            🚪 Logout
+            <LogOut size={18} /> Logout
           </button>
         </nav>
 

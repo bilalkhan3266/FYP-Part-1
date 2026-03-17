@@ -14,9 +14,10 @@
    ============================================ */
 
 .sd-sidebar {
-  width: 280px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  width: 264px;
+  min-width: 264px;
+  background: #0a1e3d;
+  color: #e2e8f0;
   padding: 30px 20px;
   position: fixed;
   height: 100vh;
@@ -104,7 +105,7 @@
    ============================================ */
 
 .sd-main {
-  margin-left: 280px;
+  margin-left: 264px;
   flex: 1;
   padding: 40px;
   overflow-y: auto;
@@ -112,7 +113,7 @@
 
 /* Edit Form Main Container with Scrollbar */
 .edit-form-main {
-  margin-left: 280px;
+  margin-left: 264px;
   flex: 1;
   padding: 0;
   overflow-y: auto;
@@ -141,28 +142,30 @@
 }
 
 .edit-form-main::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #764ba2 0%, #667eea 100%);
-  box-shadow: 0 0 6px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(180deg, #122d5e 0%, #0a1e3d 100%);
+  box-shadow: 0 0 6px rgba(10, 30, 61, 0.4);
 }
 
 .sd-header {
   margin-bottom: 40px;
   margin-top: 20px;
-  padding-top: 30px;
-  padding-left: 40px;
-  padding-right: 40px;
+  padding: 30px 40px;
   flex-shrink: 0;
+  background: linear-gradient(135deg, #0a1e3d 0%, #122d5e 100%);
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 10px 30px rgba(10, 30, 61, 0.2);
 }
 
 .sd-header h1 {
   font-size: 28px;
-  color: #1a1a1a;
+  color: #ffffff;
   margin: 0 0 10px 0;
   font-weight: 700;
 }
 
 .sd-header p {
-  color: #666;
+  color: rgba(255, 255, 255, 0.85);
   margin: 0;
   font-size: 14px;
 }
@@ -211,7 +214,7 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #0a1e3d;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -318,7 +321,7 @@
 
 .submit-btn {
   padding: 14px 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #0a1e3d;
   color: white;
   border: none;
   border-radius: 10px;
@@ -714,9 +717,10 @@
    ============================================ */
 
 .sd-sidebar {
-  width: 280px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  width: 264px;
+  min-width: 264px;
+  background: #0a1e3d;
+  color: #e2e8f0;
   padding: 30px 20px;
   position: fixed;
   height: 100vh;
@@ -813,24 +817,29 @@
    ============================================ */
 
 .sd-main {
-  margin-left: 280px;
+  margin-left: 264px;
   flex: 1;
   padding: 40px;
 }
 
 .sd-header {
   margin-bottom: 40px;
+  background: linear-gradient(135deg, #0a1e3d 0%, #122d5e 100%);
+  padding: 30px 35px;
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 10px 30px rgba(10, 30, 61, 0.2);
 }
 
 .sd-header h1 {
   font-size: 28px;
-  color: #1a1a1a;
+  color: #ffffff;
   margin: 0 0 10px 0;
   font-weight: 700;
 }
 
 .sd-header p {
-  color: #666;
+  color: rgba(255, 255, 255, 0.85);
   margin: 0;
   font-size: 14px;
 }
@@ -953,7 +962,7 @@
 
 .submit-btn {
   padding: 14px 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #0a1e3d;
   color: white;
   border: none;
   border-radius: 10px;

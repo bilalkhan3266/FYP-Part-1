@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { LayoutDashboard, ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut } from "lucide-react";
 import api from "../../services/api";
 import "./LibraryRequests.css";
 
@@ -12,9 +13,9 @@ export default function LibraryRequestsTabs() {
   const [actionLoading, setActionLoading] = useState(false);
 
   const tabs = [
-    { key: "pending", label: "Pending Requests", icon: "📄" },
-    { key: "approved", label: "Approved Requests", icon: "✅" },
-    { key: "rejected", label: "Rejected Requests", icon: "❌" },
+    { key: "pending", label: "Pending Requests", icon: <ClipboardList size={18} /> },
+    { key: "approved", label: "Approved Requests", icon: <CheckCircle2 size={18} /> },
+    { key: "rejected", label: "Rejected Requests", icon: <XCircle size={18} /> },
   ];
 
   // Fetch data from MySQL table `clearancerequests`
@@ -105,7 +106,7 @@ export default function LibraryRequestsTabs() {
 
         <nav className="sd-nav">
           <button className="sd-nav-btn" onClick={() => navigate("/library-dashboard")}>
-            🏠 Dashboard
+            <LayoutDashboard size={18} /> Dashboard
           </button>
 
           {tabs.map((tab) => (
@@ -120,15 +121,15 @@ export default function LibraryRequestsTabs() {
           ))}
 
           <button className="sd-nav-btn" onClick={() => navigate("/library-message")}>
-            💬 Message Student
+            <MessageSquare size={18} /> Message Student
           </button>
 
           <button className="sd-nav-btn" onClick={() => navigate("/library-edit-profile")}>
-            📝 Edit Profile
+            <UserPen size={18} /> Edit Profile
           </button>
 
           <button className="sd-nav-btn" onClick={() => navigate("/library-login")}>
-            🚪 Logout
+            <LogOut size={18} /> Logout
           </button>
         </nav>
 

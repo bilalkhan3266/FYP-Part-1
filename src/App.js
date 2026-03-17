@@ -23,10 +23,10 @@ import TransportDashboard from "./components/Transport/TransportDashboard";
 import TransportEditProfile from "./components/Transport/TransportEditProfile";
 import TransportMessages from "./components/Transport/TransportMessages";
 
-/* Laboratory */
-import LaboratoryDashboard from "./components/labortary/LaboratoryDashboard";
-import LaboratoryEditProfile from "./components/labortary/LaboratoryEditProfile";
-import LaboratoryMessages from "./components/labortary/LaboratoryMessages";
+// /* Laboratory */
+// import LaboratoryDashboard from "./components/labortary/LaboratoryDashboard";
+// import LaboratoryEditProfile from "./components/labortary/LaboratoryEditProfile";
+// import LaboratoryMessages from "./components/labortary/LaboratoryMessages";
 
 /* Student Service */
 import ServiceDashboard from "./components/StudentServiceDepartment/ServiceDashboard";
@@ -49,14 +49,12 @@ import AdminEditProfile from "./components/Admin/AdminEditProfile";
 import AdminMessages from "./components/Admin/AdminMessages";
 import AdminUserManagement from "./components/Admin/AdminUserManagement";
 import AdminClearance from "./components/Admin/AdminClearance";
-import HODDashboard from "./components/Hod/HODDashboard";
-import HODEditProfile from "./components/Hod/HODEditProfile";
-import HODMessages from "./components/Hod/HODMessages";
-import ClearanceApprovalPanel from "./components/Hod/ClearanceApprovalPanel";
+
 
 /* Student Pages */
 import ClearanceRequest from "./components/Student/ClearanceRequest";
 import ClearanceStatus from "./components/Student/ClearanceStatus";
+import ClearanceCertificate from "./components/Student/ClearanceCertificate";
 import Messages from "./components/Student/Messages"; // ✅ Professional messages with full features
 import EditProfile from "./components/Student/EditProfile";
 
@@ -79,8 +77,7 @@ function getDashboardPath() {
       return "library-dashboard";
     case "transport":
       return "transport-dashboard";
-    case "laboratory":
-      return "lab-dashboard";
+   
     case "studentservice":
       return "service-dashboard";
     case "feedepartment":
@@ -89,8 +86,7 @@ function getDashboardPath() {
       return "coordination-dashboard";
     case "admin":
       return "admin-dashboard";
-    case "hod":
-      return "hod-dashboard";
+
     default:
       return "login";
   }
@@ -185,39 +181,6 @@ function AppRoutes() {
         }
       />
 
-      {/* Protected Routes - Laboratory */}
-      <Route
-        path="/lab-dashboard"
-        element={
-          <ProtectedRoute allowedRoles={["laboratory"]}>
-            <LaboratoryDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/laboratory-edit-profile"
-        element={
-          <ProtectedRoute allowedRoles={["laboratory"]}>
-            <LaboratoryEditProfile />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/lab-messages"
-        element={
-          <ProtectedRoute allowedRoles={["laboratory"]}>
-            <LaboratoryMessages />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/laboratory-messages"
-        element={
-          <ProtectedRoute allowedRoles={["laboratory"]}>
-            <LaboratoryMessages />
-          </ProtectedRoute>
-        }
-      />
 
       {/* Protected Routes - Student Service */}
       <Route
@@ -343,42 +306,7 @@ function AppRoutes() {
         }
       />
 
-      {/* Protected Routes - HOD Dashboard (Department Head) */}
-      <Route
-        path="/hod-dashboard"
-        element={
-          <ProtectedRoute allowedRoles={["hod"]}>
-            <HODDashboard />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/hod-clearance-approvals"
-        element={
-          <ProtectedRoute allowedRoles={["hod"]}>
-            <ClearanceApprovalPanel />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/hod-edit-profile"
-        element={
-          <ProtectedRoute allowedRoles={["hod"]}>
-            <HODEditProfile />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/hod-messages"
-        element={
-          <ProtectedRoute allowedRoles={["hod"]}>
-            <HODMessages />
-          </ProtectedRoute>
-        }
-      />
+   
 
       {/* Protected Routes - Student Pages */}
       <Route
@@ -395,6 +323,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["student"]}>
             <ClearanceStatus />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/student-certificate"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <ClearanceCertificate />
           </ProtectedRoute>
         }
       />

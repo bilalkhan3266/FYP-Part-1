@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { LayoutDashboard, MessageSquare, UserPen, LogOut } from "lucide-react";
 import axios from "axios";
 import "../Student/EditProfile.css";
 
@@ -272,19 +273,19 @@ export default function CoordinationMessages() {
 
         <nav className="sd-nav">
           <button className="sd-nav-btn" onClick={handleBackToDashboard}>
-            📋 Dashboard
+            <LayoutDashboard size={18} /> Dashboard
           </button>
           <button className="sd-nav-btn active">
-            💬 Messages
+            <MessageSquare size={18} /> Messages
           </button>
           <button
             className="sd-nav-btn"
             onClick={() => navigate("/coordination-edit-profile")}
           >
-            📝 Edit Profile
+            <UserPen size={18} /> Edit Profile
           </button>
           <button className="sd-nav-btn logout" onClick={handleLogout}>
-            🚪 Logout
+            <LogOut size={18} /> Logout
           </button>
         </nav>
 

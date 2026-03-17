@@ -1,13 +1,47 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { LayoutDashboard, ClipboardList, CheckCircle2, MessageSquare, UserPen, LogOut, GraduationCap } from "lucide-react";
 import "./ClearanceStatus.css";
+import "./Dashboard.css";
 import axios from "axios";
+
+/* Shared Sidebar Component */
+function StudentSidebar({ displayName, displaySap, displayDept, onLogout, className }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const navItems = [
+    { path: "/student-dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { path: "/student-clearance-request", icon: ClipboardList, label: "Submit Request" },
+    { path: "/student-clearance-status", icon: CheckCircle2, label: "Clearance Status" },
+    { path: "/student-messages", icon: MessageSquare, label: "Messages" },
+    { path: "/student-edit-profile", icon: UserPen, label: "Edit Profile" },
+  ];
+  return (
+    <aside className={`sd-sidebar${className ? " " + className : ""}`}>
+      <div className="sd-sidebar-top">
+        <div className="sd-brand"><div className="sd-brand-icon"><GraduationCap size={22} /></div><span className="sd-brand-text">Riphah Clearance</span></div>
+        <div className="sd-profile"><div className="sd-avatar">{displayName ? displayName.charAt(0).toUpperCase() : "?"}</div><div className="sd-profile-info"><h3 className="sd-name">{displayName}</h3><p className="sd-meta">{displaySap}</p><p className="sd-meta">{displayDept}</p></div></div>
+        <nav className="sd-nav">
+          {navItems.map((item) => { const Icon = item.icon; const isActive = location.pathname === item.path; return (
+            <button key={item.path} className={`sd-nav-btn${isActive ? " active" : ""}`} onClick={() => navigate(item.path)}>
+              <Icon size={18} strokeWidth={isActive ? 2.5 : 2} /><span>{item.label}</span>{isActive && <span className="sd-active-indicator" />}
+            </button>
+          ); })}
+        </nav>
+      </div>
+      <div className="sd-sidebar-bottom">
+        <button className="sd-nav-btn sd-logout-btn" onClick={onLogout}><LogOut size={18} /><span>Logout</span></button>
+        <footer className="sd-footer">© 2025 Riphah International University</footer>
+      </div>
+    </aside>
+  );
+}
 
 export default function ClearanceStatus() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
-  const [statuses, setStatuses] = useState([]);
+  const [workflow, setWorkflow] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -15,19 +49,17 @@ export default function ClearanceStatus() {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [resubmitting, setResubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [selectedDeptForResubmit, setSelectedDeptForResubmit] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: "", type: "" });
 
+  const PHASE_ORDER = ["Coordination", "Library", "Transport", "Fee Department", "Student Service"];
+
   useEffect(() => {
-    fetchClearanceStatus();
-    // Refresh every 3 seconds (faster real-time updates)
-    const interval = setInterval(fetchClearanceStatus, 3000);
+    fetchWorkflowStatus();
+    const interval = setInterval(fetchWorkflowStatus, 3000);
     
-    // Detect when tab comes into focus - refresh immediately
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log("📲 Tab focused - refreshing clearance status...");
-        fetchClearanceStatus();
+        fetchWorkflowStatus();
       }
     };
     
@@ -39,13 +71,12 @@ export default function ClearanceStatus() {
     };
   }, []);
 
-  const fetchClearanceStatus = async () => {
+  const fetchWorkflowStatus = async () => {
     try {
       const token = localStorage.getItem("token");
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-      console.log('🔄 Fetching clearance status...');
-      const response = await axios.get(apiUrl + "/api/clearance-status", {
+      const response = await axios.get(apiUrl + "/api/clearance/student", {
         headers: {
           Authorization: "Bearer " + token,
           "Content-Type": "application/json",
@@ -54,20 +85,15 @@ export default function ClearanceStatus() {
       });
 
       if (response.data.success) {
-        console.log('✅ Clearance status received:', response.data.data.length, 'departments');
-        console.log('📋 Statuses:', response.data.data.map(s => `${s.department_name}: ${s.status}`).join(', '));
-        setStatuses(response.data.data || []);
+        setWorkflow(response.data.data);
         setLastUpdated(new Date());
         setError("");
       } else {
-        setError("❌ Failed to load clearance status");
+        setError("Failed to load clearance status");
       }
     } catch (err) {
       console.error("Error:", err);
-      setError(
-        err.response?.data?.message ||
-          "❌ Failed to fetch clearance status"
-      );
+      setError(err.response?.data?.message || "Failed to fetch clearance status");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -76,10 +102,11 @@ export default function ClearanceStatus() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchClearanceStatus();
+    await fetchWorkflowStatus();
   };
 
   const handleResubmit = async () => {
+    if (!workflow) return;
     try {
       setResubmitting(true);
       setError("");
@@ -88,9 +115,8 @@ export default function ClearanceStatus() {
       const token = localStorage.getItem("token");
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-      console.log('🔄 Resubmitting clearance request...');
       const response = await axios.post(
-        apiUrl + "/api/clearance-requests/resubmit",
+        apiUrl + "/api/clearance/" + workflow._id + "/resubmit",
         {},
         {
           headers: {
@@ -101,35 +127,19 @@ export default function ClearanceStatus() {
       );
 
       if (response.data.success) {
-        setSuccess(`✅ ${response.data.message}`);
-        console.log('✅ Resubmit successful:', response.data.details);
-        
-        // Refresh the status after 1 second
-        setTimeout(() => {
-          fetchClearanceStatus();
-        }, 1000);
+        setSuccess("✅ " + response.data.message);
+        setWorkflow(response.data.workflow);
+        setTimeout(() => fetchWorkflowStatus(), 1000);
       } else {
         setError("❌ " + (response.data.message || "Failed to resubmit"));
       }
     } catch (err) {
       console.error("Resubmit Error:", err);
-      setError(
-        err.response?.data?.message ||
-          "❌ Failed to resubmit clearance request"
-      );
+      setError(err.response?.data?.message || "Failed to resubmit clearance request");
     } finally {
       setResubmitting(false);
+      setShowConfirmModal(false);
     }
-  };
-
-  const openConfirmModal = (departmentName) => {
-    setSelectedDeptForResubmit(departmentName);
-    setShowConfirmModal(true);
-  };
-
-  const closeConfirmModal = () => {
-    setShowConfirmModal(false);
-    setSelectedDeptForResubmit(null);
   };
 
   const showNotification = (message, type = "success") => {
@@ -137,83 +147,6 @@ export default function ClearanceStatus() {
     setTimeout(() => {
       setNotification({ show: false, message: "", type: "" });
     }, 4000);
-  };
-
-  const handleResubmitToDepartment = async (departmentName) => {
-    try {
-      setResubmitting(true);
-      setError("");
-      setSuccess("");
-
-      const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
-
-      const url = apiUrl + "/api/clearance-requests/resubmit-department";
-      console.log('🔄 Resubmitting to', departmentName);
-      console.log('📤 Full Request Details:', { 
-        method: 'POST',
-        url: url,
-        data: { department_name: departmentName },
-        token: token ? '✓ Present (' + token.substring(0, 20) + '...)' : '✗ Missing',
-        apiUrl: apiUrl
-      });
-
-      const response = await axios.post(
-        url,
-        { department_name: departmentName },
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      console.log('✅ Response received:', response.data);
-
-      if (response.data.success) {
-        showNotification(`✅ Successfully resubmitted to ${departmentName}!`, "success");
-        closeConfirmModal();
-        setTimeout(() => {
-          fetchClearanceStatus();
-        }, 800);
-      } else {
-        console.warn('⚠️ Success false:', response.data.message);
-        showNotification(response.data.message || "Failed to resubmit", "error");
-      }
-    } catch (err) {
-      console.error("❌ Full Error Object:", {
-        message: err.message,
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        data: err.response?.data,
-        url: err.config?.url,
-        method: err.config?.method,
-        headers: err.config?.headers,
-        code: err.code
-      });
-      
-      let errorMsg = "Failed to resubmit request";
-      
-      if (err.response?.status === 404) {
-        errorMsg = "❌ Server endpoint not found (404). Is backend running on port 5000?";
-        console.error("🔴 404 Error - Backend may not be running or endpoint is missing");
-      } else if (err.response?.status === 401) {
-        errorMsg = "❌ Authentication failed - Token expired or invalid";
-      } else if (err.response?.status === 500) {
-        errorMsg = "❌ Server error: " + (err.response?.data?.message || "Unknown error");
-      } else if (err.code === 'ERR_NETWORK') {
-        errorMsg = "❌ Network error - Cannot connect to server";
-        console.error("🔴 Network Error - Is server running?");
-      } else {
-        errorMsg = err.response?.data?.message || err.message || "Failed to resubmit request";
-      }
-      
-      console.error("🔴 Final Error Message:", errorMsg);
-      showNotification(errorMsg, "error");
-    } finally {
-      setResubmitting(false);
-    }
   };
 
   const handleLogout = () => {
@@ -227,45 +160,23 @@ export default function ClearanceStatus() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Approved":
-        return "#10b981";
-      case "Rejected":
-        return "#ef4444";
-      case "Pending":
-        return "#f59e0b";
-      default:
-        return "#6b7280";
+      case "Approved": return "#10b981";
+      case "Rejected": return "#ef4444";
+      case "Pending": return "#f59e0b";
+      default: return "#6b7280";
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "Approved":
-        return "✅";
-      case "Rejected":
-        return "❌";
-      case "Pending":
-        return "⏳";
-      default:
-        return "📋";
+      case "Approved": return "✅";
+      case "Rejected": return "❌";
+      case "Pending": return "⏳";
+      default: return "📋";
     }
   };
 
-  const deptMap = {
-    "Library": { key: "library", label: "Library" },
-    "Fee Department": { key: "fee", label: "Fee & Dues" },
-    "Transport": { key: "transport", label: "Transport" },
-    "Laboratory": { key: "laboratory", label: "Laboratory (if required)" },
-    "Student Service": { key: "studentServices", label: "Student Services" },
-    "Coordination": { key: "coordination", label: "Coordination Office" },
-    "HOD": { key: "hod", label: "HOD Office" },
-    "Hostel": { key: "hostel", label: "Hostel Mess" }
-  };
-
-  const departments = Object.keys(deptMap);
-
-  // Check if any requests are rejected
-  const hasRejected = statuses.some(s => s.status === 'Rejected');
+  const isRejected = workflow?.overallStatus === "Rejected";
 
   if (loading) {
     return (
@@ -279,61 +190,12 @@ export default function ClearanceStatus() {
 
   return (
     <div className="student-dashboard-page">
-      <aside className="sd-sidebar">
-        <div className="sd-profile">
-          <div className="sd-avatar">{displayName.charAt(0).toUpperCase()}</div>
-          <div>
-            <h3 className="sd-name">{displayName}</h3>
-            <p className="sd-small">
-              {displaySap} • {displayDept}
-            </p>
-            <p className="sd-small">Riphah International University</p>
-          </div>
-        </div>
-
-        <nav className="sd-nav">
-          <button
-            onClick={() => navigate("/student-dashboard")}
-            className="sd-nav-btn"
-          >
-            🏠 Dashboard
-          </button>
-          <button
-            onClick={() => navigate("/student-clearance-request")}
-            className="sd-nav-btn"
-          >
-            📋 Submit Request
-          </button>
-          <button
-            onClick={() => navigate("/student-clearance-status")}
-            className="sd-nav-btn active"
-          >
-            ✅ Clearance Status
-          </button>
-          <button
-            onClick={() => navigate("/student-messages")}
-            className="sd-nav-btn"
-          >
-            💬 Messages
-          </button>
-          <button
-            onClick={() => navigate("/student-edit-profile")}
-            className="sd-nav-btn"
-          >
-            📝 Edit Profile
-          </button>
-          <button onClick={handleLogout} className="sd-nav-btn logout">
-            🚪 Logout
-          </button>
-        </nav>
-
-        <footer className="sd-footer">© 2025 Riphah</footer>
-      </aside>
+      <StudentSidebar displayName={displayName} displaySap={displaySap} displayDept={displayDept} onLogout={handleLogout} />
 
       <main className="sd-main">
         <header className="sd-header">
           <h1>Clearance Status</h1>
-          <p>Track your clearance approval across all departments</p>
+          <p>Track your sequential clearance progress across all departments</p>
         </header>
 
         {error && <div className="alert alert-error">{error}</div>}
@@ -347,9 +209,9 @@ export default function ClearanceStatus() {
           >
             {refreshing ? "⟳ Updating..." : "🔄 Refresh"}
           </button>
-          {hasRejected && (
+          {isRejected && (
             <button
-              onClick={handleResubmit}
+              onClick={() => setShowConfirmModal(true)}
               disabled={resubmitting}
               className={`resubmit-btn ${resubmitting ? 'resubmitting' : ''}`}
             >
@@ -361,7 +223,7 @@ export default function ClearanceStatus() {
           </span>
         </div>
 
-        {statuses.length === 0 ? (
+        {!workflow ? (
           <div className="no-data">
             <p>📭 No clearance requests submitted yet</p>
             <button
@@ -372,98 +234,158 @@ export default function ClearanceStatus() {
             </button>
           </div>
         ) : (
-          <div className="status-grid">
-            {departments.map((dept) => {
-              const deptStatus = statuses.find(
-                (s) => s.department_name === dept
-              );
+          <>
+            {/* Overall Status Banner */}
+            <div className="status-banner" style={{
+              background: workflow.overallStatus === "Completed" ? "#dcfce7" : 
+                          workflow.overallStatus === "Rejected" ? "#fee2e2" : "#fef9c3",
+              border: `1px solid ${workflow.overallStatus === "Completed" ? "#16a34a" : 
+                                   workflow.overallStatus === "Rejected" ? "#dc2626" : "#ca8a04"}`,
+              borderRadius: "12px", padding: "16px 24px", marginBottom: "20px",
+              display: "flex", alignItems: "center", gap: "12px"
+            }}>
+              <span style={{ fontSize: "24px" }}>
+                {workflow.overallStatus === "Completed" ? "🎉" : 
+                 workflow.overallStatus === "Rejected" ? "❌" : "⏳"}
+              </span>
+              <div>
+                <strong style={{ fontSize: "16px" }}>
+                  Status: {workflow.overallStatus}
+                </strong>
+                <p style={{ margin: 0, fontSize: "14px", opacity: 0.8 }}>
+                  {workflow.overallStatus === "Completed" 
+                    ? "All departments have approved your clearance! Download your certificate."
+                    : workflow.overallStatus === "Rejected"
+                    ? `Rejected at ${workflow.phases.find(p => p.status === "Rejected")?.name || "a department"}. You can resubmit.`
+                    : `Currently at Phase ${workflow.currentPhase + 1}: ${PHASE_ORDER[workflow.currentPhase]}`}
+                </p>
+              </div>
+              {workflow.overallStatus === "Completed" && (
+                <button 
+                  onClick={() => navigate("/student-certificate")}
+                  style={{ marginLeft: "auto", background: "#16a34a", color: "#fff", border: "none", 
+                           padding: "8px 20px", borderRadius: "8px", cursor: "pointer", fontWeight: 600 }}
+                >
+                  View Certificate
+                </button>
+              )}
+            </div>
 
-              return (
-                <div key={dept} className="status-card">
-                  <div className="status-header">
-                    <h3>{dept}</h3>
-                    {deptStatus ? (
+            {/* Progress Bar */}
+            <div style={{ 
+              background: "#fff", borderRadius: "12px", padding: "20px", marginBottom: "20px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                <span style={{ fontWeight: 600 }}>Progress</span>
+                <span style={{ fontWeight: 600, color: "#6366f1" }}>
+                  {workflow.phases.filter(p => p.status === "Approved").length} / {workflow.phases.length} phases complete
+                </span>
+              </div>
+              <div style={{ height: "10px", background: "#e2e8f0", borderRadius: "5px", overflow: "hidden" }}>
+                <div style={{ 
+                  height: "100%", 
+                  width: `${Math.round((workflow.phases.filter(p => p.status === "Approved").length / workflow.phases.length) * 100)}%`,
+                  background: "linear-gradient(90deg, #6366f1, #8b5cf6)", 
+                  borderRadius: "5px", transition: "width 0.5s ease"
+                }} />
+              </div>
+            </div>
+
+            {/* Sequential Phase Cards */}
+            <div className="status-grid" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {workflow.phases.map((phase, idx) => {
+                const isCurrent = idx === workflow.currentPhase && workflow.overallStatus === "In Progress";
+                const isApproved = phase.status === "Approved";
+                const isRej = phase.status === "Rejected";
+                
+                return (
+                  <div key={idx} className="status-card" style={{
+                    borderLeft: `4px solid ${getStatusColor(phase.status)}`,
+                    opacity: idx > workflow.currentPhase && workflow.overallStatus === "In Progress" ? 0.5 : 1,
+                    position: "relative"
+                  }}>
+                    <div className="status-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <span style={{ 
+                          width: "32px", height: "32px", borderRadius: "50%", display: "flex",
+                          alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700,
+                          background: isApproved ? "#dcfce7" : isRej ? "#fee2e2" : isCurrent ? "#e0e7ff" : "#f1f5f9",
+                          color: isApproved ? "#16a34a" : isRej ? "#dc2626" : isCurrent ? "#6366f1" : "#64748b"
+                        }}>
+                          {idx + 1}
+                        </span>
+                        <h3 style={{ margin: 0 }}>
+                          {phase.name}
+                          {isCurrent && <span style={{ 
+                            marginLeft: "8px", fontSize: "11px", background: "#e0e7ff", 
+                            color: "#6366f1", padding: "2px 8px", borderRadius: "12px", fontWeight: 600
+                          }}>CURRENT</span>}
+                        </h3>
+                      </div>
                       <span
                         className="status-badge"
-                        style={{
-                          backgroundColor: getStatusColor(deptStatus.status),
-                        }}
+                        style={{ backgroundColor: getStatusColor(phase.status) }}
                       >
-                        {getStatusIcon(deptStatus.status)} {deptStatus.status}
+                        {getStatusIcon(phase.status)} {phase.status}
                       </span>
-                    ) : (
-                      <span className="status-badge" style={{ backgroundColor: "#9ca3af" }}>
-                        ⏳ Pending
-                      </span>
+                    </div>
+
+                    {phase.remarks && (
+                      <div className="status-remarks">
+                        <strong>Remarks:</strong> {phase.remarks}
+                      </div>
+                    )}
+
+                    {phase.approvedAt && (
+                      <div className="status-date">
+                        <small>
+                          {isApproved ? "Approved" : "Reviewed"}: {new Date(phase.approvedAt).toLocaleDateString()}
+                          {phase.approverName && ` by ${phase.approverName}`}
+                        </small>
+                      </div>
+                    )}
+
+                    {idx > workflow.currentPhase && workflow.overallStatus === "In Progress" && (
+                      <div className="status-pending">
+                        <small>Waiting for previous phase to complete...</small>
+                      </div>
                     )}
                   </div>
-
-                  {deptStatus ? (
-                    <>
-                      {deptStatus.remarks && (
-                        <div className="status-remarks">
-                          <strong>Remarks:</strong> {deptStatus.remarks}
-                        </div>
-                      )}
-
-                      {deptStatus.approved_at && (
-                        <div className="status-date">
-                          <small>
-                            Approved: {new Date(deptStatus.approved_at).toLocaleDateString()}
-                          </small>
-                        </div>
-                      )}
-
-                      {deptStatus.status === 'Rejected' && (
-                        <button
-                          onClick={() => openConfirmModal(dept)}
-                          disabled={resubmitting}
-                          className="dept-resubmit-btn"
-                        >
-                          <span className="btn-icon">↻</span>
-                          <span className="btn-text">Resubmit to This Department</span>
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <div className="status-pending">
-                      <small>Awaiting review...</small>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         <div className="status-info">
           <div className="status-info-header">
-            <h3>📊 Status Information</h3>
-            <p className="status-info-subtitle">How clearance requests are processed</p>
+            <h3>📊 Sequential Clearance Process</h3>
+            <p className="status-info-subtitle">How the multi-phase clearance works</p>
           </div>
           
           <div className="status-info-grid">
             <div className="info-card pending-card">
-              <div className="info-icon">⏳</div>
+              <div className="info-icon">1️⃣</div>
               <div className="info-content">
-                <h4>Pending</h4>
-                <p>Your request is being reviewed by the department. This typically takes 1-3 business days.</p>
+                <h4>Sequential Phases</h4>
+                <p>Your request moves through {PHASE_ORDER.length} departments one by one: {PHASE_ORDER.join(" → ")}.</p>
               </div>
             </div>
 
             <div className="info-card approved-card">
               <div className="info-icon">✅</div>
               <div className="info-content">
-                <h4>Approved</h4>
-                <p>Department has approved your clearance. You can now proceed to the next stage.</p>
+                <h4>Approval</h4>
+                <p>Each department must approve before the request moves to the next. Final approval generates your certificate.</p>
               </div>
             </div>
 
             <div className="info-card rejected-card">
-              <div className="info-icon">❌</div>
+              <div className="info-icon">🔄</div>
               <div className="info-content">
-                <h4>Rejected</h4>
-                <p>Department has rejected your request. You can resubmit your request using the 'Resubmit Rejected Request' button above.</p>
+                <h4>Rejection & Resubmit</h4>
+                <p>If rejected, you can resubmit. The request returns to the rejecting department for re-review.</p>
               </div>
             </div>
           </div>
@@ -483,37 +405,27 @@ export default function ClearanceStatus() {
 
       {/* Confirmation Modal */}
       {showConfirmModal && (
-        <div className="modal-overlay" onClick={closeConfirmModal}>
+        <div className="modal-overlay" onClick={() => setShowConfirmModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Confirm Resubmission</h2>
-              <button className="modal-close" onClick={closeConfirmModal}>
-                ✕
-              </button>
+              <button className="modal-close" onClick={() => setShowConfirmModal(false)}>✕</button>
             </div>
             <div className="modal-body">
               <div className="confirm-icon">⚡</div>
               <p className="confirm-text">
-                Are you sure you want to resubmit your clearance request to <strong>{selectedDeptForResubmit}</strong>?
+                Are you sure you want to resubmit your clearance request?
               </p>
               <p className="confirm-subtext">
-                Your request will be reviewed again by the department.
+                It will be re-reviewed starting from <strong>{workflow?.phases.find(p => p.status === "Rejected")?.name || "the rejected department"}</strong>.
               </p>
             </div>
             <div className="modal-footer">
-              <button
-                className="btn-cancel"
-                onClick={closeConfirmModal}
-                disabled={resubmitting}
-              >
+              <button className="btn-cancel" onClick={() => setShowConfirmModal(false)} disabled={resubmitting}>
                 Cancel
               </button>
-              <button
-                className="btn-confirm"
-                onClick={() => handleResubmitToDepartment(selectedDeptForResubmit)}
-                disabled={resubmitting}
-              >
-                {resubmitting ? "⏳ Submitting..." : "✓ Confirm & Submit"}
+              <button className="btn-confirm" onClick={handleResubmit} disabled={resubmitting}>
+                {resubmitting ? "⏳ Submitting..." : "✓ Confirm & Resubmit"}
               </button>
             </div>
           </div>

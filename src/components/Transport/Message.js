@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { LayoutDashboard, ClipboardList, CheckCircle2, MessageSquare, UserPen, LogOut } from "lucide-react";
 import "./Message.css";
 
 function MessagePage() {
@@ -33,18 +34,18 @@ function MessagePage() {
     <div className="page-wrapper">
       {/* Sidebar */}
       <aside className="left-sidebar">
-        <h2>🏫 Riphah</h2>
+        <h2>Riphah</h2>
         <nav>
-          <button className="active">🏠 Dashboard</button>
+          <button className="active"><LayoutDashboard size={18} /> Dashboard</button>
           <button onClick={() => navigate("/student-clearance-request")}>
-            📋 Submit Request
+            <ClipboardList size={18} /> Submit Request
           </button>
           <button onClick={() => navigate("/student-clearance-status")}>
-            ✅ Clearance Status
+            <CheckCircle2 size={18} /> Clearance Status
           </button>
-          <button onClick={() => navigate("/student-messages")}>💬 Messages</button>
-          <button onClick={() => navigate("/student-edit-profile")}>📝 Edit Profile</button>
-          <button onClick={() => navigate("/")}>🚪 Logout</button>
+          <button onClick={() => navigate("/student-messages")}><MessageSquare size={18} /> Messages</button>
+          <button onClick={() => navigate("/student-edit-profile")}><UserPen size={18} /> Edit Profile</button>
+          <button onClick={() => navigate("/")}><LogOut size={18} /> Logout</button>
         </nav>
         <footer>© 2025 Riphah</footer>
       </aside>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { LayoutDashboard, UserPen, MessageSquare, LogOut } from "lucide-react";
 import axios from "axios";
 import "./FeeEditProfile.css";
 
@@ -124,14 +125,14 @@ export default function FeeEditProfile() {
 
         <nav className="sd-nav">
           <button className="sd-nav-btn" onClick={() => navigate("/fee-dashboard")}>
-            🏠 Dashboard
+            <LayoutDashboard size={18} /> Dashboard
           </button>
-          <button className="sd-nav-btn active">📝 Edit Profile</button>
+          <button className="sd-nav-btn active"><UserPen size={18} /> Edit Profile</button>
           <button className="sd-nav-btn" onClick={() => navigate("/fee-messages")}>
-            💬 Messages
+            <MessageSquare size={18} /> Messages
           </button>
           <button className="sd-nav-btn" onClick={() => navigate("/fee-dashboard")}>
-            🚪 Back
+            <LogOut size={18} /> Back
           </button>
         </nav>
 
