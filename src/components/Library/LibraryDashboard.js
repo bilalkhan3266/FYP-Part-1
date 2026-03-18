@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut } from "lucide-react";
 import axios from "axios";
+import DepartmentIssueReturn from "../shared/DepartmentIssueReturn";
 import "./LibraryDashboard.css"; // ✅ CORRECT IMPORT
 
 export default function LibraryDashboard() {
@@ -348,6 +349,9 @@ export default function LibraryDashboard() {
             </div>
           </div>
         )}
+
+        {/* Issue & Return Management */}
+        <DepartmentIssueReturn departmentName="Library" />
       </main>
     </div>
   );

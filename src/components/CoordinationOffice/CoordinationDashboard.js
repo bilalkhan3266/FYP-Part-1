@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut } from "lucide-react";
 import axios from "axios";
+import DepartmentIssueReturn from "../shared/DepartmentIssueReturn";
 import "./CoordinationDashboard.css";
 
 export default function CoordinationDashboard() {
@@ -343,6 +344,9 @@ export default function CoordinationDashboard() {
             </div>
           </div>
         )}
+
+        {/* Issue & Return Management */}
+        <DepartmentIssueReturn departmentName="Coordination" />
       </main>
     </div>
   );

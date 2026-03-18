@@ -12,6 +12,9 @@ const libraryRoutes = require("./routes/libraryRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const hodRoutes = require("./routes/hodRoutes");
 const clearanceWorkflowRoutes = require("./routes/clearanceWorkflowRoutes");
+const issueRoutes = require("./routes/issueRoutes");
+const returnRoutes = require("./routes/returnRoutes");
+const autoClearanceRoutes = require("./routes/autoClearanceRoutes");
 
 // Import Models
 const User = require("./models/User");
@@ -3499,6 +3502,13 @@ app.put('/api/hod/requests/:id/reject', verifyToken, async (req, res) => {
 // CLEARANCE WORKFLOW ROUTES (Sequential 5-Phase)
 // ============================================
 app.use('/api/clearance', clearanceWorkflowRoutes);
+
+// ============================================
+// AUTO-CLEARANCE, ISSUE & RETURN ROUTES
+// ============================================
+app.use('/api/auto-clearance', autoClearanceRoutes);
+app.use('/api/department-issues', issueRoutes);
+app.use('/api/department-returns', returnRoutes);
 
 // ============================================
 // ADMIN PANEL ROUTES

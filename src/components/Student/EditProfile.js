@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
-import { LayoutDashboard, ClipboardList, CheckCircle2, MessageSquare, UserPen, LogOut, GraduationCap } from "lucide-react";
+import { LayoutDashboard, ClipboardList, CheckCircle2, MessageSquare, UserPen, LogOut, GraduationCap, ShieldCheck } from "lucide-react";
 import axios from "axios";
 import "./EditProfile.css";
 import "./Dashboard.css";
@@ -13,6 +13,7 @@ function StudentSidebar({ displayName, displaySap, displayDept, onLogout, classN
   const navItems = [
     { path: "/student-dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { path: "/student-clearance-request", icon: ClipboardList, label: "Submit Request" },
+    { path: "/student-auto-clearance", icon: ShieldCheck, label: "Auto Clearance" },
     { path: "/student-clearance-status", icon: CheckCircle2, label: "Clearance Status" },
     { path: "/student-messages", icon: MessageSquare, label: "Messages" },
     { path: "/student-edit-profile", icon: UserPen, label: "Edit Profile" },

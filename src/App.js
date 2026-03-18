@@ -55,6 +55,7 @@ import AdminClearance from "./components/Admin/AdminClearance";
 import ClearanceRequest from "./components/Student/ClearanceRequest";
 import ClearanceStatus from "./components/Student/ClearanceStatus";
 import ClearanceCertificate from "./components/Student/ClearanceCertificate";
+import AutoClearanceDashboard from "./components/Student/AutoClearanceDashboard";
 import Messages from "./components/Student/Messages"; // ✅ Professional messages with full features
 import EditProfile from "./components/Student/EditProfile";
 
@@ -314,6 +315,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["student"]}>
             <ClearanceRequest />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/student-auto-clearance"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <AutoClearanceDashboard />
           </ProtectedRoute>
         }
       />

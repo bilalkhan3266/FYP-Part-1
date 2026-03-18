@@ -40,6 +40,7 @@ function Sidebar({ displayName, displaySap, displayDept, unreadCount, onLogout }
   const navItems = [
     { path: "/student-dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { path: "/student-clearance-request", icon: ClipboardList, label: "Submit Request" },
+    { path: "/student-auto-clearance", icon: ClipboardCheck, label: "Auto Clearance" },
     { path: "/student-clearance-status", icon: CheckCircle2, label: "Clearance Status" },
     { path: "/student-messages", icon: MessageSquare, label: "Messages", badge: unreadCount },
     { path: "/student-edit-profile", icon: UserPen, label: "Edit Profile" },
@@ -214,6 +215,8 @@ export default function StudentDashboard() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [emailStatus, setEmailStatus] = useState(null); // { type: "success"|"error", message }
+  const [emailSending, setEmailSending] = useState(false);
 
   const displayName = user?.full_name || "Student";
   const displaySap = user?.sap || "N/A";
@@ -304,6 +307,30 @@ export default function StudentDashboard() {
   const handleMessageDept = (deptKey) => navigate("/student-messages", { state: { dept: deptKey } });
   const handleLogout = () => { logout(); navigate("/login"); };
   const handleRefresh = () => { fetchWorkflow(); fetchUnreadCount(); };
+
+  const handleEmailCertificate = async () => {
+    try {
+      setEmailSending(true);
+      setEmailStatus(null);
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const response = await axios.post(
+        apiUrl + "/api/auto-clearance/email-certificate",
+        {},
+        { headers: { Authorization: "Bearer " + token } }
+      );
+      if (response.data.success) {
+        setEmailStatus({ type: "success", message: response.data.message });
+      } else {
+        setEmailStatus({ type: "error", message: response.data.message || "Failed to send email" });
+      }
+    } catch (err) {
+      setEmailStatus({ type: "error", message: err.response?.data?.message || "Failed to send certificate email. Please try again." });
+    } finally {
+      setEmailSending(false);
+      setTimeout(() => setEmailStatus(null), 6000);
+    }
+  };
 
   /* ═══════════════ RENDER ═══════════════ */
   return (
@@ -487,6 +514,12 @@ export default function StudentDashboard() {
             {/* ── CERTIFICATE ── */}
             {allCleared && (
               <section className="sd-certificate">
+                {emailStatus && (
+                  <div className={`sd-alert ${emailStatus.type === "success" ? "sd-alert-success" : "sd-alert-error"}`}>
+                    {emailStatus.type === "success" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                    <span>{emailStatus.message}</span>
+                  </div>
+                )}
                 <div className="sd-cert-card">
                   <div className="sd-cert-icon">
                     <Award size={40} strokeWidth={1.5} />
@@ -506,10 +539,11 @@ export default function StudentDashboard() {
                     </button>
                     <button
                       className="sd-btn sd-btn-secondary"
-                      onClick={() => alert("Certificate sent to student email (demo)")}
+                      onClick={handleEmailCertificate}
+                      disabled={emailSending}
                     >
                       <Mail size={16} />
-                      Email Certificate
+                      {emailSending ? "Sending…" : "Email Certificate"}
                     </button>
                   </div>
                 </div>

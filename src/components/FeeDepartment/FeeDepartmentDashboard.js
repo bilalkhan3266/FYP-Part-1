@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { UserPen, ClipboardList, CheckCircle2, MessageSquare, LogOut } from "lucide-react";
 import axios from "axios";
+import DepartmentIssueReturn from "../shared/DepartmentIssueReturn";
 import "./FeeDashboard.css";
 
 export default function FeeDepartmentDashboard() {
@@ -340,6 +341,9 @@ export default function FeeDepartmentDashboard() {
             </div>
           </div>
         )}
+
+        {/* Issue & Return Management */}
+        <DepartmentIssueReturn departmentName="Fee Department" />
       </main>
     </div>
   );

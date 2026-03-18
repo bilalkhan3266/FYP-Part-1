@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
-import { LayoutDashboard, ClipboardList, CheckCircle2, MessageSquare, UserPen, LogOut, GraduationCap } from "lucide-react";
+import { LayoutDashboard, ClipboardList, CheckCircle2, MessageSquare, UserPen, LogOut, GraduationCap, ShieldCheck } from "lucide-react";
 import "./ClearanceRequest.css";
 import "./Dashboard.css";
 import axios from "axios";
@@ -13,6 +13,7 @@ function StudentSidebar({ displayName, displaySap, displayDept, onLogout, classN
   const navItems = [
     { path: "/student-dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { path: "/student-clearance-request", icon: ClipboardList, label: "Submit Request" },
+    { path: "/student-auto-clearance", icon: ShieldCheck, label: "Auto Clearance" },
     { path: "/student-clearance-status", icon: CheckCircle2, label: "Clearance Status" },
     { path: "/student-messages", icon: MessageSquare, label: "Messages" },
     { path: "/student-edit-profile", icon: UserPen, label: "Edit Profile" },
@@ -74,7 +75,7 @@ export default function ClearanceRequest() {
           return;
         }
 
-        const response = await axios.get(apiUrl + "/api/clearance/student", {
+        const response = await axios.get(apiUrl + "/api/auto-clearance/student", {
           headers: { Authorization: "Bearer " + token },
         });
 
@@ -93,8 +94,9 @@ export default function ClearanceRequest() {
   }, []);
 
   const hasActiveRequest = existingWorkflow && 
-    (existingWorkflow.overallStatus === "In Progress" || existingWorkflow.overallStatus === "Pending");
+    (existingWorkflow.overallStatus === "In Progress" || existingWorkflow.overallStatus === "Pending" || existingWorkflow.overallStatus === "Completed");
   const isRejected = existingWorkflow?.overallStatus === "Rejected";
+  const isCompleted = existingWorkflow?.overallStatus === "Completed";
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -119,14 +121,18 @@ export default function ClearanceRequest() {
       }
 
       const response = await axios.post(
-        apiUrl + "/api/clearance/" + existingWorkflow._id + "/resubmit",
+        apiUrl + "/api/auto-clearance/recheck",
         {},
         { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } }
       );
 
       if (response.data.success) {
         setSuccess("✅ " + response.data.message);
-        setExistingWorkflow(response.data.workflow);
+        // Refresh workflow
+        const updated = await axios.get(apiUrl + "/api/auto-clearance/student", {
+          headers: { Authorization: "Bearer " + token },
+        });
+        if (updated.data.success && updated.data.data) setExistingWorkflow(updated.data.data);
         setTimeout(() => navigate("/student-clearance-status"), 2000);
       } else {
         setError(response.data.message || "❌ Resubmit failed.");
@@ -197,9 +203,9 @@ export default function ClearanceRequest() {
         degree_status: formData.degree_status,
       });
 
-      // Submit clearance request - new sequential workflow
+      // Submit clearance request — auto-verification checks all departments
       const response = await axios.post(
-        apiUrl + "/api/clearance",
+        apiUrl + "/api/auto-clearance",
         {
           sapid: formData.sapid,
           student_name: formData.student_name,
@@ -219,7 +225,11 @@ export default function ClearanceRequest() {
       );
 
       if (response.data.success) {
-        setSuccess("✅ Clearance Request Submitted! It will proceed through departments sequentially.");
+        if (response.data.overallStatus === "Completed") {
+          setSuccess("✅ All departments cleared! Your clearance certificate has been generated.");
+        } else {
+          setSuccess("⚠️ Clearance submitted. Rejected by: " + (response.data.rejectedDepartments || []).join(", ") + ". Resolve pending items and re-check.");
+        }
 
         // Reset form
         setFormData({
@@ -234,7 +244,7 @@ export default function ClearanceRequest() {
         });
 
         // Refresh workflow state
-        const updatedResponse = await axios.get(apiUrl + "/api/clearance/student", {
+        const updatedResponse = await axios.get(apiUrl + "/api/auto-clearance/student", {
           headers: { Authorization: "Bearer " + token },
         });
 

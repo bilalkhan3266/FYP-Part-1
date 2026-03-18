@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { QRCodeCanvas } from "qrcode.react";
-import { LayoutDashboard, ClipboardList, CheckCircle2, MessageSquare, UserPen, LogOut, GraduationCap } from "lucide-react";
+import { LayoutDashboard, ClipboardList, CheckCircle2, MessageSquare, UserPen, LogOut, GraduationCap, ShieldCheck } from "lucide-react";
 import axios from "axios";
 import "./ClearanceCertificate.css";
 import "./Dashboard.css";
@@ -14,6 +14,7 @@ function StudentSidebar({ displayName, displaySap, displayDept, onLogout, classN
   const navItems = [
     { path: "/student-dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { path: "/student-clearance-request", icon: ClipboardList, label: "Submit Request" },
+    { path: "/student-auto-clearance", icon: ShieldCheck, label: "Auto Clearance" },
     { path: "/student-clearance-status", icon: CheckCircle2, label: "Clearance Status" },
     { path: "/student-messages", icon: MessageSquare, label: "Messages" },
     { path: "/student-edit-profile", icon: UserPen, label: "Edit Profile" },
@@ -83,7 +84,8 @@ export default function ClearanceCertificate() {
           department: wf.department,
           semester: wf.semester,
           degree_status: wf.degreeStatus,
-          qr_code: wf.qrCode || wf._id,
+          qr_code: wf._id,
+          verification_url: `${apiUrl}/api/clearance/verify/${wf._id}`,
           completed_at: wf.completedAt,
           workflow_id: wf._id,
           certificateUrl: wf.certificateUrl,
@@ -364,14 +366,14 @@ export default function ClearanceCertificate() {
                     {certificate.qr_code ? (
                       <>
                         <QRCodeCanvas
-                          value={certificate.qr_code}
+                          value={certificate.verification_url || certificate.qr_code}
                           size={150}
-                          level="H"
+                          level="M"
                           includeMargin={true}
                           onLoad={onQrReady}
                         />
                         <p className="qr-label">Scan to Verify</p>
-                        <p className="qr-id">{certificate.qr_code}</p>
+                        <p className="qr-id">ID: {certificate.qr_code}</p>
                       </>
                     ) : (
                       <div className="no-qr">
