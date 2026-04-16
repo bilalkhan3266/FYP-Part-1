@@ -1,0 +1,691 @@
+/* ============================================================
+   A4 PAGE PRINT STYLES FOR CLEARANCE CERTIFICATE
+   Professional Certificate Design with Proper A4 Formatting
+   ============================================================ */
+
+/* ============================================================
+   MEDIA PRINT - A4 Page Setup
+   ============================================================ */
+@media print {
+  /* Reset all default styles */
+  * {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  /* Body and HTML */
+  html {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    color: black !important;
+    font-family: 'Arial', sans-serif;
+  }
+
+  /* Hide all elements except print container and its children */
+  body > * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Show and style print container */
+  .a4-print-container {
+    display: block !important;
+    visibility: visible !important;
+    width: 210mm;
+    height: auto;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    position: static !important;
+  }
+
+  .a4-print-container,
+  .a4-print-container * {
+    visibility: visible !important;
+    display: block !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Certificate page */
+  .certificate-page {
+    width: 210mm;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    page-break-after: avoid;
+  }
+
+  /* Main container */
+  .certificate-container {
+    width: 210mm;
+    height: auto;
+    margin: 0;
+    padding: 25mm 20mm;
+    background: white !important;
+  }
+
+  /* Certificate wrapper */
+  .certificate {
+    width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    page-break-inside: avoid;
+  }
+
+  /* ============================================================
+     HEADER SECTION
+     ============================================================ */
+  .cert-header {
+    text-align: center;
+    margin-bottom: 20pt;
+    page-break-inside: avoid;
+  }
+
+  .cert-logo {
+    font-size: 40pt;
+    margin-bottom: 8pt;
+  }
+
+  .cert-univ-name {
+    font-size: 18pt;
+    font-weight: bold;
+    color: #1a3a52 !important;
+    letter-spacing: 1pt;
+    margin-bottom: 3pt;
+  }
+
+  .cert-univ-subtitle {
+    font-size: 11pt;
+    color: #555 !important;
+    letter-spacing: 0.5pt;
+    margin-bottom: 12pt;
+  }
+
+  /* Divider line */
+  .cert-divider {
+    height: 1.5pt;
+    background: linear-gradient(90deg, white, #b8860b, white) !important;
+    margin: 12pt 0;
+    page-break-inside: avoid;
+  }
+
+  /* ============================================================
+     CERTIFICATE TITLE
+     ============================================================ */
+  .cert-title {
+    font-size: 28pt;
+    font-weight: bold;
+    color: #1a3a52 !important;
+    text-align: center;
+    margin: 15pt 0;
+    font-style: italic;
+    letter-spacing: 1pt;
+    page-break-inside: avoid;
+  }
+
+  /* ============================================================
+     CERTIFICATE TEXT
+     ============================================================ */
+  .cert-text {
+    text-align: center;
+    font-size: 12pt;
+    color: #2c3e50 !important;
+    margin: 15pt 0;
+    line-height: 1.6;
+    page-break-inside: avoid;
+  }
+
+  /* ============================================================
+     STUDENT INFORMATION BOX
+     ============================================================ */
+  .cert-info-box {
+    background: #fafafa !important;
+    border: 2pt solid #b8860b !important;
+    padding: 20pt 25pt;
+    margin: 20pt 0;
+    page-break-inside: avoid;
+  }
+
+  .cert-info-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 8pt 0;
+    font-size: 11pt;
+    line-height: 1.8;
+    page-break-inside: avoid;
+  }
+
+  .cert-label {
+    font-weight: bold;
+    color: #1a3a52 !important;
+    min-width: 140pt;
+  }
+
+  .cert-value {
+    color: #2c3e50 !important;
+    flex: 1;
+    border-bottom: 1pt dotted #b8860b !important;
+    padding-right: 12pt;
+    text-align: right;
+  }
+
+  /* ============================================================
+     DEPARTMENTS SECTION
+     ============================================================ */
+  .cert-depts-section {
+    margin: 18pt 0;
+    page-break-inside: avoid;
+  }
+
+  .cert-depts-title {
+    font-size: 13pt;
+    font-weight: bold;
+    color: #1a3a52 !important;
+    text-align: center;
+    margin-bottom: 10pt;
+    text-decoration: underline;
+  }
+
+  .cert-depts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6pt;
+    margin-bottom: 15pt;
+  }
+
+  .cert-dept-item {
+    background: white !important;
+    border: 1.5pt solid #27ae60 !important;
+    padding: 6pt 8pt;
+    text-align: center;
+    font-weight: bold;
+    color: #27ae60 !important;
+    font-size: 10pt;
+  }
+
+  .cert-dept-item::before {
+    content: "✓ ";
+    font-weight: bold;
+    margin-right: 4pt;
+  }
+
+  /* ============================================================
+     QR CODE SECTION
+     ============================================================ */
+  .cert-qr-section {
+    display: block !important;
+    text-align: center;
+    margin: 18pt 0;
+    padding: 16pt;
+    background: white !important;
+    border: 2pt dashed #b8860b !important;
+    page-break-inside: avoid;
+  }
+
+  .cert-qr-label {
+    font-size: 11pt;
+    font-weight: bold;
+    color: #1a3a52 !important;
+    margin-bottom: 8pt;
+    display: block;
+  }
+
+  .cert-qr-content {
+    display: block !important;
+    text-align: center;
+  }
+
+  .cert-qr-code {
+    width: 100pt;
+    height: 100pt;
+    margin: 0 auto 6pt;
+    border: 1pt solid #2c3e50 !important;
+    padding: 3pt;
+    background: white !important;
+    display: block !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .cert-qr-info {
+    font-size: 9pt;
+    color: #555 !important;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+    word-break: break-all;
+    display: block !important;
+  }
+
+  .cert-qr-text {
+    display: block !important;
+    margin-top: 3pt;
+  }
+
+  /* ============================================================
+     SIGNATURE SECTION
+     ============================================================ */
+  .cert-signatures {
+    display: flex !important;
+    justify-content: space-between;
+    margin-top: 25pt;
+    padding-top: 15pt;
+    border-top: 2pt solid #b8860b !important;
+    page-break-inside: avoid;
+  }
+
+  .cert-sig-box {
+    text-align: center;
+    flex: 1;
+    margin: 0 8pt;
+  }
+
+  .cert-sig-line {
+    height: 1pt;
+    background-color: #2c3e50 !important;
+    margin: 10pt 0 6pt 0;
+  }
+
+  .cert-sig-title {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #1a3a52 !important;
+  }
+
+  .cert-sig-subtitle {
+    font-size: 8pt;
+    color: #555 !important;
+    margin-top: 2pt;
+  }
+
+  /* ============================================================
+     FOOTER SECTION
+     ============================================================ */
+  .cert-footer {
+    text-align: center;
+    margin-top: 15pt;
+    padding: 8pt;
+    border-top: 1pt solid #ddd !important;
+    font-size: 9pt;
+    color: #555 !important;
+    page-break-inside: avoid;
+  }
+
+  .cert-footer p {
+    margin: 3pt 0;
+    line-height: 1.4;
+  }
+
+  .cert-footer-id {
+    font-size: 9pt;
+    color: #333 !important;
+    font-weight: bold;
+    margin-top: 5pt;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* ============================================================
+     IMAGE HANDLING
+     ============================================================ */
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* ============================================================
+     TEXT ELEMENTS
+     ============================================================ */
+  p, div, span {
+    background: transparent !important;
+    color: inherit !important;
+  }
+
+  /* Hide interactive elements */
+  button,
+  .fixed,
+  .absolute {
+    display: none !important;
+  }
+
+  /* ============================================================
+     PAGE BREAK RULES
+     ============================================================ */
+  .certificate-page {
+    page-break-after: auto;
+  }
+
+  .certificate {
+    page-break-after: avoid;
+  }
+}
+
+/* ============================================================
+   SCREEN DISPLAY - Hide print container on screen
+   ============================================================ */
+@media screen {
+  .a4-print-container {
+    display: none !important;
+  }
+}
+
+  .cert-logo {
+    font-size: 40pt;
+    margin-bottom: 8pt;
+    display: block !important;
+  }
+
+  .cert-univ-name {
+    font-size: 18pt;
+    font-weight: bold;
+    color: #1a3a52;
+    letter-spacing: 1pt;
+    margin-bottom: 3pt;
+    display: block !important;
+  }
+
+  .cert-univ-subtitle {
+    font-size: 11pt;
+    color: #555;
+    letter-spacing: 0.5pt;
+    margin-bottom: 12pt;
+    display: block !important;
+  }
+
+  /* Divider line */
+  .cert-divider {
+    height: 1.5pt;
+    background: linear-gradient(90deg, white, #b8860b, white) !important;
+    margin: 12pt 0;
+    display: block !important;
+    page-break-inside: avoid;
+  }
+
+  /* ============================================================
+     CERTIFICATE TITLE
+     ============================================================ */
+  .cert-title {
+    font-size: 28pt;
+    font-weight: bold;
+    color: #1a3a52;
+    text-align: center;
+    margin: 15pt 0;
+    font-style: italic;
+    letter-spacing: 1pt;
+    display: block !important;
+    page-break-inside: avoid;
+  }
+
+  /* ============================================================
+     CERTIFICATE TEXT
+     ============================================================ */
+  .cert-text {
+    text-align: center;
+    font-size: 12pt;
+    color: #2c3e50;
+    margin: 15pt 0;
+    line-height: 1.6;
+    display: block !important;
+    page-break-inside: avoid;
+  }
+
+  /* ============================================================
+     STUDENT INFORMATION BOX
+     ============================================================ */
+  .cert-info-box {
+    background: #fafafa !important;
+    border: 2pt solid #b8860b;
+    padding: 20pt 25pt;
+    margin: 20pt 0;
+    display: block !important;
+    page-break-inside: avoid;
+  }
+
+  .cert-info-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 8pt 0;
+    font-size: 11pt;
+    line-height: 1.8;
+    page-break-inside: avoid;
+  }
+
+  .cert-label {
+    font-weight: bold;
+    color: #1a3a52;
+    min-width: 140pt;
+  }
+
+  .cert-value {
+    color: #2c3e50;
+    flex: 1;
+    border-bottom: 1pt dotted #b8860b;
+    padding-right: 12pt;
+    text-align: right;
+  }
+
+  /* ============================================================
+     DEPARTMENTS SECTION
+     ============================================================ */
+  .cert-depts-section {
+    margin: 18pt 0;
+    display: block !important;
+    page-break-inside: avoid;
+  }
+
+  .cert-depts-title {
+    font-size: 13pt;
+    font-weight: bold;
+    color: #1a3a52;
+    text-align: center;
+    margin-bottom: 10pt;
+    text-decoration: underline;
+    display: block !important;
+  }
+
+  .cert-depts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6pt;
+    margin-bottom: 15pt;
+  }
+
+  .cert-dept-item {
+    background: white !important;
+    border: 1.5pt solid #27ae60;
+    padding: 6pt 8pt;
+    text-align: center;
+    font-weight: bold;
+    color: #27ae60;
+    font-size: 10pt;
+    display: block !important;
+  }
+
+  .cert-dept-item::before {
+    content: "✓ ";
+    font-weight: bold;
+    margin-right: 4pt;
+  }
+
+  /* ============================================================
+     QR CODE SECTION
+     ============================================================ */
+  .cert-qr-section {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    margin: 18pt 0;
+    padding: 16pt;
+    background: white !important;
+    border: 2pt dashed #b8860b;
+    page-break-inside: avoid;
+  }
+
+  .cert-qr-label {
+    font-size: 11pt;
+    font-weight: bold;
+    color: #1a3a52;
+    margin-bottom: 8pt;
+    display: block !important;
+    text-align: center;
+  }
+
+  .cert-qr-content {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .cert-qr-code {
+    width: 100pt;
+    height: 100pt;
+    margin-bottom: 6pt;
+    border: 1pt solid #2c3e50;
+    padding: 3pt;
+    background: white !important;
+    display: block !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .cert-qr-info {
+    font-size: 9pt;
+    color: #555;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+    word-break: break-all;
+    display: block !important;
+  }
+
+  .cert-qr-text {
+    display: block !important;
+    margin-top: 3pt;
+  }
+
+  /* ============================================================
+     SIGNATURE SECTION
+     ============================================================ */
+  .cert-signatures {
+    display: flex !important;
+    justify-content: space-between;
+    margin-top: 25pt;
+    padding-top: 15pt;
+    border-top: 2pt solid #b8860b;
+    page-break-inside: avoid;
+  }
+
+  .cert-sig-box {
+    text-align: center;
+    flex: 1;
+    margin: 0 8pt;
+  }
+
+  .cert-sig-line {
+    height: 1pt;
+    background-color: #2c3e50 !important;
+    margin: 10pt 0 6pt 0;
+  }
+
+  .cert-sig-title {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #1a3a52;
+    display: block !important;
+  }
+
+  .cert-sig-subtitle {
+    font-size: 8pt;
+    color: #555;
+    margin-top: 2pt;
+    display: block !important;
+  }
+
+  /* ============================================================
+     FOOTER SECTION
+     ============================================================ */
+  .cert-footer {
+    text-align: center;
+    margin-top: 15pt;
+    padding: 8pt;
+    border-top: 1pt solid #ddd;
+    font-size: 9pt;
+    color: #555;
+    display: block !important;
+    page-break-inside: avoid;
+  }
+
+  .cert-footer p {
+    margin: 3pt 0;
+    line-height: 1.4;
+    display: block !important;
+  }
+
+  .cert-footer-id {
+    font-size: 9pt;
+    color: #333;
+    font-weight: bold;
+    margin-top: 5pt;
+    font-family: 'Courier New', monospace;
+    display: block !important;
+  }
+
+  /* ============================================================
+     IMAGE HANDLING
+     ============================================================ */
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Hide buttons and interactive elements */
+  button,
+  .fixed,
+  .absolute {
+    display: none !important;
+  }
+
+  /* ============================================================
+     PAGE BREAK RULES
+     ============================================================ */
+  .certificate-page {
+    page-break-after: always;
+  }
+
+  .certificate {
+    page-break-after: avoid;
+  }
+}
+
+/* ============================================================
+   SCREEN DISPLAY - Hide print container on screen
+   ============================================================ */
+@media screen {
+  .a4-print-container {
+    display: none !important;
+  }
+}

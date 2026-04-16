@@ -1,0 +1,35 @@
+/* Global Scrollbar Styling for Dark Theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #3b82f6, #06b6d4);
+  border-radius: 5px;
+  border: 2px solid rgba(30, 41, 59, 0.5);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #2563eb, #0891b2);
+  box-shadow: inset 0 0 6px rgba(59, 130, 246, 0.3);
+}
+
+/* Firefox */
+* {
+  scrollbar-color: linear-gradient(to bottom, #3b82f6, #06b6d4) rgba(30, 41, 59, 0.5);
+  scrollbar-width: thin;
+}
+
+/* Tailwind custom scrollbar utility classes */
+.scrollbar-blue::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #3b82f6, #06b6d4);
+}
+
+.scrollbar-blue::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #2563eb, #0891b2);
+}

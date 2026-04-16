@@ -1,0 +1,78 @@
+/* Background styling (same professional look like fee department) */
+.signup-body {
+  background: whitesmoke;
+  height: 100vh;
+   width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Centered signup card */
+.signup-box {
+  background: #ffffff;
+  padding: 40px;
+  width: 380px;
+  border-radius: 12px;
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+/* Title */
+.signup-title {
+  font-size: 28px;
+  color: #2a5298;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+/* Input fields */
+.signup-input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #c5c5c5;
+  outline: none;
+  font-size: 16px;
+  transition: 0.2s;
+}
+
+.signup-input:focus {
+  border-color: #1e3c72;
+}
+
+/* Signup button */
+.signup-btn {
+  width: 100%;
+  padding: 12px;
+  background: #2a5298;
+  color: white;
+  border: none;
+  font-size: 17px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: 0.3s ease-in-out;
+}
+
+.signup-btn:hover {
+  background: #1e3c72;
+}
+
+/* Already have account? */
+.signup-text {
+  margin-top: 15px;
+  font-size: 15px;
+}
+
+.signup-link-btn {
+  background: none;
+  border: none;
+  color: #2a5298;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.signup-link-btn:hover {
+  text-decoration: underline;
+}

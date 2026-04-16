@@ -1,0 +1,272 @@
+/* ═══════════════════════════════════
+   AUTO CLEARANCE DASHBOARD STYLES
+═══════════════════════════════════ */
+
+.ac-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.ac-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+  color: #003366;
+}
+.ac-header h1 { font-size: 24px; margin: 0; }
+.ac-header p { margin: 4px 0 0; color: #666; font-size: 14px; }
+
+/* Alerts */
+.ac-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.ac-alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.ac-alert-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+
+/* Loading */
+.ac-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+  font-size: 16px;
+}
+
+/* ── Preview Section ── */
+.ac-preview-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.ac-preview-section h3 { margin: 0 0 6px; color: #1e293b; font-size: 18px; }
+.ac-preview-desc { color: #64748b; font-size: 13px; margin: 0 0 16px; }
+.ac-preview-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: #92400e;
+}
+
+/* ── Department Grid ── */
+.ac-dept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+/* Department Card */
+.ac-dept-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+.ac-dept-card:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); }
+
+.ac-dept-approved { border-left: 4px solid #16a34a; }
+.ac-dept-rejected { border-left: 4px solid #dc2626; }
+
+.ac-dept-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ac-dept-approved .ac-dept-icon-wrap { background: #dcfce7; color: #16a34a; }
+.ac-dept-rejected .ac-dept-icon-wrap { background: #fef2f2; color: #dc2626; }
+
+.ac-dept-info h4 { margin: 0 0 4px; font-size: 15px; color: #1e293b; }
+.ac-dept-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+.badge-green { background: #dcfce7; color: #16a34a; }
+.badge-red { background: #fef2f2; color: #dc2626; }
+
+.ac-dept-remarks { margin: 6px 0 0; font-size: 12px; color: #9ca3af; }
+
+/* ── Form ── */
+.ac-form {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.ac-form h3 { margin: 0 0 18px; color: #003366; font-size: 18px; }
+
+.ac-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.ac-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 5px;
+}
+.ac-field input,
+.ac-field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border 0.2s;
+  box-sizing: border-box;
+}
+.ac-field input:focus,
+.ac-field select:focus { border-color: #3b82f6; }
+
+.ac-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #003366, #00509e);
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.ac-submit-btn:hover { opacity: 0.9; }
+.ac-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Result Section ── */
+.ac-result-section h3 { margin: 24px 0 14px; color: #1e293b; font-size: 18px; }
+
+.ac-overall-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.ac-overall-banner h2 { margin: 0; font-size: 20px; }
+.ac-overall-banner p { margin: 4px 0 0; font-size: 14px; opacity: 0.9; }
+
+.banner-green { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #15803d; }
+.banner-red { background: linear-gradient(135deg, #fef2f2, #fecaca); color: #b91c1c; }
+.banner-yellow { background: linear-gradient(135deg, #fefce8, #fde68a); color: #92400e; }
+
+/* ── Certificate Section ── */
+.ac-certificate-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  margin-top: 24px;
+  padding: 24px;
+  background: #f0fdf4;
+  border-radius: 12px;
+  border: 1px solid #bbf7d0;
+  flex-wrap: wrap;
+}
+.ac-qr-box {
+  text-align: center;
+}
+.ac-qr-box h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #15803d;
+}
+.ac-qr-img {
+  width: 160px;
+  height: 160px;
+  border-radius: 8px;
+  border: 2px solid #bbf7d0;
+}
+.ac-cert-actions { display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+
+.ac-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.ac-download-btn:hover { background: #15803d; }
+
+/* ── Re-check Section ── */
+.ac-recheck-section {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 24px;
+  text-align: center;
+}
+.ac-recheck-section p { margin: 0 0 14px; color: #92400e; font-size: 14px; }
+
+.ac-recheck-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f59e0b;
+  color: #fff;
+  border: none;
+  padding: 11px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.ac-recheck-btn:hover { background: #d97706; }
+.ac-recheck-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Spin animation */
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ac-dept-grid { grid-template-columns: 1fr; }
+  .ac-form-grid { grid-template-columns: 1fr; }
+  .ac-certificate-section { flex-direction: column; align-items: center; }
+}

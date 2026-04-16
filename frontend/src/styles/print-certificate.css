@@ -1,0 +1,596 @@
+/* ============================================================
+   A4 PRINT STYLES FOR CLEARANCE CERTIFICATE
+   ============================================================ */
+
+/* ============================================================
+   PRINT MEDIA - A4 PAGE SETUP
+   ============================================================ */
+@media print {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body,
+  html {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
+    background: white;
+    font-family: Arial, sans-serif;
+  }
+
+  /* Hide everything except print container */
+  body > * {
+    display: none !important;
+  }
+
+  .a4-print-container,
+  .a4-print-container * {
+    display: block !important;
+  }
+
+  .a4-print-container {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  /* Certificate page */
+  .certificate-page {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
+    background: white;
+    page-break-after: avoid;
+    page-break-before: avoid;
+  }
+
+  /* Container */
+  .certificate-container {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
+    background: white;
+    box-shadow: none;
+    border: none;
+  }
+
+  /* Main certificate */
+  .certificate {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 30mm 20mm;
+    background: white;
+    box-shadow: none;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    page-break-inside: avoid;
+  }
+
+  /* Header section */
+  .cert-header {
+    text-align: center;
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+  }
+
+  .cert-logo {
+    font-size: 48px;
+    margin-bottom: 8px;
+  }
+
+  .cert-univ-name {
+    font-size: 20px;
+    font-weight: bold;
+    color: #1a3a52;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .cert-univ-subtitle {
+    font-size: 12px;
+    color: #666;
+    letter-spacing: 0.5px;
+    margin-bottom: 15px;
+  }
+
+  /* Divider */
+  .cert-divider {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #d4a574, transparent);
+    margin: 15px 0;
+    page-break-inside: avoid;
+  }
+
+  /* Certificate title */
+  .cert-title {
+    font-size: 32px;
+    font-weight: bold;
+    color: #1a3a52;
+    text-align: center;
+    margin: 18px 0;
+    font-style: italic;
+    letter-spacing: 0.5px;
+    page-break-inside: avoid;
+  }
+
+  /* Certificate opening text */
+  .cert-text {
+    text-align: center;
+    font-size: 14px;
+    color: #2c3e50;
+    margin: 18px 0;
+    line-height: 1.6;
+    page-break-inside: avoid;
+  }
+
+  /* Student info box */
+  .cert-info-box {
+    background: #f9f9f9;
+    border: 2px solid #d4a574;
+    padding: 25px 30px;
+    margin: 25px 0;
+    page-break-inside: avoid;
+  }
+
+  /* Info rows */
+  .cert-info-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .cert-label {
+    font-weight: bold;
+    color: #1a3a52;
+    min-width: 150px;
+  }
+
+  .cert-value {
+    color: #2c3e50;
+    flex: 1;
+    border-bottom: 1px dotted #d4a574;
+    padding-right: 15px;
+    text-align: right;
+  }
+
+  /* Departments section */
+  .cert-depts-section {
+    margin: 20px 0;
+    page-break-inside: avoid;
+  }
+
+  .cert-depts-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #1a3a52;
+    text-align: center;
+    margin-bottom: 12px;
+    text-decoration: underline;
+  }
+
+  .cert-depts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .cert-dept-item {
+    background: white;
+    border: 1.5px solid #27ae60;
+    padding: 8px 10px;
+    text-align: center;
+    font-weight: 500;
+    color: #27ae60;
+    font-size: 12px;
+  }
+
+  .cert-dept-item::before {
+    content: "✓ ";
+    font-weight: bold;
+  }
+
+  /* QR section */
+  .cert-qr-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
+    padding: 20px;
+    background: white;
+    border: 2px dashed #d4a574;
+    page-break-inside: avoid;
+  }
+
+  .cert-qr-label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #1a3a52;
+    margin-bottom: 10px;
+  }
+
+  .cert-qr-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .cert-qr-code {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 8px;
+    border: 1px solid #2c3e50;
+    padding: 4px;
+    background: white;
+  }
+
+  .cert-qr-info {
+    font-size: 10px;
+    color: #666;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+    word-break: break-all;
+  }
+
+  .cert-qr-text {
+    display: block;
+    margin-top: 4px;
+  }
+
+  /* Signatures section */
+  .cert-signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #d4a574;
+    page-break-inside: avoid;
+  }
+
+  .cert-sig-box {
+    text-align: center;
+    flex: 1;
+    margin: 0 10px;
+  }
+
+  .cert-sig-line {
+    height: 1px;
+    background-color: #2c3e50;
+    margin: 12px 0;
+  }
+
+  .cert-sig-title {
+    font-size: 11px;
+    font-weight: bold;
+    color: #1a3a52;
+  }
+
+  .cert-sig-subtitle {
+    font-size: 9px;
+    color: #666;
+    margin-top: 3px;
+  }
+
+  /* Footer section */
+  .cert-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    font-size: 10px;
+    color: #666;
+    page-break-inside: avoid;
+  }
+
+  .cert-footer p {
+    margin: 4px 0;
+    line-height: 1.4;
+  }
+
+  .cert-footer-id {
+    font-size: 10px;
+    color: #444;
+    font-weight: bold;
+    margin-top: 6px;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* Ensure images print correctly */
+  img {
+    max-width: 100%;
+    height: auto;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Hide non-essential elements during print */
+  .fixed,
+  .absolute {
+    position: static !important;
+  }
+
+  /* Remove any background issues */
+  body {
+    background: white !important;
+  }
+}
+
+/* ============================================================
+   SCREEN DISPLAY - Preview styling
+   ============================================================ */
+@media screen {
+  .a4-print-container {
+    display: none;
+  }
+}
+  }
+
+  /* Certificate title */
+  .certificate-title {
+    font-size: 36px;
+    font-weight: bold;
+    color: #1a3a52;
+    text-align: center;
+    margin: 25px 0;
+    font-style: italic;
+    letter-spacing: 1px;
+    page-break-inside: avoid;
+  }
+
+  /* Certificate text */
+  .certificate-text {
+    text-align: center;
+    font-size: 16px;
+    color: #2c3e50;
+    margin: 25px 0;
+    line-height: 1.8;
+    page-break-inside: avoid;
+  }
+
+  /* Content box */
+  .content-box {
+    background: #f9f9f9;
+    border: 2px solid #d4a574;
+    padding: 35px;
+    border-radius: 0;
+    margin: 35px 0;
+    page-break-inside: avoid;
+  }
+
+  /* Info row */
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 15px 0;
+    font-size: 15px;
+    line-height: 1.8;
+  }
+
+  .info-label {
+    font-weight: bold;
+    color: #1a3a52;
+    min-width: 180px;
+  }
+
+  .info-value {
+    color: #2c3e50;
+    flex: 1;
+    border-bottom: 1px dotted #d4a574;
+    padding-right: 20px;
+    text-align: right;
+  }
+
+  /* Departments section */
+  .departments-section {
+    margin: 30px 0;
+    page-break-inside: avoid;
+  }
+
+  .departments-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #1a3a52;
+    text-align: center;
+    margin-bottom: 20px;
+    text-decoration: underline;
+  }
+
+  .departments-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 25px;
+  }
+
+  .dept-item {
+    background: white;
+    border: 2px solid #27ae60;
+    padding: 12px 15px;
+    border-radius: 0;
+    text-align: center;
+    font-weight: 500;
+    color: #27ae60;
+    box-shadow: none;
+  }
+
+  .dept-item::before {
+    content: "✓";
+    margin-right: 8px;
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+  /* QR section */
+  .qr-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 30px 0;
+    padding: 25px;
+    background: white;
+    border: 2px dashed #d4a574;
+    border-radius: 0;
+    page-break-inside: avoid;
+  }
+
+  .qr-container {
+    text-align: center;
+  }
+
+  .qr-label {
+    font-size: 13px;
+    font-weight: bold;
+    color: #1a3a52;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .qr-image {
+    border: 2px solid #2c3e50;
+    padding: 8px;
+    background: white;
+    border-radius: 0;
+  }
+
+  .qr-code {
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .qr-id {
+    font-size: 11px;
+    color: #666;
+    font-family: 'Courier New', monospace;
+    word-break: break-all;
+    margin-top: 10px;
+  }
+
+  /* Signatures section */
+  .signatures-section {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 2px solid #d4a574;
+    page-break-inside: avoid;
+  }
+
+  .signature-box {
+    text-align: center;
+    flex: 1;
+    margin: 0 15px;
+  }
+
+  .signature-line {
+    height: 2px;
+    background-color: #2c3e50;
+    margin: 15px 0;
+  }
+
+  .signature-title {
+    font-size: 12px;
+    font-weight: bold;
+    color: #1a3a52;
+  }
+
+  .signature-subtitle {
+    font-size: 10px;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 30px;
+    padding: 15px;
+    border-top: 1px solid #ddd;
+    font-size: 11px;
+    color: #666;
+    page-break-inside: avoid;
+  }
+
+  .certificate-id {
+    font-size: 12px;
+    color: #444;
+    font-weight: bold;
+    margin: 8px 0 0 0;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* Decorative corners - hide in print */
+  .corner {
+    display: none;
+  }
+
+  /* Hide scroll bars */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Ensure images print at full quality */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Remove background from print */
+  body {
+    background: white;
+  }
+
+  /* Print button should not be visible in print preview */
+  .print-button {
+    display: none;
+  }
+}
+
+/* Screen styles for certificate display */
+.print-area {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin: 20px auto;
+  max-width: 900px;
+}
+
+.certificate-container {
+  position: relative;
+  background: white;
+  margin: 0 auto;
+  max-width: 850px;
+  aspect-ratio: 210 / 297;
+}
+
+/* Ensure proper sizing on screen */
+.certificate {
+  min-height: auto;
+  max-width: 100%;
+  overflow: visible;
+  margin: 0;
+}
+
+/* Print-only container visible during print */
+@media screen {
+  #print-area {
+    display: none;
+  }
+}
