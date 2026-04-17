@@ -48,7 +48,7 @@ railway login
 
 ### 2.2 Create Railway Project
 ```powershell
-cd g:\Part_3_Library
+cd g:\Part_3_Library\my-app\backend
 railway init
 ```
 Follow prompts:
