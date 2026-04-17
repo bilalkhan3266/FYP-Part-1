@@ -17,7 +17,7 @@ export default function LandingPage() {
             className="landing-logo"
           />
 
-          <h1>Welcome to Riphah Student Clearance Portal</h1>
+          <h1>Welcome to Riphah E Clearance</h1>
           <p>
             Streamline your clearance process across all university departments — 
             fast, paperless, and secure.
