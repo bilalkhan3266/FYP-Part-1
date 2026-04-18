@@ -27,7 +27,15 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (userData) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      // Use REACT_APP_API_URL if set, otherwise detect from hostname
+      let apiUrl = process.env.REACT_APP_API_URL;
+      if (!apiUrl) {
+        if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+          apiUrl = "http://localhost:5000";
+        } else {
+          apiUrl = "https://fyp-part-1-production.up.railway.app";
+        }
+      }
       const response = await axios.post(
         apiUrl + "/api/signup",
         userData
@@ -48,7 +56,15 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      // Use REACT_APP_API_URL if set, otherwise detect from hostname
+      let apiUrl = process.env.REACT_APP_API_URL;
+      if (!apiUrl) {
+        if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+          apiUrl = "http://localhost:5000";
+        } else {
+          apiUrl = "https://fyp-part-1-production.up.railway.app";
+        }
+      }
       const response = await axios.post(apiUrl + "/api/login", {
         email,
         password
