@@ -126,21 +126,11 @@ export default function LibraryDashboard() {
         return;
       }
 
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
-      const endpoint = `${apiUrl}/api/clearance/${modalRequestId}/approve`;
+      console.log("📤 Approving request:", { modalRequestId });
 
-      console.log("📤 Approving request:", { endpoint, modalRequestId });
-
-      const response = await axios.put(
-        endpoint,
-        { remarks: remarks.trim() },
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json"
-          }
-        }
+      const response = await api.put(
+        `/api/clearance/${modalRequestId}/approve`,
+        { remarks: remarks.trim() }
       );
 
       if (response.data.success) {
@@ -173,21 +163,11 @@ export default function LibraryDashboard() {
 
     setActionLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
-      const endpoint = `${apiUrl}/api/clearance/${modalRequestId}/reject`;
+      console.log("📤 Rejecting request:", { modalRequestId });
 
-      console.log("📤 Rejecting request:", { endpoint, modalRequestId });
-
-      const response = await axios.put(
-        endpoint,
-        { remarks: remarks.trim() },
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json"
-          }
-        }
+      const response = await api.put(
+        `/api/clearance/${modalRequestId}/reject`,
+        { remarks: remarks.trim() }
       );
 
       if (response.data.success) {

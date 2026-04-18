@@ -115,23 +115,14 @@ export default function FeeDepartmentDashboard() {
   const handleApprove = async () => {
     setActionLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
-
-      const response = await axios.put(
-        apiUrl + `/api/clearance/department/approve-or-reject`,
+      const response = await api.put(
+        `/api/clearance/department/approve-or-reject`,
         {
           requestId: modalRequestId,
           studentSapId: modalStudentSapId,
           departmentName: "Fee Department",
           action: "approve",
           remarks: remarks.trim()
-        },
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json"
-          }
         }
       );
 
@@ -162,23 +153,14 @@ export default function FeeDepartmentDashboard() {
 
     setActionLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
-
-      const response = await axios.put(
-        apiUrl + `/api/clearance/department/approve-or-reject`,
+      const response = await api.put(
+        `/api/clearance/department/approve-or-reject`,
         {
           requestId: modalRequestId,
           studentSapId: modalStudentSapId,
           departmentName: "Fee Department",
           action: "reject",
           remarks: remarks.trim()
-        },
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json"
-          }
         }
       );
 

@@ -104,23 +104,14 @@ export default function ServiceDashboard() {
   const handleApprove = async () => {
     setActionLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
-
-      const response = await axios.put(
-        `${apiUrl}/api/clearance/department/approve-or-reject`,
+      const response = await api.put(
+        `/api/clearance/department/approve-or-reject`,
         {
           requestId: modalRequestId,
           studentSapId: modalStudentSapId,
           departmentName: "Student Service",
           action: "approve",
           remarks: remarks.trim()
-        },
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json"
-          }
         }
       );
 
@@ -148,23 +139,14 @@ export default function ServiceDashboard() {
     }
     setActionLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
-
-      const response = await axios.put(
-        `${apiUrl}/api/clearance/department/approve-or-reject`,
+      const response = await api.put(
+        `/api/clearance/department/approve-or-reject`,
         {
           requestId: modalRequestId,
           studentSapId: modalStudentSapId,
           departmentName: "Student Service",
           action: "reject",
           remarks: remarks.trim()
-        },
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json"
-          }
         }
       );
 
