@@ -33,13 +33,47 @@ const app = express();
 
 // CORS Configuration
 const corsOptions = {
-  origin: '*', // Allow all origins temporarily for debugging
-  credentials: false,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (origin.match(/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/)) {
+      return callback(null, true);
+    }
+    if (origin.includes('vercel.app')) {
+      return callback(null, true);
+    }
+    const allowedOrigins = (process.env.CORS_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'X-Requested-With']
 };
 
 app.use(cors(corsOptions));
+
+// Store CORS options for preflight handlers
+const corsOptionsForPreflight = {
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'X-Requested-With'],
+  credentials: false
+};
+
+// Global OPTIONS handler
+app.options('*', cors(corsOptionsForPreflight));
+
+// Explicit OPTIONS handlers for main endpoints
+app.options('/api/signup', cors(corsOptionsForPreflight));
+app.options('/api/login', cors(corsOptionsForPreflight));
+app.options('/api/clearance-requests', cors(corsOptionsForPreflight));
+app.options('/api/clearance/department', cors(corsOptionsForPreflight));
+app.options('/api/department-issues', cors(corsOptionsForPreflight));
+app.options('/api/department-returns', cors(corsOptionsForPreflight));
+app.options('/api/health', cors(corsOptionsForPreflight));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
