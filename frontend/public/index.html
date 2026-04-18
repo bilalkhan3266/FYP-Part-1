@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
 
-    <!-- ✅ Content Security Policy (FIXED FOR LOCAL + NETWORK) -->
+    <!-- ✅ Content Security Policy (FIXED FOR LOCAL + NETWORK + PRODUCTION) -->
     <meta
       http-equiv="Content-Security-Policy"
       content="
@@ -17,10 +17,12 @@
           http://127.0.0.1:* 
           http://192.168.8.1:*
           http://192.168.100.198:*
+          https://fyp-part-1-production.up.railway.app
           ws://localhost:* 
           ws://127.0.0.1:* 
           ws://192.168.8.1:*
-          wss://192.168.100.198:*;
+          wss://192.168.100.198:*
+          wss://fyp-part-1-production.up.railway.app;
       "
     />
 
