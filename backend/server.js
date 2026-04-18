@@ -30,10 +30,44 @@ const { sendClearanceCertificateEmail } = require("./utils/emailService");
 // Express app
 // --------------------
 const app = express();
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  credentials: true
-}));
+
+// CORS Configuration
+const corsOptions = {
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+    
+    // Hardcode Vercel production URLs
+    const hardcodedOrigins = [
+      'https://frontend-pied-two-x4gwfxbawy.vercel.app',
+      'https://frontend-rio21a8i9-bilalyousafxai326-4991s-projects.vercel.app'
+    ];
+    
+    if (hardcodedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Allow localhost for development
+    if (origin.startsWith('http://localhost')) {
+      return callback(null, true);
+    }
+    
+    // Default to allowing the environment variable origin
+    const envOrigin = process.env.CORS_ORIGIN;
+    if (envOrigin && origin === envOrigin) {
+      return callback(null, true);
+    }
+    
+    // Log blocked origin for debugging
+    console.log('🚫 CORS: Blocked origin:', origin);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
