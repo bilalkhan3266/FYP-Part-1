@@ -63,19 +63,29 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'X-Requested-With']
 }));
+
+// Store cors options for reuse in OPTIONS handlers
+const corsOptionsForPreflight = {
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'X-Requested-With'],
+  credentials: false
+};
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // --------------------
 // Global OPTIONS Handler (CORS Preflight)
 // --------------------
-app.options('*', cors());
+app.options('*', cors(corsOptionsForPreflight));
 
 // Additional explicit OPTIONS for main endpoints
-app.options('/api/signup', cors());
-app.options('/api/login', cors());
-app.options('/api/clearance-requests', cors());
-app.options('/api/health', cors());
+app.options('/api/signup', cors(corsOptionsForPreflight));
+app.options('/api/login', cors(corsOptionsForPreflight));
+app.options('/api/clearance-requests', cors(corsOptionsForPreflight));
+app.options('/api/clearance/department', cors(corsOptionsForPreflight));
+app.options('/api/health', cors(corsOptionsForPreflight));
 
 // --------------------
 // Health Check Route (single definition)
