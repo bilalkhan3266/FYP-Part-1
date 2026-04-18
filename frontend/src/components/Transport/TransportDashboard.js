@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut, Inbox, AlertCircle, AlertTriangle } from "lucide-react";
-import axios from "axios";
+import api from "../../services/api";
 import { getApiUrl } from "../../config/apiConfig";
 
 export default function TransportDashboard() {
@@ -33,7 +33,7 @@ export default function TransportDashboard() {
       // Add cache buster parameter to force fresh data
       const cacheBuster = `?_t=${Date.now()}`;
 
-      const response = await axios.get(apiUrl + "/api/clearance/department" + cacheBuster, {
+      const response = await api.get(apiUrl + "/api/clearance/department" + cacheBuster, {
         headers: {
           Authorization: "Bearer " + token,
           "Content-Type": "application/json"

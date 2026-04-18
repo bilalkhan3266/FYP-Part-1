@@ -5,7 +5,7 @@ import {
   ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut,
   GitCompare, AlertCircle, CheckCircle, Inbox, AlertTriangle
 } from "lucide-react";
-import axios from "axios";
+import api from "../../services/api";
 import { getApiUrl } from "../../config/apiConfig";
 
 export default function CoordinationDashboard() {
@@ -36,7 +36,7 @@ export default function CoordinationDashboard() {
       // Add cache buster parameter to force fresh data
       const cacheBuster = `?_t=${Date.now()}`;
 
-      const response = await axios.get(apiUrl + "/api/clearance/department" + cacheBuster, {
+      const response = await api.get(apiUrl + "/api/clearance/department" + cacheBuster, {
         headers: {
           Authorization: "Bearer " + token,
           "Content-Type": "application/json"

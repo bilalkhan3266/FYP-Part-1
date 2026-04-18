@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import api from "../../services/api";
 import {
   Plus, RotateCcw, Search, X, FileText, Package,
   CheckCircle2, AlertTriangle, RefreshCw, Trash2,
@@ -44,7 +44,7 @@ export default function DepartmentIssueReturn({ departmentName }) {
         Authorization: `Bearer ${localStorage.getItem("token")}`, 
         "Content-Type": "application/json"
       };
-      const res = await axios.get(`${API_URL}/api/department-issues?${params}`, { headers: authHeaders });
+      const res = await api.get(`${API_URL}/api/department-issues?${params}`, { headers: authHeaders });
       if (res.data.success) setIssues(res.data.data);
     } catch (err) {
       console.error("Fetch issues error:", err);
@@ -61,7 +61,7 @@ export default function DepartmentIssueReturn({ departmentName }) {
         Authorization: `Bearer ${localStorage.getItem("token")}`, 
         "Content-Type": "application/json"
       };
-      const res = await axios.get(`${API_URL}/api/department-returns?${params}`, { headers: authHeaders });
+      const res = await api.get(`${API_URL}/api/department-returns?${params}`, { headers: authHeaders });
       if (res.data.success) setReturns(res.data.data);
     } catch (err) {
       console.error("Fetch returns error:", err);
@@ -85,7 +85,7 @@ export default function DepartmentIssueReturn({ departmentName }) {
     clearMessages();
     setIssueSubmitting(true);
     try {
-      const res = await axios.post(`${API_URL}/api/department-issues`, {
+      const res = await api.post(`${API_URL}/api/department-issues`, {
         ...issueForm,
         departmentName,
       }, { headers: getHeaders() });
@@ -107,7 +107,7 @@ export default function DepartmentIssueReturn({ departmentName }) {
     clearMessages();
     setReturnSubmitting(true);
     try {
-      const res = await axios.post(`${API_URL}/api/department-returns`, {
+      const res = await api.post(`${API_URL}/api/department-returns`, {
         studentId: selectedIssue.studentId,
         departmentName,
         referenceIssueId: selectedIssue._id,
@@ -131,7 +131,7 @@ export default function DepartmentIssueReturn({ departmentName }) {
     if (!window.confirm("Delete this issue record?")) return;
     clearMessages();
     try {
-      await axios.delete(`${API_URL}/api/department-issues/${id}`, { headers: getHeaders() });
+      await api.delete(`${API_URL}/api/department-issues/${id}`, { headers: getHeaders() });
       setSuccess("Issue deleted");
       fetchIssues();
     } catch (err) {
