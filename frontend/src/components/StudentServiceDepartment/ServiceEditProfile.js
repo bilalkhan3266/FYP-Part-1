@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { LayoutDashboard, MessageSquare, UserPen, LogOut, Mail, Lock, Save, AlertTriangle, CheckCircle } from "lucide-react";
@@ -64,7 +65,7 @@ export default function ServiceEditProfile() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const payload = {
         full_name: formData.full_name.trim(),

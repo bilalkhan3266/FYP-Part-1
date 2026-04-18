@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getApiUrl } from "../config/apiConfig";
 import axios from "axios";
 import "./SendMessage.css";
 
@@ -40,7 +41,7 @@ export default function SendMessage() {
 
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.post(
         apiUrl + "/api/send-message",

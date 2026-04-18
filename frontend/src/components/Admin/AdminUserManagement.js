@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
@@ -12,7 +13,7 @@ import {
 export default function AdminUserManagement() {
   const navigate = useNavigate();
   const { user, logout } = useAuthContext();
-  const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  const apiUrl = getApiUrl();
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);

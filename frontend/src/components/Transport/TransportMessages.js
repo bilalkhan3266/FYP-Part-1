@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { 
@@ -54,7 +55,7 @@ export default function TransportMessages() {
       setLoading(true);
       setError("");
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.get(apiUrl + "/api/my-messages", {
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }
@@ -78,7 +79,7 @@ export default function TransportMessages() {
       setLoading(true);
       setError("");
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.get(apiUrl + "/api/staff/sent-messages", {
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }
@@ -101,7 +102,7 @@ export default function TransportMessages() {
       setLoading(true);
       setError("");
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.get(apiUrl + "/api/my-messages", {
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }
@@ -135,7 +136,7 @@ export default function TransportMessages() {
     setReplyLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.post(
         apiUrl + `/api/messages/reply/${messageId}`,
@@ -171,7 +172,7 @@ export default function TransportMessages() {
 
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.post(
         apiUrl + "/api/send-message",

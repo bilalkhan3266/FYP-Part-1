@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { LayoutDashboard, ClipboardList, CheckCircle2, MessageSquare, UserPen, LogOut, GraduationCap, ShieldCheck } from "lucide-react";
@@ -75,7 +76,7 @@ export default function ClearanceStatus() {
   const fetchWorkflowStatus = async () => {
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.get(apiUrl + "/api/clearance/student", {
         headers: {
@@ -114,7 +115,7 @@ export default function ClearanceStatus() {
       setSuccess("");
 
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.post(
         apiUrl + "/api/clearance/" + workflow._id + "/resubmit",

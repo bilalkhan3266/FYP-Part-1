@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { LayoutDashboard, ClipboardList, CheckCircle2, MessageSquare, UserPen, LogOut, GraduationCap, ShieldCheck } from "lucide-react";
@@ -68,7 +69,7 @@ export default function ClearanceRequest() {
       try {
         setFetchingRequests(true);
         const token = localStorage.getItem("token");
-        const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+        const apiUrl = getApiUrl();
 
         if (!token) {
           setFetchingRequests(false);
@@ -112,7 +113,7 @@ export default function ClearanceRequest() {
 
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       if (!token) {
         setError("❌ No authentication token found. Please login again.");
@@ -184,7 +185,7 @@ export default function ClearanceRequest() {
 
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       // Check if token exists
       if (!token) {

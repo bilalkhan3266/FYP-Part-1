@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { X, Printer, Download } from "lucide-react";
 import "../../styles/print-certificate-a4-clean.css";
 
@@ -25,7 +26,7 @@ export const CertificatePrintPreview = ({ certificate, onClose }) => {
   const program = certData.program || "Program";
   const qrCode = certData.qr_code || `CLEARANCE_${sapId}_${Date.now()}`;
 
-  let apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  let apiUrl = getApiUrl();
   if (apiUrl.includes("localhost") || apiUrl.includes("127.0.0.1")) {
     const hostname = window.location.hostname;
     const port = window.location.port ? `:${window.location.port}` : ":5000";

@@ -7,7 +7,7 @@ import {
   RiAddCircleLine, RiArrowLeftLine
 } from "react-icons/ri";
 import axios from "axios";
-
+import { getApiUrl } from "../../config/apiConfig";
 export default function LibraryDashboard() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ export default function LibraryDashboard() {
       setLoading(true);
       setError("");
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       // Add cache buster parameter to force fresh data
       const cacheBuster = `?_t=${Date.now()}`;
@@ -39,9 +39,7 @@ export default function LibraryDashboard() {
       const response = await axios.get(apiUrl + "/api/clearance/department" + cacheBuster, {
         headers: {
           Authorization: "Bearer " + token,
-          "Content-Type": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Pragma": "no-cache",
+          "Content-Type": "application/json"
         }
       });
 
@@ -137,7 +135,7 @@ export default function LibraryDashboard() {
       }
 
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
       const endpoint = `${apiUrl}/api/clearance/${modalRequestId}/approve`;
 
       console.log("📤 Approving request:", { endpoint, modalRequestId });
@@ -184,7 +182,7 @@ export default function LibraryDashboard() {
     setActionLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
       const endpoint = `${apiUrl}/api/clearance/${modalRequestId}/reject`;
 
       console.log("📤 Rejecting request:", { endpoint, modalRequestId });

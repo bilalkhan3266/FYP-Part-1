@@ -1,5 +1,6 @@
 // src/auth/ForgotPassword.js
 import React, { useState } from "react";
+import { getApiUrl } from "../config/apiConfig";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "./Forgotpassword.css";
@@ -51,7 +52,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
       const response = await axios.post(apiUrl + "/api/forgot-password-request", {
         email: formData.email.trim().toLowerCase()
       });
@@ -88,7 +89,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
       const response = await axios.post(apiUrl + "/api/verify-reset-code", {
         email: formData.email,
         code: formData.code
@@ -130,7 +131,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
       const response = await axios.post(apiUrl + "/api/reset-password", {
         email: formData.email,
         code: formData.code,

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut, Inbox, AlertCircle, AlertTriangle } from "lucide-react";
 import axios from "axios";
+import { getApiUrl } from "../../config/apiConfig";
 
 export default function TransportDashboard() {
   const { user, logout } = useAuthContext();
@@ -27,7 +28,7 @@ export default function TransportDashboard() {
       setLoading(true);
       setError("");
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       // Add cache buster parameter to force fresh data
       const cacheBuster = `?_t=${Date.now()}`;
@@ -35,9 +36,7 @@ export default function TransportDashboard() {
       const response = await axios.get(apiUrl + "/api/clearance/department" + cacheBuster, {
         headers: {
           Authorization: "Bearer " + token,
-          "Content-Type": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Pragma": "no-cache",
+          "Content-Type": "application/json"
         }
       });
 
@@ -122,7 +121,7 @@ export default function TransportDashboard() {
     setActionLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.put(
         apiUrl + `/api/clearance/department/approve-or-reject`,
@@ -169,7 +168,7 @@ export default function TransportDashboard() {
     setActionLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.put(
         apiUrl + `/api/clearance/department/approve-or-reject`,

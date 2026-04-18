@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { LayoutDashboard, MessageSquare, UserPen, LogOut, Save, AlertTriangle, CheckCircle, Mail, Phone, MapPin, Building2, User } from "lucide-react";
@@ -75,7 +76,7 @@ export default function TransportEditProfile() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       console.log("📝 Updating profile with data:", formData);
       console.log("📡 API URL:", apiUrl);
@@ -139,7 +140,7 @@ export default function TransportEditProfile() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.post(
         apiUrl + "/api/users/change-password",

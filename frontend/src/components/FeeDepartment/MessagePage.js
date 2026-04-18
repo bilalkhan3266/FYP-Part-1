@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { LayoutDashboard, MessageSquare, UserPen, LogOut, Send, Inbox, AlertTriangle, CheckCircle, History, Megaphone, Reply, X, Paperclip, ThumbsDown, AlertCircle, Search, Clock, Star, Share2, DollarSign } from "lucide-react";
@@ -43,7 +44,7 @@ export default function FeeMessage() {
       setLoading(true);
       setError("");
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
       const response = await axios.get(apiUrl + "/api/my-messages", {
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }
       });
@@ -63,7 +64,7 @@ export default function FeeMessage() {
       setLoading(true);
       setError("");
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
       const response = await axios.get(apiUrl + "/api/staff/sent-messages", {
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }
       });
@@ -81,7 +82,7 @@ export default function FeeMessage() {
       setLoading(true);
       setError("");
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
       const response = await axios.get(apiUrl + "/api/my-messages", {
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }
       });
@@ -107,7 +108,7 @@ export default function FeeMessage() {
     setReplyLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
       const response = await axios.post(apiUrl + `/api/messages/reply/${messageId}`, { message: replyText.trim() }, { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } });
       if (response.data.success) {
         setSuccess("Reply sent successfully!");
@@ -130,7 +131,7 @@ export default function FeeMessage() {
     if (!formData.recipient_sapid.trim() || !formData.subject.trim() || !formData.message.trim()) { setError("All fields are required"); return; }
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
       const response = await axios.post(apiUrl + "/api/send-message", { recipient_sapid: formData.recipient_sapid.trim(), subject: formData.subject.trim(), message: formData.message.trim(), message_type: formData.message_type }, { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } });
       if (response.data.success) { setSuccess("Message sent successfully!"); setFormData({ recipient_sapid: "", subject: "", message: "", message_type: "info" }); setAttachments([]); setTimeout(() => setSuccess(""), 3000); }
     } catch (err) {

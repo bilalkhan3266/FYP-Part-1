@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useAuthContext } from "../../contexts/AuthContext";
 import {
   CheckCircle2,
@@ -41,7 +42,7 @@ export default function SequentialClearanceStatus() {
     try {
       setError("");
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.get(
         `${apiUrl}/api/clearance-status`,

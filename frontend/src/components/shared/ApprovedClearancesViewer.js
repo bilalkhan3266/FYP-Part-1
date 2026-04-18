@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import {
   CheckCircle2,
   Download,
@@ -39,7 +40,7 @@ export default function ApprovedClearancesViewer({ departmentName }) {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  const apiUrl = getApiUrl();
   const token = localStorage.getItem("token");
 
   // Fetch approved clearances

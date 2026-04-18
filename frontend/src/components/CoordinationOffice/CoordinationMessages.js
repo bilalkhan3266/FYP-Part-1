@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { LayoutDashboard, MessageSquare, UserPen, LogOut, Send, Inbox, AlertTriangle, CheckCircle, History, Megaphone, Reply, X, Paperclip, ThumbsDown, AlertCircle, Search, Clock, Star, Share2, GitCompare } from "lucide-react";
@@ -27,7 +28,7 @@ export default function CoordinationMessages() {
   const removeAttachment = (index) => { setAttachments(prev => prev.filter((_, i) => i !== index)); };
 
   const fetchReceivedMessages = async () => {
-    try { setLoading(true); setError(""); const token = localStorage.getItem("token"); const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+    try { setLoading(true); setError(""); const token = localStorage.getItem("token"); const apiUrl = getApiUrl();
       const response = await axios.get(apiUrl + "/api/my-messages", { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } });
       if (response.data.success) { const studentMessages = response.data.data.filter(msg => msg.sender_role === 'student'); setReceivedMessages(studentMessages); }
       else setError(response.data.message || "Failed to load messages");
@@ -36,7 +37,7 @@ export default function CoordinationMessages() {
   };
 
   const fetchSentMessages = async () => {
-    try { setLoading(true); setError(""); const token = localStorage.getItem("token"); const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+    try { setLoading(true); setError(""); const token = localStorage.getItem("token"); const apiUrl = getApiUrl();
       const response = await axios.get(apiUrl + "/api/staff/sent-messages", { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } });
       if (response.data.success) setSentMessages(response.data.data || []);
       else setError(response.data.message || "Failed to load sent messages");
@@ -45,7 +46,7 @@ export default function CoordinationMessages() {
   };
 
   const fetchAdminBroadcasts = async () => {
-    try { setLoading(true); setError(""); const token = localStorage.getItem("token"); const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+    try { setLoading(true); setError(""); const token = localStorage.getItem("token"); const apiUrl = getApiUrl();
       const response = await axios.get(apiUrl + "/api/my-messages", { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } });
       if (response.data.success) { const broadcasts = response.data.data.filter(msg => msg.messageType === 'admin-broadcast' || msg.message_type === 'admin-broadcast'); setAdminBroadcasts(broadcasts); }
       else setError(response.data.message || "Failed to load broadcasts");
@@ -62,7 +63,7 @@ export default function CoordinationMessages() {
   const handleReply = async (messageId) => {
     if (!replyText.trim()) { setError("Reply cannot be empty"); return; }
     setReplyLoading(true);
-    try { const token = localStorage.getItem("token"); const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+    try { const token = localStorage.getItem("token"); const apiUrl = getApiUrl();
       const message = receivedMessages.find(msg => msg._id === messageId);
       if (!message) { setError("Message not found"); setReplyLoading(false); return; }
       const conversationId = message.conversation_id || messageId;
@@ -76,7 +77,7 @@ export default function CoordinationMessages() {
   const handleSubmit = async (e) => {
     e.preventDefault(); setError(""); setSuccess("");
     if (!formData.recipient_sapid.trim() || !formData.subject.trim() || !formData.message.trim()) { setError("All fields are required"); return; }
-    try { const token = localStorage.getItem("token"); const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+    try { const token = localStorage.getItem("token"); const apiUrl = getApiUrl();
       const response = await axios.post(apiUrl + "/api/send-message", { recipient_sapid: formData.recipient_sapid.trim(), subject: formData.subject.trim(), message: formData.message.trim(), message_type: formData.message_type }, { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } });
       if (response.data.success) { setSuccess("Message sent successfully!"); setFormData({ recipient_sapid: "", subject: "", message: "", message_type: "info" }); setAttachments([]); setTimeout(() => setSuccess(""), 3000); }
     } catch (err) { setError(err.response?.data?.message || "Failed to send message"); }

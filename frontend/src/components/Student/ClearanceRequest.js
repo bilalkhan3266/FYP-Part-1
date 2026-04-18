@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import {
@@ -121,7 +122,7 @@ export default function ClearanceRequest() {
     const fetchClearanceHistory = async () => {
       try {
         const token = localStorage.getItem("token");
-        const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+        const apiUrl = getApiUrl();
 
         const response = await axios.get(
           apiUrl + "/api/clearance-requests",
@@ -260,7 +261,7 @@ export default function ClearanceRequest() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       console.log('📤 Submitting clearance request:', formData);
 

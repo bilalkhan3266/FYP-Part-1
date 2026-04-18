@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { QRCodeCanvas } from "qrcode.react";
@@ -62,7 +63,7 @@ export default function ClearanceCertificate() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.get(apiUrl + "/api/clearance/student", {
         headers: { Authorization: "Bearer " + token },
@@ -110,7 +111,7 @@ export default function ClearanceCertificate() {
     if (!certificate?.workflow_id) return;
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
       
       const response = await axios.get(
         apiUrl + "/api/clearance/certificate/download/" + certificate.workflow_id,

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import axios from "axios";
@@ -11,7 +12,7 @@ import {
 export default function AdminEditProfile() {
   const navigate = useNavigate();
   const { user, logout } = useAuthContext();
-  const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  const apiUrl = getApiUrl();
   const axiosConfig = { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } };
 
   const [formData, setFormData] = useState({

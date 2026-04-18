@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import {
@@ -58,7 +59,7 @@ export default function ClearanceCertificate() {
     try {
       setError("");
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.get(
         apiUrl + "/api/certificates",
@@ -91,7 +92,7 @@ export default function ClearanceCertificate() {
     setDownloadingId(certId);
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.get(
         apiUrl + `/api/certificates/${certId}/download`,

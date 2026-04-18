@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { Download, Printer, Share2, QrCode, CheckCircle, Loader } from "lucide-react";
 import axios from "axios";
 import html2canvas from "html2canvas";
@@ -41,7 +42,7 @@ export default function ProfessionalCertificateDesign({
     try {
       // Check if certificate already exists on backend
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
       const certId = certificateData._id;
 
       // First try to download existing PDF from backend

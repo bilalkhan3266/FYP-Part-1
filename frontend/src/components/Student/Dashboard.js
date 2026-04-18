@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import axios from "axios";
@@ -50,7 +51,7 @@ export default function StudentDashboard() {
   const fetchClearanceStatus = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       console.log("📊 Fetching clearance status...");
       const response = await axios.get(apiUrl + "/api/clearance-status", {
@@ -93,7 +94,7 @@ export default function StudentDashboard() {
   const fetchUnreadMessages = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.get(apiUrl + "/api/my-messages", {
         headers: { Authorization: "Bearer " + token }
@@ -128,7 +129,7 @@ export default function StudentDashboard() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.get(apiUrl + "/api/clearance-certificate", {
         headers: { Authorization: "Bearer " + token }
@@ -173,7 +174,7 @@ export default function StudentDashboard() {
     console.log('Certificate Data:', { studentName, sapId, regNo, program, qrCode });
     
     // Create verification URL - this is what will be encoded in the QR code
-    let apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+    let apiUrl = getApiUrl();
     
     // For mobile scanning: Replace localhost with actual hostname/IP
     // This allows QR codes to work on mobile devices

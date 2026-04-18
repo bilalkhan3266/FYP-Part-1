@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
@@ -42,7 +43,7 @@ const EXCLUDED_DEPARTMENTS = ["Laboratory", "HOD"];
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuthContext();
-  const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  const apiUrl = getApiUrl();
 
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);

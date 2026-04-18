@@ -5,7 +5,8 @@ import {
   CheckCircle2, AlertTriangle, RefreshCw, Trash2,
 } from "lucide-react";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+import { getApiUrl } from "../../config/apiConfig";
+const API_URL = getApiUrl();
 
 /**
  * Reusable Issue/Return management panel for any department.
@@ -41,9 +42,7 @@ export default function DepartmentIssueReturn({ departmentName }) {
       params.append("_t", Date.now());
       const authHeaders = { 
         Authorization: `Bearer ${localStorage.getItem("token")}`, 
-        "Content-Type": "application/json",
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache",
+        "Content-Type": "application/json"
       };
       const res = await axios.get(`${API_URL}/api/department-issues?${params}`, { headers: authHeaders });
       if (res.data.success) setIssues(res.data.data);
@@ -60,9 +59,7 @@ export default function DepartmentIssueReturn({ departmentName }) {
       params.append("_t", Date.now());
       const authHeaders = { 
         Authorization: `Bearer ${localStorage.getItem("token")}`, 
-        "Content-Type": "application/json",
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache",
+        "Content-Type": "application/json"
       };
       const res = await axios.get(`${API_URL}/api/department-returns?${params}`, { headers: authHeaders });
       if (res.data.success) setReturns(res.data.data);

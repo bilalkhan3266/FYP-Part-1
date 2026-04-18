@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import axios from "axios";
@@ -17,7 +18,7 @@ export default function AdminMessages() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, logout } = useAuthContext();
-  const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  const apiUrl = getApiUrl();
   const axiosConfig = { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } };
 
   const messageType = searchParams.get("type") || "department";

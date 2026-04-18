@@ -6,6 +6,7 @@ import {
   DollarSign, AlertCircle, CheckCircle, Inbox, AlertTriangle
 } from "lucide-react";
 import axios from "axios";
+import { getApiUrl } from "../../config/apiConfig";
 
 export default function FeeDepartmentDashboard() {
   const { user, logout } = useAuthContext();
@@ -30,7 +31,7 @@ export default function FeeDepartmentDashboard() {
       setLoading(true);
       setError("");
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       // Add cache buster parameter to force fresh data
       const cacheBuster = `?_t=${Date.now()}`;
@@ -38,9 +39,7 @@ export default function FeeDepartmentDashboard() {
       const response = await axios.get(apiUrl + "/api/clearance/department" + cacheBuster, {
         headers: {
           Authorization: "Bearer " + token,
-          "Content-Type": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Pragma": "no-cache",
+          "Content-Type": "application/json"
         }
       });
 
@@ -125,7 +124,7 @@ export default function FeeDepartmentDashboard() {
     setActionLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.put(
         apiUrl + `/api/clearance/department/approve-or-reject`,
@@ -172,7 +171,7 @@ export default function FeeDepartmentDashboard() {
     setActionLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.put(
         apiUrl + `/api/clearance/department/approve-or-reject`,

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import axios from "axios";
@@ -45,7 +46,7 @@ export default function StudentDashboard() {
   const fetchClearanceStatus = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.get(apiUrl + "/api/clearance-status", {
         headers: { Authorization: "Bearer " + token }
@@ -64,7 +65,7 @@ export default function StudentDashboard() {
   const fetchUnreadMessages = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiUrl = getApiUrl();
 
       const response = await axios.get(apiUrl + "/api/my-messages", {
         headers: { Authorization: "Bearer " + token }
