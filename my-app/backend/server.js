@@ -85,6 +85,8 @@ app.options('/api/signup', cors(corsOptionsForPreflight));
 app.options('/api/login', cors(corsOptionsForPreflight));
 app.options('/api/clearance-requests', cors(corsOptionsForPreflight));
 app.options('/api/clearance/department', cors(corsOptionsForPreflight));
+app.options('/api/department-issues', cors(corsOptionsForPreflight));
+app.options('/api/department-returns', cors(corsOptionsForPreflight));
 app.options('/api/health', cors(corsOptionsForPreflight));
 
 // --------------------
