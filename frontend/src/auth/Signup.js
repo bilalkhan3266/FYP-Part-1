@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { getApiUrl } from "../config/apiConfig";
 import "./Auth.css";
 
 const logo512 = "/logo512.png";
@@ -28,16 +29,6 @@ const sapMatchesEmail = (sap, email) => {
 
 export default function Signup() {
   const navigate = useNavigate();
-  
-  // Determine API URL based on environment
-  const getApiUrl = () => {
-    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-      return "http://localhost:5000";
-    } else {
-      return "https://fyp-part-1-production.up.railway.app";
-    }
-  };
-  
   const apiUrl = getApiUrl();
 
   // ---- State ----

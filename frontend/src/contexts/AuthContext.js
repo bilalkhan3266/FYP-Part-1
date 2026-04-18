@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
+import { getApiUrl } from "../config/apiConfig";
 
 const AuthContext = createContext();
 
@@ -27,15 +28,7 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (userData) => {
     try {
-      // Determine API URL based on environment
-      let apiUrl;
-      if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-        apiUrl = "http://localhost:5000";
-      } else {
-        // Production: always use the Railway backend
-        apiUrl = "https://fyp-part-1-production.up.railway.app";
-      }
-      
+      const apiUrl = getApiUrl();
       const response = await axios.post(
         apiUrl + "/api/signup",
         userData
@@ -56,15 +49,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      // Determine API URL based on environment
-      let apiUrl;
-      if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-        apiUrl = "http://localhost:5000";
-      } else {
-        // Production: always use the Railway backend
-        apiUrl = "https://fyp-part-1-production.up.railway.app";
-      }
-      
+      const apiUrl = getApiUrl();
       const response = await axios.post(apiUrl + "/api/login", {
         email,
         password
