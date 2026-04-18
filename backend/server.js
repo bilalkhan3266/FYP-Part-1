@@ -136,6 +136,14 @@ const verifyToken = (req, res, next) => {
 };
 
 // --------------------
+// OPTIONS HANDLERS (CORS Preflight)
+// --------------------
+app.options('/api/signup', cors());
+app.options('/api/login', cors());
+app.options('/api/clearance-requests', cors());
+app.options('/api/health', cors());
+
+// --------------------
 // AUTHENTICATION ROUTES
 // --------------------
 // Signup
