@@ -61,12 +61,18 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
         return { success: true, message: response.data.message };
+      } else {
+        return {
+          success: false,
+          message: response.data.message || "Login failed"
+        };
       }
     } catch (err) {
       console.error("Login Error:", err);
       return {
         success: false,
-        message: err.response?.data?.message || "Login failed"
+        message: err.response?.data?.message || err.message || "Login failed",
+        error: err.response?.data?.message || err.message || "Login failed"
       };
     }
   };
