@@ -138,6 +138,10 @@ const verifyToken = (req, res, next) => {
 // --------------------
 // OPTIONS HANDLERS (CORS Preflight)
 // --------------------
+// Global OPTIONS handler for all requests
+app.options('*', cors());
+
+// Specific OPTIONS handlers
 app.options('/api/signup', cors());
 app.options('/api/login', cors());
 app.options('/api/clearance-requests', cors());
