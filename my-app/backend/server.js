@@ -39,7 +39,7 @@ const { sendCertificateEmail, sendRejectionEmail } = require("./services/emailSe
 // --------------------
 const app = express();
 
-// Fix #1: Dynamic CORS - allow any localhost port and production URLs
+// Fix #1: CORS - allow all Vercel preview/production URLs and localhost
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, Postman)
@@ -48,12 +48,8 @@ app.use(cors({
     if (origin.match(/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/)) {
       return callback(null, true);
     }
-    // Allow hardcoded production URLs
-    const hardcodedOrigins = [
-      'https://frontend-pied-two-x4gwfxbawy.vercel.app',
-      'https://frontend-rio21a8i9-bilalyousafxai326-4991s-projects.vercel.app'
-    ];
-    if (hardcodedOrigins.includes(origin)) {
+    // Allow ALL Vercel preview and production URLs
+    if (origin.includes('vercel.app')) {
       return callback(null, true);
     }
     // Allow specific production origins from env
@@ -63,7 +59,9 @@ app.use(cors({
     }
     callback(new Error('Not allowed by CORS'));
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'X-Requested-With']
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
