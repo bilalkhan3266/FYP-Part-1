@@ -6,7 +6,6 @@ import {
   GitCompare, AlertCircle, CheckCircle, Inbox, AlertTriangle
 } from "lucide-react";
 import api from "../../services/api";
-import { getApiUrl } from "../../config/apiConfig";
 
 export default function CoordinationDashboard() {
   const { user, logout } = useAuthContext();
@@ -30,18 +29,11 @@ export default function CoordinationDashboard() {
     try {
       setLoading(true);
       setError("");
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
-
       // Add cache buster parameter to force fresh data
       const cacheBuster = `?_t=${Date.now()}`;
 
-      const response = await api.get(apiUrl + "/api/clearance/department" + cacheBuster, {
-        headers: {
-          Authorization: "Bearer " + token,
-          "Content-Type": "application/json"
-        }
-      });
+      // Let the api instance and interceptors handle auth headers automatically
+      const response = await api.get(`/api/clearance/department${cacheBuster}`);
 
       if (response.data.success) {
         // Store all data

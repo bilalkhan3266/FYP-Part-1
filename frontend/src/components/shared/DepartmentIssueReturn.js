@@ -5,9 +5,6 @@ import {
   CheckCircle2, AlertTriangle, RefreshCw, Trash2,
 } from "lucide-react";
 
-import { getApiUrl } from "../../config/apiConfig";
-const API_URL = getApiUrl();
-
 /**
  * Reusable Issue/Return management panel for any department.
  * Props:
@@ -32,19 +29,14 @@ export default function DepartmentIssueReturn({ departmentName }) {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [returnSubmitting, setReturnSubmitting] = useState(false);
 
-  const getHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}`, "Content-Type": "application/json" });
-
   const fetchIssues = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (searchSap) params.append("studentId", searchSap.trim());
       // Add cache buster to force fresh data
       params.append("_t", Date.now());
-      const authHeaders = { 
-        Authorization: `Bearer ${localStorage.getItem("token")}`, 
-        "Content-Type": "application/json"
-      };
-      const res = await api.get(`${API_URL}/api/department-issues?${params}`, { headers: authHeaders });
+      // Let the api instance handle authorization headers via interceptor
+      const res = await api.get(`/api/department-issues?${params}`);
       if (res.data.success) setIssues(res.data.data);
     } catch (err) {
       console.error("Fetch issues error:", err);
@@ -57,11 +49,8 @@ export default function DepartmentIssueReturn({ departmentName }) {
       if (searchSap) params.append("studentId", searchSap.trim());
       // Add cache buster to force fresh data
       params.append("_t", Date.now());
-      const authHeaders = { 
-        Authorization: `Bearer ${localStorage.getItem("token")}`, 
-        "Content-Type": "application/json"
-      };
-      const res = await api.get(`${API_URL}/api/department-returns?${params}`, { headers: authHeaders });
+      // Let the api instance handle authorization headers via interceptor
+      const res = await api.get(`/api/department-returns?${params}`);
       if (res.data.success) setReturns(res.data.data);
     } catch (err) {
       console.error("Fetch returns error:", err);
@@ -85,10 +74,11 @@ export default function DepartmentIssueReturn({ departmentName }) {
     clearMessages();
     setIssueSubmitting(true);
     try {
-      const res = await api.post(`${API_URL}/api/department-issues`, {
+      // Let the api instance handle authorization headers via interceptor
+      const res = await api.post(`/api/department-issues`, {
         ...issueForm,
         departmentName,
-      }, { headers: getHeaders() });
+      });
       if (res.data.success) {
         setSuccess("Issue record created successfully");
         setShowIssueForm(false);
@@ -107,11 +97,12 @@ export default function DepartmentIssueReturn({ departmentName }) {
     clearMessages();
     setReturnSubmitting(true);
     try {
-      const res = await api.post(`${API_URL}/api/department-returns`, {
+      // Let the api instance handle authorization headers via interceptor
+      const res = await api.post(`/api/department-returns`, {
         studentId: selectedIssue.studentId,
         departmentName,
         referenceIssueId: selectedIssue._id,
-      }, { headers: getHeaders() });
+      });
       if (res.data.success) {
         setSuccess("Return processed — issue marked as Cleared");
         setShowReturnModal(false);
@@ -131,7 +122,8 @@ export default function DepartmentIssueReturn({ departmentName }) {
     if (!window.confirm("Delete this issue record?")) return;
     clearMessages();
     try {
-      await api.delete(`${API_URL}/api/department-issues/${id}`, { headers: getHeaders() });
+      // Let the api instance handle authorization headers via interceptor
+      await api.delete(`/api/department-issues/${id}`);
       setSuccess("Issue deleted");
       fetchIssues();
     } catch (err) {
