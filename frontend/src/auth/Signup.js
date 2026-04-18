@@ -28,7 +28,17 @@ const sapMatchesEmail = (sap, email) => {
 
 export default function Signup() {
   const navigate = useNavigate();
-  const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  
+  // Determine API URL based on environment
+  const getApiUrl = () => {
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return "http://localhost:5000";
+    } else {
+      return "https://fyp-part-1-production.up.railway.app";
+    }
+  };
+  
+  const apiUrl = getApiUrl();
 
   // ---- State ----
   const [step, setStep] = useState("signup"); // "signup" | "otp" | "success"

@@ -1,9 +1,22 @@
 // src/services/api.js
 import axios from "axios";
 
+// Determine API base URL based on environment
+const getBaseURL = () => {
+  // Always use Railway backend in production
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return "http://localhost:5000";
+    } else {
+      return "https://fyp-part-1-production.up.railway.app";
+    }
+  }
+  return "https://fyp-part-1-production.up.railway.app"; // Default for SSR
+};
+
 // Create Axios instance
 const api = axios.create({
-  baseURL: "http://localhost:5000", // Change if your backend URL is different
+  baseURL: getBaseURL(),
   headers: {
     "Content-Type": "application/json",
   },
