@@ -150,6 +150,7 @@ app.options('*', cors());
 
 // Specific OPTIONS handlers
 app.options('/api/signup', cors());
+app.options('/api/auth/verify-otp', cors());
 app.options('/api/login', cors());
 app.options('/api/clearance-requests', cors());
 app.options('/api/health', cors());
@@ -157,59 +158,162 @@ app.options('/api/health', cors());
 // --------------------
 // AUTHENTICATION ROUTES
 // --------------------
-// Signup
+// Signup (Step 1: Validate + Send OTP)
 app.post('/api/signup', async (req, res) => {
   try {
     const { full_name, email, password, role, sap, department } = req.body;
 
-    console.log('📝 Signup Request:', {
-      full_name,
-      email,
-      role,
-      has_sap: !!sap,
-      has_department: !!department
-    });
+    console.log('📝 Signup Request:', { full_name, email, role, has_sap: !!sap, has_department: !!department });
 
-    // Validation
-    if (!full_name || !email || !password || !role) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Full name, email, password, and role are required' 
-      });
+    // VALIDATION
+
+    // 1. Check all required fields
+    if (!full_name || !email || !password || !sap || !department) {
+      return res.status(400).json({ success: false, message: 'Full name, email, password, SAP ID, and department are required' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Password must be at least 6 characters' 
-      });
+    // 2. Validate Full Name
+    if (!/^[A-Za-z ]{3,}$/.test(full_name.trim())) {
+      return res.status(400).json({ success: false, message: 'Name must be at least 3 letters and contain only alphabets' });
     }
 
-    // Check if user exists
-    const existingUser = await User.findOne({ email });
+    // 3. Validate SAP ID
+    if (!/^[0-9]+$/.test(sap.trim())) {
+      return res.status(400).json({ success: false, message: 'SAP ID must contain only numbers' });
+    }
+
+    // 4. Validate university email format
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[0-9]+@students\.riphah\.edu\.pk$/.test(normalizedEmail)) {
+      return res.status(400).json({ success: false, message: 'Only university email allowed (e.g. 48397@students.riphah.edu.pk)' });
+    }
+
+    // 5. SAP ID must match email prefix
+    const emailPrefix = normalizedEmail.split('@')[0];
+    if (emailPrefix !== sap.trim()) {
+      return res.status(400).json({ success: false, message: 'SAP ID must match your university email' });
+    }
+
+    // 6. Validate Password
+    if (!/^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$/.test(password)) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters with uppercase, number, and special character' });
+    }
+
+    // 7. Ensure role is Student only
+    if (!role || role.toLowerCase() !== 'student') {
+      return res.status(400).json({ success: false, message: 'Signup is only available for students' });
+    }
+
+    // 8. Check if user already exists
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Email already exists' 
-      });
+      return res.status(400).json({ success: false, message: 'Email already registered. Please login.' });
     }
 
-    // Hash password
+    const existingSAP = await User.findOne({ sap: sap.trim() });
+    if (existingSAP) {
+      return res.status(400).json({ success: false, message: 'SAP ID already registered' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+    // Hash password before storing
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user - normalize role to lowercase
+    // Upsert into PendingUser
+    await PendingUser.findOneAndUpdate(
+      { email: normalizedEmail },
+      {
+        full_name: full_name.trim(),
+        email: normalizedEmail,
+        password: hashedPassword,
+        sap: sap.trim(),
+        department: department.trim(),
+        otp,
+        otpExpiry,
+        createdAt: new Date()
+      },
+      { upsert: true, new: true }
+    );
+
+    // Send OTP email
+    const emailResult = await sendOtpEmail({
+      userName: full_name.trim(),
+      userEmail: normalizedEmail,
+      otp,
+      expiresInMinutes: 5
+    });
+
+    if (!emailResult.success) {
+      console.warn('⚠️ OTP email could not be sent:', emailResult.reason || emailResult.error);
+    }
+
+    console.log(`✅ OTP generated for ${normalizedEmail}: ${otp}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Verification code sent to your email',
+      email: normalizedEmail
+    });
+  } catch (err) {
+    console.error('❌ Signup Error:', err.message);
+    res.status(500).json({ success: false, message: 'Registration failed: ' + err.message });
+  }
+});
+
+// Verify OTP (Step 2: Create user account)
+app.post('/api/auth/verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: 'Email and OTP are required' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Find pending user
+    const pendingUser = await PendingUser.findOne({ email: normalizedEmail });
+    if (!pendingUser) {
+      return res.status(404).json({ success: false, message: 'No pending registration found' });
+    }
+
+    // Check OTP match
+    if (pendingUser.otp !== otp.toString()) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP' });
+    }
+
+    // Check OTP expiry
+    if (new Date() > pendingUser.otpExpiry) {
+      await PendingUser.deleteOne({ email: normalizedEmail });
+      return res.status(400).json({ success: false, message: 'OTP has expired. Please signup again' });
+    }
+
+    // Check if user was already created (shouldn't happen but just in case)
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      await PendingUser.deleteOne({ email: normalizedEmail });
+      return res.status(400).json({ success: false, message: 'User already registered' });
+    }
+
+    // Create actual user from pending
     const newUser = new User({
-      full_name,
-      email,
-      password: hashedPassword,
-      role: role.toLowerCase(),
-      sap: sap || null,
-      department: department || null
+      full_name: pendingUser.full_name,
+      email: normalizedEmail,
+      password: pendingUser.password,
+      sap: pendingUser.sap,
+      department: pendingUser.department,
+      role: 'student'
     });
 
     await newUser.save();
 
-    console.log('✅ User created successfully:', newUser._id);
+    // Delete pending user record
+    await PendingUser.deleteOne({ email: normalizedEmail });
+
+    console.log(`✅ User ${normalizedEmail} successfully verified and created`);
 
     // Generate token
     const token = jwt.sign(
@@ -218,33 +322,24 @@ app.post('/api/signup', async (req, res) => {
       { expiresIn: JWT_EXPIRE }
     );
 
-    // Return user without password
     const userResponse = {
       id: newUser._id,
       full_name: newUser.full_name,
       email: newUser.email,
-      role: newUser.role.toLowerCase(),
+      role: newUser.role,
       sap: newUser.sap,
       department: newUser.department
     };
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
-      message: 'User registered successfully',
+      message: 'Email verified and account created successfully',
       token,
       user: userResponse
     });
   } catch (err) {
-    console.error('❌ Signup Error:', err.message);
-    console.error('Error Details:', {
-      name: err.name,
-      code: err.code,
-      message: err.message
-    });
-    res.status(500).json({ 
-      success: false, 
-      message: 'Registration failed: ' + err.message 
-    });
+    console.error('❌ OTP Verification Error:', err.message);
+    res.status(500).json({ success: false, message: 'Verification failed: ' + err.message });
   }
 });
 
