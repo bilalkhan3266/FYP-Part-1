@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
-import axios from "axios";
+import api from "../../services/api";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -28,6 +28,7 @@ import {
   Loader,
   BarChart3,
   CheckSquare,
+  Menu,
 } from "lucide-react";
 import "../../styles/scrollbar.css";
 import "../../styles/print-certificate-a4-clean.css";
@@ -37,6 +38,7 @@ export default function StudentDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [clearanceStatus, setClearanceStatus] = useState(null);
   const [departmentStatuses, setDepartmentStatuses] = useState([]);
@@ -50,13 +52,8 @@ export default function StudentDashboard() {
   // ✅ FETCH CLEARANCE STATUS
   const fetchClearanceStatus = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
-
       console.log("📊 Fetching clearance status...");
-      const response = await axios.get(apiUrl + "/api/clearance-status", {
-        headers: { Authorization: "Bearer " + token }
-      });
+      const response = await api.get("/api/clearance-status");
 
       console.log("✅ Clearance status response:", response.data);
 
@@ -93,12 +90,7 @@ export default function StudentDashboard() {
   // ✅ FETCH UNREAD MESSAGES
   const fetchUnreadMessages = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
-
-      const response = await axios.get(apiUrl + "/api/my-messages", {
-        headers: { Authorization: "Bearer " + token }
-      });
+      const response = await api.get("/api/my-messages");
 
       if (response.data.success && Array.isArray(response.data.data)) {
         const unread = response.data.data.filter(msg => !msg.is_read).length;
@@ -128,12 +120,8 @@ export default function StudentDashboard() {
   const handleDownloadCertificate = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
 
-      const response = await axios.get(apiUrl + "/api/clearance-certificate", {
-        headers: { Authorization: "Bearer " + token }
-      });
+      const response = await api.get("/api/clearance-certificate");
 
       if (response.data.success) {
         // Create a simple certificate HTML and trigger download
@@ -652,9 +640,17 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
+      {/* ── MOBILE MENU TOGGLE ── */}
+      <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-slate-700 shadow-lg border border-slate-600 hover:bg-slate-600 transition-colors duration-200">
+        <Menu size={24} className="text-white" />
+      </button>
+
+      {/* ── MOBILE OVERLAY ── */}
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/50 z-30" />}
+
       {/* Sidebar with Custom Scrollbar */}
-      <aside className="w-[280px] shrink-0 h-screen bg-gradient-to-b from-slate-800 to-slate-900 text-white p-6 shadow-2xl overflow-y-auto border-r border-slate-700 scrollbar-blue">
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-[280px] h-screen lg:h-auto shrink-0 bg-gradient-to-b from-slate-800 to-slate-900 text-white p-6 shadow-2xl overflow-y-auto border-r border-slate-700 scrollbar-blue transition-transform duration-300 z-40 lg:z-auto`}>
         {/* Brand */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-6">
@@ -720,7 +716,7 @@ export default function StudentDashboard() {
       </aside>
 
       {/* Main Content with Custom Scrollbar */}
-      <main className="flex-1 overflow-y-auto p-6 lg:p-8 scrollbar-blue">
+      <main className="flex-1 overflow-y-auto p-6 lg:p-8 scrollbar-blue mt-14 lg:mt-0">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>

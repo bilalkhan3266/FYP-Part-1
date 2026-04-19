@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
+import api, { setAuthToken } from "../services/api";
 import { getApiUrl } from "../config/apiConfig";
 
 const AuthContext = createContext();
@@ -17,6 +17,8 @@ export const AuthProvider = ({ children }) => {
       try {
         setUser(JSON.parse(storedUser));
         setToken(storedToken);
+        // Update api instance with stored token
+        setAuthToken(storedToken);
       } catch (err) {
         console.error("Error parsing stored user:", err);
         localStorage.removeItem("user");
@@ -28,11 +30,7 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (userData) => {
     try {
-      const apiUrl = getApiUrl();
-      const response = await axios.post(
-        apiUrl + "/api/signup",
-        userData
-      );
+      const response = await api.post("/api/signup", userData);
 
       if (response.data.success) {
         // ✅ After signup, DO NOT log in user - let them go to login page
@@ -49,8 +47,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const apiUrl = getApiUrl();
-      const response = await axios.post(apiUrl + "/api/login", {
+      const response = await api.post("/api/login", {
         email,
         password
       });
@@ -59,8 +56,8 @@ export const AuthProvider = ({ children }) => {
         const { token, user } = response.data;
         setToken(token);
         setUser(user);
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
+        // Update api instance with new token
+        setAuthToken(token);
         return { success: true, message: response.data.message };
       } else {
         return {
