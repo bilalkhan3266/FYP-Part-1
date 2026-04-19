@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getApiUrl } from "../../config/apiConfig";
-import axios from "axios";
+import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import {
@@ -13,7 +12,6 @@ import {
 export default function AdminUserManagement() {
   const navigate = useNavigate();
   const { user, logout } = useAuthContext();
-  const apiUrl = getApiUrl();
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,11 +59,7 @@ export default function AdminUserManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-
-      const response = await axios.get(apiUrl + "/api/admin/users", {
-        headers: { Authorization: "Bearer " + token }
-      });
+      const response = await api.get("/api/admin/users");
 
       if (response.data.success) {
         setUsers(response.data.data || []);
@@ -85,9 +79,7 @@ export default function AdminUserManagement() {
   const migrateTimestamps = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(apiUrl + "/api/admin/migrate-timestamps", {}, {
-        headers: { Authorization: "Bearer " + token }
-      });
+      const response = await api.post("/api/admin/migrate-timestamps", {});
 
       if (response.data.success) {
         console.log("✅ Migration successful:", response.data.message);
@@ -147,9 +139,7 @@ export default function AdminUserManagement() {
 
       console.log("📝 Creating new user:", userData);
 
-      const response = await axios.post(apiUrl + "/api/admin/create-user", userData, {
-        headers: { Authorization: "Bearer " + token }
-      });
+      const response = await api.post("/api/admin/create-user", userData);
 
       if (response.data.success) {
         setSuccess("✅ User created successfully!");
@@ -182,11 +172,7 @@ export default function AdminUserManagement() {
 
     try {
       setDeleting(true);
-      const token = localStorage.getItem("token");
-
-      const response = await axios.delete(apiUrl + `/api/admin/users/${userToDelete._id}`, {
-        headers: { Authorization: "Bearer " + token }
-      });
+      const response = await api.delete(`/api/admin/users/${userToDelete._id}`);
 
       if (response.data.success) {
         setSuccess("✅ User deleted successfully!");
