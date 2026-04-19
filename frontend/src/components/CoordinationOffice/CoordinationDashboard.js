@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { 
   ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut,
-  GitCompare, AlertCircle, CheckCircle, Inbox, AlertTriangle
+  GitCompare, AlertCircle, CheckCircle, Inbox, AlertTriangle, Menu
 } from "lucide-react";
 import api from "../../services/api";
 
@@ -12,6 +12,7 @@ export default function CoordinationDashboard() {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("approved");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [allData, setAllData] = useState({ approved: [], rejected: [] });
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -204,9 +205,17 @@ export default function CoordinationDashboard() {
   }, [allData]);
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans text-gray-800 overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-screen bg-gray-50 font-sans text-gray-800 overflow-hidden">
+      {/* ── MOBILE MENU TOGGLE ── */}
+      <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors duration-200">
+        <Menu size={24} className="text-gray-800" />
+      </button>
+
+      {/* ── MOBILE OVERLAY ── */}
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/50 z-30" />}
+
       {/* ── SIDEBAR ── */}
-      <aside className="w-[280px] flex flex-col bg-gradient-to-b from-[#1a0e3e] via-[#2d1b69] to-[#1f1450] text-white py-6 px-4 shadow-xl overflow-y-auto shrink-0">
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-[280px] h-screen lg:h-auto flex flex-col bg-gradient-to-b from-[#1a0e3e] via-[#2d1b69] to-[#1f1450] text-white py-6 px-4 shadow-xl overflow-y-auto shrink-0 transition-transform duration-300 z-40 lg:z-auto`}>
         {/* Logo & Title */}
         <div className="flex items-center gap-3 mb-8 pb-5 border-b border-white/10">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center text-white shadow-lg">
@@ -271,7 +280,7 @@ export default function CoordinationDashboard() {
       </aside>
 
       {/* ── MAIN CONTENT ── */}
-      <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+      <main className="flex-1 overflow-y-auto p-6 lg:p-8 mt-14 lg:mt-0">
         {/* Hero Header Card */}
         <div className="mb-8 rounded-2xl bg-gradient-to-br from-purple-50 to-violet-50 border border-purple-100 shadow-sm p-6">
           <div className="flex items-center justify-between gap-4">

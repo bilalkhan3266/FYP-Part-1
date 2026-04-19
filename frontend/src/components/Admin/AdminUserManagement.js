@@ -441,11 +441,14 @@ export default function AdminUserManagement() {
                 <button
                   type="button"
                   onClick={handleDeleteUser}
-                  disabled={deleting}
+                  disabled={deleting || userToDelete?.role === "student"}
+                  title={userToDelete?.role === "student" ? "Cannot delete student users" : "Delete this user"}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-semibold shadow-lg shadow-red-500/20 hover:from-red-600 hover:to-red-700 hover:shadow-xl active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {deleting ? (
                     <><FiLoader size={16} className="animate-spin" /> Deleting...</>
+                  ) : userToDelete?.role === "student" ? (
+                    <><FiShieldOff size={16} /> Cannot Delete Student</>
                   ) : (
                     <><FiTrash2 size={16} /> Delete User</>
                   )}

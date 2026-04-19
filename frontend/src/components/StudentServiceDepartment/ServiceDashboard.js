@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
-import { ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut, Inbox, AlertCircle, AlertTriangle, RefreshCw } from "lucide-react";
+import { ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut, Inbox, AlertCircle, AlertTriangle, RefreshCw, Menu } from "lucide-react";
 
 export default function ServiceDashboard() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("approved");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [allData, setAllData] = useState({ approved: [], rejected: [] });
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -196,9 +197,17 @@ export default function ServiceDashboard() {
   const displaySap = user?.sap || "N/A";
 
   return (
-    <div className="h-screen bg-gray-50 flex">
+    <div className="flex flex-col lg:flex-row h-screen bg-gray-50 overflow-hidden">
+      {/* ── MOBILE MENU TOGGLE ── */}
+      <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors duration-200">
+        <Menu size={24} className="text-gray-800" />
+      </button>
+
+      {/* ── MOBILE OVERLAY ── */}
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/50 z-30" />}
+
       {/* Sidebar */}
-      <aside className="w-[280px] bg-gradient-to-b from-[#0a3d2e] via-[#1a5c47] to-[#0d4835] text-white p-6 shadow-lg overflow-y-auto">
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-[280px] h-screen lg:h-auto bg-gradient-to-b from-[#0a3d2e] via-[#1a5c47] to-[#0d4835] text-white p-6 shadow-lg overflow-y-auto transition-transform duration-300 z-40 lg:z-auto`}>
         {/* Profile Card */}
         <div className="mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full flex items-center justify-center text-xl font-bold text-white mb-3">
@@ -262,7 +271,7 @@ export default function ServiceDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+      <main className="flex-1 overflow-y-auto p-6 lg:p-8 mt-14 lg:mt-0">
         {/* Hero Header */}
         <div className="mb-8 bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl p-8 border border-emerald-200">
           <div className="flex items-center justify-between">
