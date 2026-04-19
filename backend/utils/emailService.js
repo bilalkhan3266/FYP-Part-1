@@ -149,4 +149,128 @@ const sendClearanceCertificateEmail = async ({
   }
 };
 
-module.exports = { sendClearanceCertificateEmail };
+module.exports = { 
+  sendClearanceCertificateEmail,
+  sendPasswordResetEmail,
+  sendOtpEmail
+};
+
+/**
+ * Send password reset code to user email
+ */
+const sendPasswordResetEmail = async ({
+  userName,
+  userEmail,
+  resetCode,
+  expiresInMinutes = 15
+}) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn("⚠️ Email not configured. Skipping password reset email.");
+    return { success: false, reason: "Email not configured" };
+  }
+
+  const htmlContent = `
+  <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff">
+    <div style="background:linear-gradient(135deg,#1a3a52,#2c3e50);padding:40px 40px;text-align:center;border-radius:12px 12px 0 0">
+      <h1 style="color:#fff;margin:0;font-size:28px;letter-spacing:1px;font-family:'Georgia','serif'">🔐 Password Reset</h1>
+      <p style="color:#d4a574;margin:8px 0 0;font-size:13px;letter-spacing:1px;font-weight:600">RIPHAH CLEARANCE PORTAL</p>
+    </div>
+    <div style="padding:40px 40px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;background:#f8f9fa">
+      <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 24px">
+        Hello ${userName || 'User'},
+      </p>
+      <p style="color:#555;font-size:15px;line-height:1.8;margin:0 0 24px">
+        We received a request to reset your password. Use the code below to create a new password.
+      </p>
+      <div style="background:linear-gradient(135deg,rgba(26,58,82,0.05),rgba(212,165,116,0.1));border:3px solid #d4a574;border-radius:12px;padding:30px;margin:30px 0;text-align:center">
+        <p style="color:#1a3a52;font-size:13px;font-weight:bold;margin:0 0 12px;letter-spacing:1px">YOUR RESET CODE</p>
+        <div style="background:#1a3a52;color:#d4a574;font-family:'Courier New',monospace;font-size:32px;font-weight:bold;padding:20px;border-radius:8px;letter-spacing:3px;margin-bottom:16px;word-spacing:8px">
+          ${resetCode}
+        </div>
+        <p style="color:#666;font-size:13px;margin:0">
+          This code will expire in <strong>${expiresInMinutes} minutes</strong>
+        </p>
+      </div>
+      <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:16px 20px;margin:20px 0">
+        <p style="color:#856404;font-size:13px;margin:0">
+          <strong>⚠️ Security Notice:</strong> If you did not request this, ignore this email.
+        </p>
+      </div>
+    </div>
+  </div>
+  `;
+
+  try {
+    const transporter = createTransporter();
+    const mailOptions = {
+      from: `"Riphah Clearance System" <${process.env.EMAIL_USER}>`,
+      to: userEmail,
+      subject: "🔐 Password Reset Code - Riphah Clearance Portal",
+      html: htmlContent,
+    };
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Password reset email sent to ${userEmail}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err) {
+    console.error(`❌ Failed to send password reset email: ${err.message}`);
+    return { success: false, error: err.message };
+  }
+};
+
+/**
+ * Send OTP verification email for signup
+ */
+const sendOtpEmail = async ({ userName, userEmail, otp, expiresInMinutes = 5 }) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn("⚠️ Email not configured. Skipping OTP email.");
+    return { success: false, reason: "Email not configured" };
+  }
+
+  const htmlContent = `
+  <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff">
+    <div style="background:linear-gradient(135deg,#1a3a52,#2c3e50);padding:40px;text-align:center;border-radius:12px 12px 0 0">
+      <h1 style="color:#fff;margin:0;font-size:28px;letter-spacing:1px;font-family:'Georgia','serif'">🎓 Email Verification</h1>
+      <p style="color:#d4a574;margin:8px 0 0;font-size:13px;letter-spacing:1px;font-weight:600">RIPHAH CLEARANCE PORTAL</p>
+    </div>
+    <div style="padding:40px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;background:#f8f9fa">
+      <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 24px">
+        Hello <strong>${userName || 'Student'}</strong>,
+      </p>
+      <p style="color:#555;font-size:15px;line-height:1.8;margin:0 0 24px">
+        Thank you for signing up! Please use the verification code below to complete your registration.
+      </p>
+      <div style="background:linear-gradient(135deg,rgba(26,58,82,0.05),rgba(212,165,116,0.1));border:3px solid #d4a574;border-radius:12px;padding:30px;margin:30px 0;text-align:center">
+        <p style="color:#1a3a52;font-size:13px;font-weight:bold;margin:0 0 12px;letter-spacing:1px">YOUR VERIFICATION CODE</p>
+        <div style="background:#1a3a52;color:#d4a574;font-family:'Courier New',monospace;font-size:36px;font-weight:bold;padding:20px;border-radius:8px;letter-spacing:8px;margin-bottom:16px">
+          ${otp}
+        </div>
+        <p style="color:#666;font-size:13px;margin:0">
+          This code will expire in <strong>${expiresInMinutes} minutes</strong>
+        </p>
+      </div>
+      <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:16px 20px;margin:20px 0">
+        <p style="color:#856404;font-size:13px;margin:0">
+          <strong>⚠️ Security Notice:</strong> If you did not request this, please ignore this email.
+        </p>
+      </div>
+    </div>
+  </div>
+  `;
+
+  try {
+    const transporter = createTransporter();
+    const mailOptions = {
+      from: `"Riphah Clearance System" <${process.env.EMAIL_USER}>`,
+      to: userEmail,
+      subject: "🔐 Your Verification Code - Riphah Clearance Portal",
+      html: htmlContent,
+    };
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ OTP email sent to ${userEmail}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err) {
+    console.error(`❌ Failed to send OTP email: ${err.message}`);
+    return { success: false, error: err.message };
+  }
+};
+

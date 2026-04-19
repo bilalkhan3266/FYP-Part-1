@@ -24,7 +24,8 @@ const Message = require("./models/Message");
 const AdminMessage = require("./models/AdminMessage");
 const DepartmentStats = require("./models/DepartmentStats");
 const DocumentQRCode = require("./models/DocumentQRCode");
-const { sendClearanceCertificateEmail } = require("./utils/emailService");
+const PendingUser = require("./models/PendingUser");
+const { sendClearanceCertificateEmail, sendOtpEmail, sendPasswordResetEmail } = require("./utils/emailService");
 
 // --------------------
 // Express app
