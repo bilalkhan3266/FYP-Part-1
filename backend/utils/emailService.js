@@ -149,12 +149,6 @@ const sendClearanceCertificateEmail = async ({
   }
 };
 
-module.exports = { 
-  sendClearanceCertificateEmail,
-  sendPasswordResetEmail,
-  sendOtpEmail
-};
-
 /**
  * Send password reset code to user email
  */
@@ -272,5 +266,11 @@ const sendOtpEmail = async ({ userName, userEmail, otp, expiresInMinutes = 5 }) 
     console.error(`❌ Failed to send OTP email: ${err.message}`);
     return { success: false, error: err.message };
   }
+};
+
+module.exports = { 
+  sendClearanceCertificateEmail,
+  sendPasswordResetEmail,
+  sendOtpEmail
 };
 
