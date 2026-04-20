@@ -1,15 +1,44 @@
 const nodemailer = require("nodemailer");
 
-// Create reusable transporter
+// Persistent transporter with connection pooling
+let transporter = null;
+
 const createTransporter = () => {
-  return nodemailer.createTransport({
+  // Return cached transporter if available
+  if (transporter) {
+    return transporter;
+  }
+
+  // Create new transporter with optimized settings
+  transporter = nodemailer.createTransport({
     service: process.env.EMAIL_SERVICE || "gmail",
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
+    // Performance optimizations
+    pool: {
+      maxConnections: 5,           // Connection pool size
+      maxMessages: 100,            // Max messages per connection
+      rateDelta: 500,              // ms between messages
+      rateLimit: true              // Enable rate limiting
+    },
+    // Timeouts
+    connectionTimeout: 5000,       // 5 seconds to connect
+    socketTimeout: 5000,           // 5 seconds for socket operations
+    // Connection settings
+    logger: false,                 // Disable verbose logging
+    debug: false                   // Disable debug mode
   });
+
+  return transporter;
 };
+
+// Initialize transporter on module load
+if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+  createTransporter();
+  console.log("✅ Email transporter initialized at startup");
+}
 
 /**
  * Send clearance certificate email to student
@@ -260,7 +289,6 @@ const sendOtpEmail = async ({ userName, userEmail, otp, expiresInMinutes = 5 }) 
   `;
 
   try {
-    console.log(`📨 Creating email transporter for: ${process.env.EMAIL_SERVICE}`);
     const transporter = createTransporter();
     
     const mailOptions = {
@@ -268,10 +296,24 @@ const sendOtpEmail = async ({ userName, userEmail, otp, expiresInMinutes = 5 }) 
       to: userEmail,
       subject: "🔐 Your Verification Code - Riphah Clearance Portal",
       html: htmlContent,
+      text: `Riphah Clearance Portal - Email Verification\n\nYour OTP: ${otp}\n\nThis code will expire in ${expiresInMinutes} minutes.\n\nIf you did not request this, please ignore this email.`,
+      // Headers for better deliverability
+      headers: {
+        'X-Priority': '3',
+        'X-Mailer': 'Riphah-Clearance-System/1.0',
+        'X-MSMail-Priority': 'Normal'
+      }
     };
     
-    console.log(`📬 Sending email via ${process.env.EMAIL_SERVICE}...`);
-    const info = await transporter.sendMail(mailOptions);
+    console.log(`📬 Sending OTP email to ${userEmail}...`);
+    const sendPromise = transporter.sendMail(mailOptions);
+    
+    // 10-second timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Email send timeout")), 10000)
+    );
+    
+    const info = await Promise.race([sendPromise, timeoutPromise]);
     
     console.log(`✅ OTP email successfully sent to ${userEmail} | Message ID: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
