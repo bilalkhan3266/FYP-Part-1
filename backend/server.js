@@ -151,6 +151,7 @@ app.options('*', cors());
 // Specific OPTIONS handlers
 app.options('/api/signup', cors());
 app.options('/api/auth/verify-otp', cors());
+app.options('/api/auth/resend-otp', cors());
 app.options('/api/login', cors());
 app.options('/api/clearance-requests', cors());
 app.options('/api/health', cors());
@@ -344,6 +345,58 @@ app.post('/api/auth/verify-otp', async (req, res) => {
   } catch (err) {
     console.error('❌ OTP Verification Error:', err.message);
     res.status(500).json({ success: false, message: 'Verification failed: ' + err.message });
+  }
+});
+
+// Resend OTP
+app.post('/api/auth/resend-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const pendingUser = await PendingUser.findOne({ email: normalizedEmail });
+
+    if (!pendingUser) {
+      return res.status(400).json({ success: false, message: 'No pending signup found. Please signup again.' });
+    }
+
+    // Generate new OTP
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
+
+    pendingUser.otp = otp;
+    pendingUser.otpExpiry = otpExpiry;
+    await pendingUser.save();
+
+    // Send email (asynchronously)
+    sendOtpEmail({
+      userName: pendingUser.full_name,
+      userEmail: normalizedEmail,
+      otp,
+      expiresInMinutes: 5
+    }).then(result => {
+      if (result.success) {
+        console.log(`✅ Resend OTP email successfully sent to ${normalizedEmail}`);
+      } else {
+        console.warn(`⚠️ Resend OTP email failed: ${result.reason || result.error}`);
+      }
+    }).catch(err => {
+      console.error(`❌ Resend OTP email error:`, err.message);
+    });
+
+    console.log(`✅ OTP resent for ${normalizedEmail}: ${otp}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'New verification code sent to your email'
+    });
+  } catch (err) {
+    console.error('❌ Resend OTP Error:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to resend OTP' });
   }
 });
 
