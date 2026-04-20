@@ -464,6 +464,9 @@ const sendOtpEmail = async ({ userName, userEmail, otp, expiresInMinutes = 5 }) 
     // All retries failed
     console.error(`❌ FAILED to send OTP email to ${userEmail} after 3 attempts`);
     console.error(`   Error: ${lastError.message}`);
+    return { success: false, error: lastError.message };
+  } catch (err) {
+    console.error(`❌ Error in OTP email service for ${userEmail}:`, err.message);
     return { success: false, error: err.message };
   }
 };
