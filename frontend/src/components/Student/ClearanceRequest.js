@@ -163,6 +163,26 @@ export default function ClearanceRequest() {
     fetchClearanceHistory();
   }, []);
 
+  // ✅ AUTO-REDIRECT if student already has active request (Pending or In Progress)
+  useEffect(() => {
+    if (historyLoading) return; // Wait for history to load
+
+    if (clearanceHistory.length > 0) {
+      const lastRequest = clearanceHistory[0];
+      
+      // If they have an active request, redirect to Dashboard
+      if (lastRequest.status === 'Pending' || lastRequest.status === 'In Progress') {
+        console.log('ℹ️ Student has active request - redirecting to Dashboard');
+        setTimeout(() => {
+          navigate('/student-clearance-status', { 
+            state: { message: 'You have an active clearance request. Check your progress below.' }
+          });
+        }, 500);
+        return;
+      }
+    }
+  }, [historyLoading, clearanceHistory, navigate]);
+
   // Auto-hide alerts after 3 seconds when all departments are approved
   useEffect(() => {
     if (allDepartmentsApproved && showAlerts) {
@@ -285,7 +305,24 @@ export default function ClearanceRequest() {
       console.error("Error:", err);
       console.error("Error response:", err.response?.data);
       
-      if (err.response?.status === 409) {
+      // Handle specific error status codes
+      if (err.response?.status === 400) {
+        const errorMsg = err.response?.data?.message || "❌ Invalid input - please check your details";
+        console.error("❌ 400 Bad Request:", errorMsg);
+        setError(errorMsg);
+        
+        // If it's "already have a request", redirect to Dashboard
+        if (errorMsg.includes('already have') || errorMsg.includes('in progress')) {
+          console.log('ℹ️ Active request detected - redirecting to Dashboard');
+          setTimeout(() => {
+            navigate("/student-clearance-status", {
+              state: { message: 'You have an active clearance request. Check your progress below.' }
+            });
+          }, 1500);
+        }
+      } else if (err.response?.status === 404) {
+        setError(err.response?.data?.message || "❌ The record is not found in the system");
+      } else if (err.response?.status === 409) {
         setError(`⚠️ ${err.response?.data?.message || "You already have an active request"}`);
         setCanSubmitNew(false);
       } else if (err.response?.status === 400) {
@@ -513,6 +550,23 @@ export default function ClearanceRequest() {
         )}
 
         {/* Form */}
+        {clearanceHistory.length > 0 && (clearanceHistory[0].status === 'Pending' || clearanceHistory[0].status === 'In Progress') ? (
+          <div className="max-w-4xl bg-blue-500/10 border-2 border-blue-500 rounded-2xl p-8 text-center">
+            <h2 className="text-2xl font-bold text-blue-300 mb-4">📋 Active Request in Progress</h2>
+            <p className="text-blue-200 mb-6">
+              You already have a clearance request that is being processed. You cannot submit another request at this time.
+            </p>
+            <p className="text-blue-100 mb-8">
+              <strong>Current Status:</strong> <span className="text-yellow-300">{clearanceHistory[0].status}</span>
+            </p>
+            <button
+              onClick={() => navigate('/student-clearance-status')}
+              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+            >
+              📊 View Progress & Department Status
+            </button>
+          </div>
+        ) : (
         <div className="max-w-4xl bg-slate-800 rounded-2xl border border-slate-700 p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Personal Information Section */}
@@ -742,6 +796,7 @@ export default function ClearanceRequest() {
             </div>
           </form>
         </div>
+        )}
       </main>
     </div>
   );
