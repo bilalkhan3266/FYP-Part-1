@@ -2567,6 +2567,68 @@ app.get('/api/staff/sent-messages', verifyToken, async (req, res) => {
   }
 });
 
+// ========== GET STUDENT SENT MESSAGES (GET /api/student/sent-messages) ==========
+// Students can view messages they have sent to departments
+app.get('/api/student/sent-messages', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    if (userRole !== 'student') {
+      return res.status(403).json({
+        success: false,
+        message: '❌ Only students can view student sent messages'
+      });
+    }
+
+    // Convert userId string to ObjectId for proper matching
+    let objectId;
+    try {
+      const mongoose = require('mongoose');
+      objectId = mongoose.Types.ObjectId.isValid(userId) 
+        ? new mongoose.Types.ObjectId(userId) 
+        : userId;
+      console.log('📤 Student Sent Messages - Converted ObjectId:', objectId);
+    } catch (conversionErr) {
+      console.warn('⚠️ ObjectId conversion issue:', conversionErr.message);
+      objectId = userId;
+    }
+
+    // Query for messages where sender_id matches the student AND sender_role is student
+    const sentMessages = await Message.find({
+      sender_id: objectId,
+      sender_role: 'student'
+    })
+    .sort({ createdAt: -1 })
+    .limit(100)
+    .lean()
+    .exec();
+
+    console.log(`✅ Found ${sentMessages.length} sent messages for student ${req.user.sap}`);
+    
+    if (sentMessages.length > 0) {
+      console.log('  - Sample sent messages:');
+      sentMessages.slice(0, 3).forEach(msg => {
+        console.log(`    • To: ${msg.recipient_department}, Subject: ${msg.subject}, At: ${msg.createdAt}`);
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: sentMessages,
+      count: sentMessages.length
+    });
+  } catch (err) {
+    console.error('❌ Student Sent Messages Error:', err.message);
+    console.error('  Stack:', err.stack);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to fetch sent messages: ' + err.message,
+      error: err.message
+    });
+  }
+});
+
 // ========== GET ADMIN BROADCASTS (GET /api/admin/messages) ==========
 // Staff can view admin broadcasts sent to their department/role
 app.get('/api/admin/messages', verifyToken, async (req, res) => {
