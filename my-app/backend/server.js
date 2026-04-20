@@ -308,17 +308,15 @@ app.post('/api/signup', async (req, res) => {
       { upsert: true, new: true }
     );
 
-    // Send OTP email
-    const emailResult = await sendOtpEmail({
+    // Send OTP email (asynchronously to avoid blocking response)
+    sendOtpEmail({
       userName: full_name.trim(),
       userEmail: normalizedEmail,
       otp,
       expiresInMinutes: 5
+    }).catch(err => {
+      console.warn('⚠️ OTP email could not be sent:', err.message);
     });
-
-    if (!emailResult.success) {
-      console.warn('⚠️ OTP email could not be sent:', emailResult.reason || emailResult.error);
-    }
 
     console.log(`✅ OTP generated for ${normalizedEmail}: ${otp}`);
 
