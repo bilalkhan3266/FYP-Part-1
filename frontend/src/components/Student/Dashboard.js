@@ -49,12 +49,31 @@ export default function StudentDashboard() {
   const displaySap = user?.sap || "SAP ID";
   const displayDept = user?.department || "Department";
 
-  // ✅ FETCH CLEARANCE STATUS
+  // ✅ FETCH CLEARANCE STATUS - ONLY if student has SUBMITTED a request
   const fetchClearanceStatus = useCallback(async () => {
     try {
       console.log("📊 Fetching clearance status...");
-      const response = await api.get("/api/clearance-status");
+      
+      // First check if student has any clearance request
+      const requestsResponse = await api.get("/api/my-clearance-requests");
+      console.log("📋 Student requests:", requestsResponse.data);
+      
+      // If no requests, don't fetch status (avoid showing false "Clearance Completed")
+      if (!requestsResponse.data.success || !Array.isArray(requestsResponse.data.data) || requestsResponse.data.data.length === 0) {
+        console.log("⚠️ Student has not submitted any clearance request yet");
+        setClearanceStatus({
+          total: 0,
+          cleared: 0,
+          pending: 0,
+          rejected: 0,
+          progressPercentage: 0
+        });
+        setDepartmentStatuses([]);
+        return;
+      }
 
+      // Student has submitted - now fetch status
+      const response = await api.get("/api/clearance-status");
       console.log("✅ Clearance status response:", response.data);
 
       if (response.data.success && response.data.summary) {

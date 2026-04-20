@@ -765,17 +765,26 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
       });
     }
 
-    if (!registration_no || registration_no.toString().trim() === '') {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Registration number is required' 
-      });
-    }
+    // ✅ Registration number is now OPTIONAL (user deleted this field)
+    const regNoFormatted = registration_no ? registration_no.toString().trim().toUpperCase() : null;
 
     if (!father_name || father_name.toString().trim() === '') {
       return res.status(400).json({ 
         success: false, 
         message: 'Father name is required' 
+      });
+    }
+
+    // ✅ Check if student has already submitted a clearance request
+    const existingRequest = await ClearanceRequest.findOne({ 
+      student_id: req.user.id,
+      status: { $in: ['Pending', 'In Progress', 'Approved', 'Completed'] }
+    });
+
+    if (existingRequest && existingRequest.status !== 'Rejected') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'You already have a clearance request in progress. Cannot submit new request.' 
       });
     }
 
