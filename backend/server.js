@@ -244,8 +244,14 @@ app.post('/api/signup', async (req, res) => {
       userEmail: normalizedEmail,
       otp,
       expiresInMinutes: 5
+    }).then(result => {
+      if (result.success) {
+        console.log(`✅ OTP email successfully sent to ${normalizedEmail}`);
+      } else {
+        console.warn(`⚠️ OTP email failed: ${result.reason || result.error}`);
+      }
     }).catch(err => {
-      console.warn('⚠️ OTP email could not be sent:', err.message);
+      console.error(`❌ OTP email error for ${normalizedEmail}:`, err.message);
     });
 
     console.log(`✅ OTP generated for ${normalizedEmail}: ${otp}`);
@@ -3675,6 +3681,14 @@ app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`📦 Database: MongoDB`);
+  
+  // Email configuration status
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    console.log(`📧 Email: ${process.env.EMAIL_SERVICE || 'gmail'} (${process.env.EMAIL_USER})`);
+  } else {
+    console.warn('⚠️  EMAIL_USER or EMAIL_PASS not configured - OTP emails will not be sent');
+  }
+  
   console.log('='.repeat(60) + '\n');
 });
 

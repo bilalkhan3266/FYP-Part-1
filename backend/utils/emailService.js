@@ -215,10 +215,18 @@ const sendPasswordResetEmail = async ({
  * Send OTP verification email for signup
  */
 const sendOtpEmail = async ({ userName, userEmail, otp, expiresInMinutes = 5 }) => {
+  // Validate email configuration
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn("⚠️ Email not configured. Skipping OTP email.");
-    return { success: false, reason: "Email not configured" };
+    console.error("❌ EMAIL_USER or EMAIL_PASS not configured in environment variables");
+    return { success: false, reason: "Email credentials not configured" };
   }
+
+  if (!userEmail) {
+    console.error("❌ User email address is missing");
+    return { success: false, reason: "User email is required" };
+  }
+
+  console.log(`📧 Preparing to send OTP email to: ${userEmail}`);
 
   const htmlContent = `
   <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff">
@@ -252,18 +260,25 @@ const sendOtpEmail = async ({ userName, userEmail, otp, expiresInMinutes = 5 }) 
   `;
 
   try {
+    console.log(`📨 Creating email transporter for: ${process.env.EMAIL_SERVICE}`);
     const transporter = createTransporter();
+    
     const mailOptions = {
       from: `"Riphah Clearance System" <${process.env.EMAIL_USER}>`,
       to: userEmail,
       subject: "🔐 Your Verification Code - Riphah Clearance Portal",
       html: htmlContent,
     };
+    
+    console.log(`📬 Sending email via ${process.env.EMAIL_SERVICE}...`);
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ OTP email sent to ${userEmail}`);
+    
+    console.log(`✅ OTP email successfully sent to ${userEmail} | Message ID: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (err) {
-    console.error(`❌ Failed to send OTP email: ${err.message}`);
+    console.error(`❌ FAILED to send OTP email to ${userEmail}`);
+    console.error(`   Error: ${err.message}`);
+    console.error(`   Full error:`, err);
     return { success: false, error: err.message };
   }
 };

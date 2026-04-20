@@ -363,9 +363,9 @@ const sendOtpEmail = async ({ userName, userEmail, otp, expiresInMinutes = 5 }) 
   `;
 
   try {
+    console.log(`📨 Creating email transporter for: ${process.env.EMAIL_SERVICE}`);
     const transporter = createTransporter();
-    await transporter.verify();
-
+    
     const mailOptions = {
       from: `"Riphah Clearance System" <${process.env.EMAIL_USER}>`,
       to: userEmail,
@@ -373,11 +373,15 @@ const sendOtpEmail = async ({ userName, userEmail, otp, expiresInMinutes = 5 }) 
       html: htmlContent,
     };
 
+    console.log(`📬 Sending OTP email via ${process.env.EMAIL_SERVICE} to ${userEmail}...`);
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ OTP email sent to ${userEmail} | MessageID: ${info.messageId}`);
+    
+    console.log(`✅ OTP email successfully sent to ${userEmail} | Message ID: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (err) {
-    console.error(`❌ Failed to send OTP email: ${err.message}`);
+    console.error(`❌ FAILED to send OTP email to ${userEmail}`);
+    console.error(`   Error: ${err.message}`);
+    console.error(`   Full error:`, err);
     return { success: false, error: err.message };
   }
 };
