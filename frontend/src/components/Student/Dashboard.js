@@ -49,31 +49,12 @@ export default function StudentDashboard() {
   const displaySap = user?.sap || "SAP ID";
   const displayDept = user?.department || "Department";
 
-  // ✅ FETCH CLEARANCE STATUS - ONLY if student has SUBMITTED a request
+  // ✅ FETCH CLEARANCE STATUS
   const fetchClearanceStatus = useCallback(async () => {
     try {
       console.log("📊 Fetching clearance status...");
-      
-      // First check if student has any clearance request
-      const requestsResponse = await api.get("/api/my-clearance-requests");
-      console.log("📋 Student requests:", requestsResponse.data);
-      
-      // If no requests, don't fetch status (avoid showing false "Clearance Completed")
-      if (!requestsResponse.data.success || !Array.isArray(requestsResponse.data.data) || requestsResponse.data.data.length === 0) {
-        console.log("⚠️ Student has not submitted any clearance request yet");
-        setClearanceStatus({
-          total: 0,
-          cleared: 0,
-          pending: 0,
-          rejected: 0,
-          progressPercentage: 0
-        });
-        setDepartmentStatuses([]);
-        return;
-      }
-
-      // Student has submitted - now fetch status
       const response = await api.get("/api/clearance-status");
+
       console.log("✅ Clearance status response:", response.data);
 
       if (response.data.success && response.data.summary) {
@@ -867,7 +848,7 @@ export default function StudentDashboard() {
         {/* Certificate & Resubmit Section */}
         {clearanceStatus && (clearanceStatus.cleared === clearanceStatus.total || clearanceStatus.rejected > 0) && (
           <div className="mb-8">
-            {clearanceStatus.cleared === clearanceStatus.total && (
+            {clearanceStatus.cleared === clearanceStatus.total && clearanceStatus.total > 0 && (
               <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 rounded-xl p-8 text-center">
                 <div className="flex justify-center mb-4">
                   <div className="p-4 bg-green-500/30 rounded-full">
