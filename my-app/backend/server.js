@@ -955,17 +955,43 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
     const { student_name, sapid, father_name, program, semester, degree_status } = req.body;
 
     console.log('\n📝 CLEARANCE REQUEST RECEIVED');
+    console.log('  Full body:', JSON.stringify(req.body, null, 2));
     console.log('  Student:', student_name);
     console.log('  SAP ID:', sapid);
+    console.log('  Father Name:', father_name);
+    console.log('  Program:', program);
+    console.log('  Semester:', semester);
+    console.log('  Degree Status:', degree_status);
     console.log('  User ID:', req.user.id);
 
-    // ==================== VALIDATION ====================
-    if (!student_name || student_name.toString().trim() === '') {
-      return res.status(400).json({ success: false, message: 'Student name is required' });
+    // ==================== VALIDATION WITH SAFE CHECKS ====================
+    // Check for undefined fields FIRST
+    if (typeof student_name === 'undefined' || student_name === null) {
+      return res.status(400).json({ success: false, message: 'Student name is required (received undefined)' });
+    }
+    if (typeof sapid === 'undefined' || sapid === null) {
+      return res.status(400).json({ success: false, message: 'SAP ID is required (received undefined)' });
+    }
+    if (typeof father_name === 'undefined' || father_name === null) {
+      return res.status(400).json({ success: false, message: 'Father name is required (received undefined)' });
+    }
+    if (typeof program === 'undefined' || program === null) {
+      return res.status(400).json({ success: false, message: 'Program is required (received undefined)' });
+    }
+    if (typeof semester === 'undefined' || semester === null) {
+      return res.status(400).json({ success: false, message: 'Semester is required (received undefined)' });
+    }
+    if (typeof degree_status === 'undefined' || degree_status === null) {
+      return res.status(400).json({ success: false, message: 'Degree status is required (received undefined)' });
     }
 
-    if (!sapid || sapid.toString().trim() === '') {
-      return res.status(400).json({ success: false, message: 'SAP ID is required' });
+    // Now safe to call .toString()
+    if (!student_name.toString().trim()) {
+      return res.status(400).json({ success: false, message: 'Student name cannot be empty' });
+    }
+
+    if (!sapid.toString().trim()) {
+      return res.status(400).json({ success: false, message: 'SAP ID cannot be empty' });
     }
 
     // ✅ CHECK IF SAPID EXISTS IN DEPARTMENT ISSUES (NEW VALIDATION)
@@ -993,16 +1019,16 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
     console.log(`   Department: ${issueRecord.departmentName}`);
     console.log(`   Status: ${issueRecord.status}\n`);
 
-    if (!father_name || father_name.toString().trim() === '') {
-      return res.status(400).json({ success: false, message: 'Father name is required' });
+    if (!father_name.toString().trim()) {
+      return res.status(400).json({ success: false, message: 'Father name cannot be empty' });
     }
 
-    if (!program || program.toString().trim() === '') {
-      return res.status(400).json({ success: false, message: 'Program is required' });
+    if (!program.toString().trim()) {
+      return res.status(400).json({ success: false, message: 'Program cannot be empty' });
     }
 
-    if (!semester || semester.toString().trim() === '') {
-      return res.status(400).json({ success: false, message: 'Semester is required' });
+    if (!semester.toString().trim()) {
+      return res.status(400).json({ success: false, message: 'Semester cannot be empty' });
     }
 
     const semesterNum = parseInt(semester.toString().trim());
@@ -1013,8 +1039,8 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
       });
     }
 
-    if (!degree_status || degree_status.toString().trim() === '') {
-      return res.status(400).json({ success: false, message: 'Degree status is required' });
+    if (!degree_status.toString().trim()) {
+      return res.status(400).json({ success: false, message: 'Degree status cannot be empty' });
     }
 
     // ==================== SUBMISSION CONTROL ====================

@@ -741,6 +741,7 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
     const { student_name, sapid, registration_no, father_name, program, semester, degree_status, department } = req.body;
 
     console.log('📝 Clearance Request Received:');
+    console.log('  Full body:', JSON.stringify(req.body, null, 2));
     console.log('  - Student Name:', student_name);
     console.log('  - SAP ID:', sapid);
     console.log('  - Registration No:', registration_no);
@@ -750,18 +751,61 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
     console.log('  - Degree Status:', degree_status);
     console.log('  - User ID:', req.user.id);
 
-    // Validation with specific error messages
-    if (!student_name || student_name.toString().trim() === '') {
+    // Validation with specific error messages - CHECK FOR UNDEFINED FIRST
+    if (typeof student_name === 'undefined' || student_name === null) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Student name is required' 
+        message: 'Student name is required (received undefined)' 
       });
     }
 
-    if (!sapid || sapid.toString().trim() === '') {
+    if (typeof sapid === 'undefined' || sapid === null) {
       return res.status(400).json({ 
         success: false, 
-        message: 'SAP ID is required' 
+        message: 'SAP ID is required (received undefined)' 
+      });
+    }
+
+    if (typeof father_name === 'undefined' || father_name === null) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Father name is required (received undefined)' 
+      });
+    }
+
+    if (typeof program === 'undefined' || program === null) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Program is required (received undefined)' 
+      });
+    }
+
+    if (typeof semester === 'undefined' || semester === null) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Semester is required (received undefined)' 
+      });
+    }
+
+    if (typeof degree_status === 'undefined' || degree_status === null) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Degree status is required (received undefined)' 
+      });
+    }
+
+    // Now safe to use .toString()
+    if (!student_name.toString().trim()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Student name cannot be empty' 
+      });
+    }
+
+    if (!sapid.toString().trim()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'SAP ID cannot be empty' 
       });
     }
 
