@@ -2,42 +2,65 @@ const nodemailer = require("nodemailer");
 
 // Persistent transporter with connection pooling
 let transporter = null;
+let lastTransporterReset = 0;
 
 const createTransporter = () => {
-  // Return cached transporter if available
-  if (transporter) {
+  // Reset transporter every 30 minutes to clear stale connections
+  const now = Date.now();
+  const thirtyMinutes = 30 * 60 * 1000;
+  
+  if (transporter && (now - lastTransporterReset) < thirtyMinutes) {
     return transporter;
   }
 
-  // Create new transporter with optimized settings
+  // Close old transporter if exists
+  if (transporter) {
+    try {
+      transporter.close();
+    } catch (e) {
+      // Ignore errors
+    }
+  }
+
+  // Create new transporter with OPTIMIZED settings for Railway
   transporter = nodemailer.createTransport({
     service: process.env.EMAIL_SERVICE || "gmail",
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-    // Performance optimizations
+    // PRODUCTION-GRADE SETTINGS FOR CLOUD PLATFORMS (Railway)
     pool: {
-      maxConnections: 5,           // Connection pool size
-      maxMessages: 100,            // Max messages per connection
-      rateDelta: 500,              // ms between messages
+      maxConnections: 3,           // Reduced to 3 for stability
+      maxMessages: 50,             // Max 50 messages per connection
+      rateDelta: 1000,             // 1 second between messages (safer)
       rateLimit: true              // Enable rate limiting
     },
-    // Timeouts
-    connectionTimeout: 5000,       // 5 seconds to connect
-    socketTimeout: 5000,           // 5 seconds for socket operations
+    // INCREASED TIMEOUTS FOR CLOUD PLATFORMS
+    connectionTimeout: 30000,      // 30 seconds to connect (was 5)
+    socketTimeout: 30000,          // 30 seconds for socket operations (was 5)
+    greetingTimeout: 30000,        // 30 seconds for greeting
+    
     // Connection settings
     logger: false,                 // Disable verbose logging
-    debug: false                   // Disable debug mode
+    debug: false,                  // Disable debug mode
+    
+    // TLS/SSL settings for better reliability
+    secure: true,                  // Use TLS
+    requireTLS: false,             // But don't require it
+    tls: {
+      rejectUnauthorized: false   // For cloud platforms with proxy
+    }
   });
 
+  lastTransporterReset = now;
   return transporter;
 };
 
 // Initialize transporter on module load
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
   createTransporter();
-  console.log("✅ Email transporter initialized at startup");
+  console.log("✅ Email transporter initialized with 30-second timeout for cloud platforms");
 }
 
 /**
@@ -409,21 +432,38 @@ const sendOtpEmail = async ({ userName, userEmail, otp, expiresInMinutes = 5 }) 
     };
 
     console.log(`📬 Sending OTP email to ${userEmail}...`);
-    const sendPromise = transporter.sendMail(mailOptions);
     
-    // 10-second timeout to prevent hanging
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Email send timeout")), 10000)
-    );
+    // Retry logic with exponential backoff
+    let lastError;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const sendPromise = transporter.sendMail(mailOptions);
+        
+        // 30-second timeout (increased for Railway)
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Email send timeout")), 30000)
+        );
+        
+        const info = await Promise.race([sendPromise, timeoutPromise]);
+        
+        console.log(`✅ OTP email successfully sent to ${userEmail} | Message ID: ${info.messageId}`);
+        return { success: true, messageId: info.messageId };
+      } catch (err) {
+        lastError = err;
+        console.warn(`⚠️ Attempt ${attempt}/3 failed for ${userEmail}: ${err.message}`);
+        
+        if (attempt < 3) {
+          // Wait before retry: 2s, then 4s
+          const waitTime = Math.pow(2, attempt) * 1000;
+          console.log(`⏳ Retrying in ${waitTime}ms...`);
+          await new Promise(r => setTimeout(r, waitTime));
+        }
+      }
+    }
     
-    const info = await Promise.race([sendPromise, timeoutPromise]);
-    
-    console.log(`✅ OTP email successfully sent to ${userEmail} | Message ID: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
-  } catch (err) {
-    console.error(`❌ FAILED to send OTP email to ${userEmail}`);
-    console.error(`   Error: ${err.message}`);
-    console.error(`   Full error:`, err);
+    // All retries failed
+    console.error(`❌ FAILED to send OTP email to ${userEmail} after 3 attempts`);
+    console.error(`   Error: ${lastError.message}`);
     return { success: false, error: err.message };
   }
 };
