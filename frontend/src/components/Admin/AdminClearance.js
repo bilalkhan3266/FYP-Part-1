@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { getApiUrl } from "../../config/apiConfig";
-import axios from "axios";
+import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { Menu } from "lucide-react";
 import {
   FiGrid, FiUsers, FiMessageSquare, FiEdit, FiLogOut, FiShield, FiClipboard
 } from "react-icons/fi";
@@ -11,8 +11,8 @@ import "./AdminDashboard.css";
 export default function AdminClearance() {
   const navigate = useNavigate();
   const { user, logout } = useAuthContext();
-  const apiUrl = getApiUrl();
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [clearanceRequests, setClearanceRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -33,10 +33,7 @@ export default function AdminClearance() {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get(apiUrl + "/api/admin/clearance-requests", {
-          headers: { Authorization: "Bearer " + token }
-        });
+        const response = await api.get("/api/admin/clearance-requests");
 
         if (response.data.success) {
           setClearanceRequests(response.data.data || []);
@@ -53,7 +50,7 @@ export default function AdminClearance() {
     };
 
     fetchRequests();
-  }, [apiUrl]);
+  }, []);
 
   // Filter requests
   const filteredRequests = clearanceRequests.filter(req => {
@@ -82,8 +79,24 @@ export default function AdminClearance() {
 
   return (
     <div className="admin-dashboard">
+      {/* Mobile Hamburger Button */}
+      <button 
+        className="admin-hamburger"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+      >
+        <Menu size={24} />
+      </button>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="admin-mobile-overlay open"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="admin-sidebar">
+      <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="admin-logo">
           <div className="logo-icon"><FiShield size={32} /></div>
           <h1>Admin Panel</h1>

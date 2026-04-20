@@ -758,7 +758,7 @@ router.post('/create-user', verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
-// DELETE USER (admin only, cannot delete students)
+// DELETE USER (admin only)
 router.delete('/users/:userId', verifyToken, verifyAdmin, async (req, res) => {
   try {
     const { userId } = req.params;
@@ -769,12 +769,7 @@ router.delete('/users/:userId', verifyToken, verifyAdmin, async (req, res) => {
       return res.status(404).json({ success: false, message: '❌ User not found' });
     }
 
-    // Prevent deletion of students
-    if (user.role === 'student') {
-      return res.status(400).json({ success: false, message: '❌ Cannot delete student users' });
-    }
-
-    // Delete user
+    // Delete user (including students)
     await User.findByIdAndDelete(userId);
 
     console.log(`🗑️ Admin - Deleted user: ${user.email} (${user.role})`);

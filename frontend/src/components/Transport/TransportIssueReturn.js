@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
-import { ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut, Inbox, AlertCircle, AlertTriangle } from "lucide-react";
+import { ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut, Inbox, AlertCircle, AlertTriangle, Menu } from "lucide-react";
 import DepartmentIssueReturn from "../shared/DepartmentIssueReturn";
 
 export default function TransportIssueReturn() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const displayName = user?.full_name || "Transport Staff";
   const displaySap = user?.sap || "N/A";
 
@@ -18,8 +19,16 @@ export default function TransportIssueReturn() {
 
   return (
     <div className="h-screen bg-gray-50 flex">
+      {/* Mobile Hamburger */}
+      <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+        <Menu size={24} className="text-gray-800" />
+      </button>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/50 z-30" />}
+
       {/* Sidebar */}
-      <aside className="w-[280px] bg-gradient-to-b from-[#0d3d35] via-[#1a6959] to-[#0f4a3f] text-white p-6 shadow-lg overflow-y-auto">
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-[280px] h-screen lg:h-auto bg-gradient-to-b from-[#0d3d35] via-[#1a6959] to-[#0f4a3f] text-white p-6 shadow-lg overflow-y-auto transition-transform duration-300 z-40 lg:z-auto`}>
         {/* Profile Card */}
         <div className="mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-cyan-600 rounded-full flex items-center justify-center text-xl font-bold text-white mb-3">

@@ -3,19 +3,20 @@ import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { 
-  LayoutDashboard, MessageSquare, UserPen, LogOut, Send, Inbox, 
+  LayoutDashboard, MessageSquare, UserPen, LogOut, Send, Inbox, Menu,
   AlertTriangle, CheckCircle, History, Megaphone, Reply, X, 
   Paperclip, ThumbsDown, AlertCircle, Search, Filter, Download,
   Clock, User, Phone, Mail, Eye, EyeOff, Plus, Archive, Trash2,
   Star, Pin, Share2
 } from "lucide-react";
-import axios from "axios";
+import api from "../../services/api";
 
 export default function LibraryMessages() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
 
   // State
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("received");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -62,9 +63,7 @@ export default function LibraryMessages() {
       const token = localStorage.getItem("token");
       const apiUrl = getApiUrl();
 
-      const response = await axios.get(apiUrl + "/api/my-messages", {
-        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }
-      });
+      const response = await api.get("/api/my-messages");
 
       if (response.data.success) {
         const studentMessages = response.data.data.filter(msg => msg.sender_role === 'student');
@@ -86,9 +85,7 @@ export default function LibraryMessages() {
       const token = localStorage.getItem("token");
       const apiUrl = getApiUrl();
 
-      const response = await axios.get(apiUrl + "/api/staff/sent-messages", {
-        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }
-      });
+      const response = await api.get("/api/staff/sent-messages");
 
       if (response.data.success) {
         setSentMessages(response.data.data || []);
@@ -109,9 +106,7 @@ export default function LibraryMessages() {
       const token = localStorage.getItem("token");
       const apiUrl = getApiUrl();
 
-      const response = await axios.get(apiUrl + "/api/my-messages", {
-        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }
-      });
+      const response = await api.get("/api/my-messages");
 
       if (response.data.success) {
         const broadcasts = response.data.data.filter(msg => msg.messageType === 'admin-broadcast' || msg.message_type === 'admin-broadcast');
@@ -143,10 +138,9 @@ export default function LibraryMessages() {
       const token = localStorage.getItem("token");
       const apiUrl = getApiUrl();
 
-      const response = await axios.post(
-        apiUrl + `/api/messages/reply/${messageId}`,
-        { message: replyText.trim() },
-        { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } }
+      const response = await api.post(
+        "/api/messages/reply/" + messageId,
+        { message: replyText.trim() }
       );
 
       if (response.data.success) {
@@ -179,15 +173,14 @@ export default function LibraryMessages() {
       const token = localStorage.getItem("token");
       const apiUrl = getApiUrl();
 
-      const response = await axios.post(
-        apiUrl + "/api/send-message",
+      const response = await api.post(
+        "/api/send-message",
         {
           recipient_sapid: formData.recipient_sapid.trim(),
           subject: formData.subject.trim(),
           message: formData.message.trim(),
           message_type: formData.message_type
-        },
-        { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } }
+        }
       );
 
       if (response.data.success) {
@@ -231,8 +224,16 @@ export default function LibraryMessages() {
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans text-gray-800 overflow-hidden">
+      {/* ── MOBILE HAMBURGER ── */}
+      <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors duration-200">
+        <Menu size={24} className="text-gray-800" />
+      </button>
+
+      {/* ── MOBILE OVERLAY ── */}
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/50 z-30" />}
+
       {/* ── SIDEBAR ── */}
-      <aside className="w-[280px] flex flex-col bg-gradient-to-b from-[#0a0f24] via-[#1b2a56] to-[#182848] text-white py-6 px-4 shadow-2xl overflow-y-auto shrink-0">
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-[280px] h-screen lg:h-auto flex flex-col bg-gradient-to-b from-[#0a0f24] via-[#1b2a56] to-[#182848] text-white py-6 px-4 shadow-2xl overflow-y-auto shrink-0 transition-transform duration-300 z-40 lg:z-auto`}>
         <div className="flex items-center gap-3 mb-8 pb-5 border-b border-white/10">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white shadow-lg">
             <MessageSquare size={22} />

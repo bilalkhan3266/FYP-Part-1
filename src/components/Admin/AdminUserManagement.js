@@ -170,12 +170,6 @@ export default function AdminUserManagement() {
 
   // ====== DELETE USER ======
   const handleDeleteUser = async (userId, userRole) => {
-    // Prevent deleting students
-    if (userRole === "student") {
-      setError("❌ Cannot delete student users");
-      return;
-    }
-
     if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
       return;
     }
@@ -486,20 +480,14 @@ export default function AdminUserManagement() {
                         </td>
                         <td>
                           <div className="action-buttons">
-                            {u.role === "student" ? (
-                              <span className="btn-disabled" title="Cannot delete students">
-                                🔒 Protected
-                              </span>
-                            ) : (
-                              <button
-                                className="btn-delete"
-                                onClick={() => handleDeleteUser(u._id, u.role)}
-                                disabled={deleting}
-                                title="Delete user"
-                              >
-                                🗑️ Delete
-                              </button>
-                            )}
+                            <button
+                              className="btn-delete"
+                              onClick={() => handleDeleteUser(u._id, u.role)}
+                              disabled={deleting}
+                              title="Delete user"
+                            >
+                              🗑️ Delete
+                            </button>
                           </div>
                         </td>
                       </tr>

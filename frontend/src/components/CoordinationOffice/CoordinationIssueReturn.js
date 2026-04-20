@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { 
   ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut,
-  GitCompare, AlertCircle, CheckCircle, Inbox, AlertTriangle
+  GitCompare, AlertCircle, CheckCircle, Inbox, AlertTriangle, Menu
 } from "lucide-react";
 import DepartmentIssueReturn from "../shared/DepartmentIssueReturn";
 
 export default function CoordinationIssueReturn() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("issues");
 
   const displayName = user?.full_name || "User";
@@ -22,8 +23,12 @@ export default function CoordinationIssueReturn() {
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans text-gray-800 overflow-hidden">
+      <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+        <Menu size={24} className="text-gray-800" />
+      </button>
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/50 z-30" />}
       {/* ── SIDEBAR ── */}
-      <aside className="w-[280px] flex flex-col bg-gradient-to-b from-[#1a0e3e] via-[#2d1b69] to-[#1f1450] text-white py-6 px-4 shadow-xl overflow-y-auto shrink-0">
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 w-[280px] fixed lg:relative h-screen lg:h-auto transition-transform duration-300 z-40 lg:z-auto flex flex-col bg-gradient-to-b from-[#1a0e3e] via-[#2d1b69] to-[#1f1450] text-white py-6 px-4 shadow-xl overflow-y-auto shrink-0`}>
         {/* Logo & Title */}
         <div className="flex items-center gap-3 mb-8 pb-5 border-b border-white/10">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center text-white shadow-lg">

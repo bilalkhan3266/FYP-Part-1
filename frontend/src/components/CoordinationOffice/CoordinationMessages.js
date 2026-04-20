@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
-import { LayoutDashboard, MessageSquare, UserPen, LogOut, Send, Inbox, AlertTriangle, CheckCircle, History, Megaphone, Reply, X, Paperclip, ThumbsDown, AlertCircle, Search, Clock, Star, Share2, GitCompare } from "lucide-react";
-import axios from "axios";
+import { LayoutDashboard, MessageSquare, UserPen, LogOut, Send, Inbox, AlertTriangle, CheckCircle, History, Megaphone, Reply, X, Paperclip, ThumbsDown, AlertCircle, Search, Clock, Star, Share2, GitCompare, Menu } from "lucide-react";
+import api from "../../services/api";
 
 export default function CoordinationMessages() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("received");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -28,8 +29,8 @@ export default function CoordinationMessages() {
   const removeAttachment = (index) => { setAttachments(prev => prev.filter((_, i) => i !== index)); };
 
   const fetchReceivedMessages = async () => {
-    try { setLoading(true); setError(""); const token = localStorage.getItem("token"); const apiUrl = getApiUrl();
-      const response = await axios.get(apiUrl + "/api/my-messages", { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } });
+    try { setLoading(true); setError("");
+      const response = await api.get("/api/my-messages");
       if (response.data.success) { const studentMessages = response.data.data.filter(msg => msg.sender_role === 'student'); setReceivedMessages(studentMessages); }
       else setError(response.data.message || "Failed to load messages");
     } catch (err) { setError(err.response?.data?.message || "Failed to load messages"); }
@@ -38,7 +39,7 @@ export default function CoordinationMessages() {
 
   const fetchSentMessages = async () => {
     try { setLoading(true); setError(""); const token = localStorage.getItem("token"); const apiUrl = getApiUrl();
-      const response = await axios.get(apiUrl + "/api/staff/sent-messages", { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } });
+      const response = await api.get("/api/staff/sent-messages");
       if (response.data.success) setSentMessages(response.data.data || []);
       else setError(response.data.message || "Failed to load sent messages");
     } catch (err) { setError(err.response?.data?.message || "Failed to load sent messages"); }
@@ -46,8 +47,8 @@ export default function CoordinationMessages() {
   };
 
   const fetchAdminBroadcasts = async () => {
-    try { setLoading(true); setError(""); const token = localStorage.getItem("token"); const apiUrl = getApiUrl();
-      const response = await axios.get(apiUrl + "/api/my-messages", { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } });
+    try { setLoading(true); setError("");
+      const response = await api.get("/api/my-messages");
       if (response.data.success) { const broadcasts = response.data.data.filter(msg => msg.messageType === 'admin-broadcast' || msg.message_type === 'admin-broadcast'); setAdminBroadcasts(broadcasts); }
       else setError(response.data.message || "Failed to load broadcasts");
     } catch (err) { setError(err.response?.data?.message || "Failed to load broadcasts"); }
@@ -63,11 +64,11 @@ export default function CoordinationMessages() {
   const handleReply = async (messageId) => {
     if (!replyText.trim()) { setError("Reply cannot be empty"); return; }
     setReplyLoading(true);
-    try { const token = localStorage.getItem("token"); const apiUrl = getApiUrl();
+    try { 
       const message = receivedMessages.find(msg => msg._id === messageId);
       if (!message) { setError("Message not found"); setReplyLoading(false); return; }
       const conversationId = message.conversation_id || messageId;
-      const response = await axios.post(apiUrl + `/api/messages/${conversationId}/reply`, { message: replyText.trim() }, { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } });
+      const response = await api.post("/api/messages/reply/" + messageId, { message: replyText.trim() });
       if (response.data.success) { setSuccess("Reply sent successfully!"); setReplyingTo(null); setReplyText(""); setTimeout(() => setSuccess(""), 2000); fetchReceivedMessages(); }
       else setError(response.data.message || "Failed to send reply");
     } catch (err) { setError(err.response?.data?.message || "Failed to send reply"); }
@@ -78,7 +79,7 @@ export default function CoordinationMessages() {
     e.preventDefault(); setError(""); setSuccess("");
     if (!formData.recipient_sapid.trim() || !formData.subject.trim() || !formData.message.trim()) { setError("All fields are required"); return; }
     try { const token = localStorage.getItem("token"); const apiUrl = getApiUrl();
-      const response = await axios.post(apiUrl + "/api/send-message", { recipient_sapid: formData.recipient_sapid.trim(), subject: formData.subject.trim(), message: formData.message.trim(), message_type: formData.message_type }, { headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" } });
+      const response = await api.post("/api/send-message", { recipient_sapid: formData.recipient_sapid.trim(), subject: formData.subject.trim(), message: formData.message.trim(), message_type: formData.message_type });
       if (response.data.success) { setSuccess("Message sent successfully!"); setFormData({ recipient_sapid: "", subject: "", message: "", message_type: "info" }); setAttachments([]); setTimeout(() => setSuccess(""), 3000); }
     } catch (err) { setError(err.response?.data?.message || "Failed to send message"); }
   };
@@ -96,7 +97,11 @@ export default function CoordinationMessages() {
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans text-gray-800 overflow-hidden">
-      <aside className="w-[280px] flex flex-col bg-gradient-to-b from-purple-900 via-violet-800 to-purple-900 text-white py-6 px-4 shadow-2xl overflow-y-auto shrink-0">
+      <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+        <Menu size={24} className="text-gray-800" />
+      </button>
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/50 z-30" />}
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 w-[280px] fixed lg:relative h-screen lg:h-auto transition-transform duration-300 z-40 lg:z-auto flex flex-col bg-gradient-to-b from-purple-900 via-violet-800 to-purple-900 text-white py-6 px-4 shadow-2xl overflow-y-auto shrink-0`}>
         <div className="flex items-center gap-3 mb-8 pb-5 border-b border-white/10">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center text-white shadow-lg">
             <GitCompare size={22} />

@@ -20,14 +20,16 @@ import {
   GraduationCap,
   Loader,
   Clock,
+  Menu,
 } from "lucide-react";
-import axios from "axios";
+import api from "../../services/api";
 
 export default function StudentMessages() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("received");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -63,15 +65,8 @@ export default function StudentMessages() {
     try {
       setLoading(true);
       setError("");
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
 
-      const response = await axios.get(apiUrl + "/api/my-messages", {
-        headers: {
-          Authorization: "Bearer " + token,
-          "Content-Type": "application/json"
-        }
-      });
+      const response = await api.get("/api/my-messages");
 
       if (response.data.success) {
         setReceivedMessages(response.data.data || []);
@@ -92,15 +87,8 @@ export default function StudentMessages() {
     try {
       setSentLoading(true);
       setError("");
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
 
-      const response = await axios.get(apiUrl + "/api/student/sent-messages", {
-        headers: {
-          Authorization: "Bearer " + token,
-          "Content-Type": "application/json"
-        }
-      });
+      const response = await api.get("/api/student/sent-messages");
 
       if (response.data.success) {
         setSentMessages(response.data.data || []);
@@ -125,18 +113,9 @@ export default function StudentMessages() {
 
     setReplyLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
-
-      const response = await axios.post(
-        apiUrl + `/api/messages/reply/${messageId}`,
-        { message: replyText.trim() },
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json"
-          }
-        }
+      const response = await api.post(
+        `/api/messages/reply/${messageId}`,
+        { message: replyText.trim() }
       );
 
       if (response.data.success) {
@@ -169,21 +148,12 @@ export default function StudentMessages() {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
-
-      const response = await axios.post(
-        apiUrl + "/api/send-message",
+      const response = await api.post(
+        "/api/send-message",
         {
           recipient_department: sendFormData.recipient_department.trim(),
           subject: sendFormData.subject.trim(),
           message: sendFormData.message.trim()
-        },
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json"
-          }
         }
       );
 
@@ -222,8 +192,16 @@ export default function StudentMessages() {
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex overflow-hidden">
+      {/* Mobile Hamburger Button */}
+      <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-slate-700 shadow-lg border border-slate-600 hover:bg-slate-600 transition-colors duration-200">
+        <Menu size={24} className="text-white" />
+      </button>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/50 z-30" />}
+
       {/* Sidebar */}
-      <aside className="w-[280px] shrink-0 h-screen bg-gradient-to-b from-slate-800 to-slate-900 text-white p-6 shadow-2xl overflow-y-auto border-r border-slate-700 scrollbar-blue">
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-[280px] shrink-0 h-screen bg-gradient-to-b from-slate-800 to-slate-900 text-white p-6 shadow-2xl overflow-y-auto border-r border-slate-700 scrollbar-blue transition-transform duration-300 z-40 lg:z-auto`}>
         {/* Brand */}
         <div className="mb-8">
           <div className="flex items-center gap-3">

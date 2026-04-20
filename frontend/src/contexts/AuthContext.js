@@ -56,6 +56,9 @@ export const AuthProvider = ({ children }) => {
         const { token, user } = response.data;
         setToken(token);
         setUser(user);
+        // Save to localStorage so they persist
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
         // Update api instance with new token
         setAuthToken(token);
         return { success: true, message: response.data.message };

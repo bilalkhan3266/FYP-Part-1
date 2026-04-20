@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { getApiUrl } from "../../config/apiConfig";
-import axios from "axios";
+import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { Menu } from "lucide-react";
 import {
   FiGrid, FiUsers, FiMessageSquare, FiEdit, FiLogOut,
   FiClipboard, FiCheckCircle, FiXCircle, FiClock,
@@ -43,8 +43,8 @@ const EXCLUDED_DEPARTMENTS = ["Laboratory", "HOD"];
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuthContext();
-  const apiUrl = getApiUrl();
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -57,17 +57,11 @@ export default function AdminDashboard() {
 
   // Fetch real department statistics
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const config = { headers: { Authorization: `Bearer ${token}` } };
-    
     const fetchDepartmentStats = async () => {
       setLoading(true);
       setError("");
       try {
-        const response = await axios.get(
-          `${apiUrl}/api/admin/department-stats`,
-          config
-        );
+        const response = await api.get("/api/admin/department-stats");
 
         if (response.data.success) {
           const { departments } = response.data.data;
@@ -114,7 +108,7 @@ export default function AdminDashboard() {
     const interval = setInterval(fetchDepartmentStats, 30000);
     
     return () => clearInterval(interval);
-  }, [apiUrl]);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -131,8 +125,24 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
+      {/* Mobile Hamburger Button */}
+      <button 
+        className="admin-hamburger"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+      >
+        <Menu size={24} />
+      </button>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="admin-mobile-overlay open"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="admin-sidebar">
+      <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="admin-logo">
           <div className="logo-icon"><FiShield size={32} /></div>
           <h1>Admin Panel</h1>

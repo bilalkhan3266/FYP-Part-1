@@ -4,13 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { 
   LayoutDashboard, UserPen, MessageSquare, LogOut,
-  DollarSign, AlertCircle, CheckCircle, Lock, Mail, Save, Camera
+  DollarSign, AlertCircle, CheckCircle, Lock, Mail, Save, Camera, Menu
 } from "lucide-react";
-import axios from "axios";
+import api from "../../services/api";
 
 export default function FeeEditProfile() {
   const { user, setUser, logout } = useAuthContext();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [form, setForm] = useState({
     full_name: "",
@@ -76,15 +77,9 @@ export default function FeeEditProfile() {
         updateData.password = form.password;
       }
 
-      const response = await axios.put(
-        apiUrl + "/api/update-profile",
-        updateData,
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json"
-          }
-        }
+      const response = await api.put(
+        "/api/update-profile",
+        updateData
       );
 
       if (response.data.success) {
@@ -116,8 +111,12 @@ export default function FeeEditProfile() {
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans text-gray-800 overflow-hidden">
+      <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+        <Menu size={24} className="text-gray-800" />
+      </button>
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/50 z-30" />}
       {/* ── SIDEBAR ── */}
-      <aside className="w-[280px] flex flex-col bg-gradient-to-b from-[#5a2e0f] via-[#8b4513] to-[#654321] text-white py-6 px-4 shadow-xl overflow-y-auto shrink-0">
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 w-[280px] fixed lg:relative h-screen lg:h-auto transition-transform duration-300 z-40 lg:z-auto flex flex-col bg-gradient-to-b from-[#5a2e0f] via-[#8b4513] to-[#654321] text-white py-6 px-4 shadow-xl overflow-y-auto shrink-0`}>
         {/* Logo & Title */}
         <div className="flex items-center gap-3 mb-8 pb-5 border-b border-white/10">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg">

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { Menu } from "lucide-react";
 import {
   FiGrid, FiUsers, FiMessageSquare, FiEdit, FiLogOut, FiShield,
   FiPlus, FiSearch, FiTrash2, FiX, FiUser, FiMail, FiLock, FiHash,
@@ -13,6 +14,7 @@ export default function AdminUserManagement() {
   const navigate = useNavigate();
   const { user, logout } = useAuthContext();
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -295,8 +297,24 @@ export default function AdminUserManagement() {
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans text-gray-800 overflow-hidden">
+      {/* Mobile Hamburger Button */}
+      <button 
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+      >
+        <Menu size={24} />
+      </button>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          onClick={() => setSidebarOpen(false)}
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+        />
+      )}
+
       {/* ── Sidebar ── */}
-      <aside className="w-[270px] flex flex-col bg-gradient-to-b from-[#0a0f24] via-[#1b2a56] to-[#182848] text-white py-6 px-4 shadow-xl overflow-y-auto shrink-0">
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-[270px] flex flex-col bg-gradient-to-b from-[#0a0f24] via-[#1b2a56] to-[#182848] text-white py-6 px-4 shadow-xl overflow-y-auto shrink-0 transition-transform duration-300 z-40 lg:z-auto h-screen lg:h-auto`}>
         <div className="flex items-center gap-3 mb-8 pb-5 border-b border-white/10">
           <FiShield size={30} className="text-indigo-400" />
           <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Admin Panel</h1>
@@ -441,14 +459,12 @@ export default function AdminUserManagement() {
                 <button
                   type="button"
                   onClick={handleDeleteUser}
-                  disabled={deleting || userToDelete?.role === "student"}
-                  title={userToDelete?.role === "student" ? "Cannot delete student users" : "Delete this user"}
+                  disabled={deleting}
+                  title="Delete this user"
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-semibold shadow-lg shadow-red-500/20 hover:from-red-600 hover:to-red-700 hover:shadow-xl active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {deleting ? (
                     <><FiLoader size={16} className="animate-spin" /> Deleting...</>
-                  ) : userToDelete?.role === "student" ? (
-                    <><FiShieldOff size={16} /> Cannot Delete Student</>
                   ) : (
                     <><FiTrash2 size={16} /> Delete User</>
                   )}

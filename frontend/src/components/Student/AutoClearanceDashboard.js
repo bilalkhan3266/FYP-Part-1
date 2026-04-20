@@ -24,7 +24,7 @@ import {
   Shield,
   Download,
 } from "lucide-react";
-import axios from "axios";
+import api from "../../services/api";
 import "../../styles/scrollbar.css";
 
 export default function AutoClearanceDashboard() {
@@ -32,6 +32,7 @@ export default function AutoClearanceDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isEnabled, setIsEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -60,18 +61,7 @@ export default function AutoClearanceDashboard() {
   const fetchAutoClearanceData = async () => {
     try {
       setError("");
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
-
-      const response = await axios.get(
-        apiUrl + "/api/auto-clearance/status",
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json"
-          }
-        }
-      );
+      const response = await api.get("/api/auto-clearance/status");
 
       if (response.data.success) {
         setIsEnabled(response.data.data?.enabled || false);
@@ -93,18 +83,9 @@ export default function AutoClearanceDashboard() {
     try {
       setError("");
       setSuccess("");
-      const token = localStorage.getItem("token");
-      const apiUrl = getApiUrl();
-
-      const response = await axios.post(
-        apiUrl + "/api/auto-clearance/toggle",
-        { enabled: !isEnabled },
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json"
-          }
-        }
+      const response = await api.post(
+        "/api/auto-clearance/toggle",
+        { enabled: !isEnabled }
       );
 
       if (response.data.success) {
@@ -129,8 +110,16 @@ export default function AutoClearanceDashboard() {
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex overflow-hidden">
+      {/* Mobile Hamburger Button */}
+      <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-slate-700 shadow-lg border border-slate-600 hover:bg-slate-600 transition-colors duration-200">
+        <Menu size={24} className="text-white" />
+      </button>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/50 z-30" />}
+
       {/* Sidebar */}
-      <aside className="w-[280px] shrink-0 h-screen bg-gradient-to-b from-slate-800 to-slate-900 text-white p-6 shadow-2xl overflow-y-auto border-r border-slate-700 scrollbar-blue">
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-[280px] shrink-0 h-screen bg-gradient-to-b from-slate-800 to-slate-900 text-white p-6 shadow-2xl overflow-y-auto border-r border-slate-700 scrollbar-blue transition-transform duration-300 z-40 lg:z-auto`}>
         {/* Brand */}
         <div className="mb-8">
           <div className="flex items-center gap-3">

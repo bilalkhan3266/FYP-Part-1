@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { getApiUrl } from "../../config/apiConfig";
+import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
-import axios from "axios";
+import { Menu } from "lucide-react";
 import {
   FiGrid, FiUsers, FiMessageSquare, FiEdit, FiLogOut, FiShield,
   FiUser, FiMail, FiPhone, FiMapPin, FiLock, FiSave, FiArrowLeft,
@@ -12,9 +12,8 @@ import {
 export default function AdminEditProfile() {
   const navigate = useNavigate();
   const { user, logout } = useAuthContext();
-  const apiUrl = getApiUrl();
-  const axiosConfig = { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } };
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [formData, setFormData] = useState({
     full_name: user?.full_name || "",
     email: user?.email || "",
@@ -74,15 +73,9 @@ export default function AdminEditProfile() {
         payload.new_password = formData.new_password;
       }
 
-      const response = await axios.put(
-        apiUrl + "/api/update-profile",
-        payload,
-        {
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("token"),
-            "Content-Type": "application/json"
-          }
-        }
+      const response = await api.put(
+        "/api/update-profile",
+        payload
       );
 
       if (response.data.success) {
@@ -113,8 +106,24 @@ export default function AdminEditProfile() {
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans text-gray-800 overflow-hidden">
+      {/* Mobile Hamburger Button */}
+      <button 
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+      >
+        <Menu size={24} />
+      </button>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          onClick={() => setSidebarOpen(false)}
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+        />
+      )}
+
       {/* ── Sidebar ── */}
-      <aside className="w-[270px] flex flex-col bg-gradient-to-b from-[#0a0f24] via-[#1b2a56] to-[#182848] text-white py-6 px-4 shadow-xl overflow-y-auto shrink-0">
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-[270px] flex flex-col bg-gradient-to-b from-[#0a0f24] via-[#1b2a56] to-[#182848] text-white py-6 px-4 shadow-xl overflow-y-auto shrink-0 transition-transform duration-300 z-40 lg:z-auto h-screen lg:h-auto`}>
         <div className="flex items-center gap-3 mb-8 pb-5 border-b border-white/10">
           <FiShield size={30} className="text-indigo-400" />
           <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Admin Panel</h1>

@@ -3,15 +3,16 @@ import { getApiUrl } from "../../config/apiConfig";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { 
-  LayoutDashboard, UserPen, MessageSquare, LogOut,
+  LayoutDashboard, UserPen, MessageSquare, LogOut, Menu,
   BookOpen, AlertCircle, CheckCircle, Lock, Mail, Save, Camera
 } from "lucide-react";
-import axios from "axios";
+import api from "../../services/api";
 
 export default function LibraryEditProfile() {
   const { user, setUser, logout } = useAuthContext();
   const navigate = useNavigate();
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [form, setForm] = useState({
     full_name: "",
     email: "",
@@ -76,15 +77,9 @@ export default function LibraryEditProfile() {
         updateData.password = form.password;
       }
 
-      const response = await axios.put(
-        apiUrl + "/api/update-profile",
-        updateData,
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json"
-          }
-        }
+      const response = await api.put(
+        "/api/update-profile",
+        updateData
       );
 
       if (response.data.success) {
@@ -116,8 +111,16 @@ export default function LibraryEditProfile() {
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans text-gray-800 overflow-hidden">
+      {/* ── MOBILE HAMBURGER ── */}
+      <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors duration-200">
+        <Menu size={24} className="text-gray-800" />
+      </button>
+
+      {/* ── MOBILE OVERLAY ── */}
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/50 z-30" />}
+
       {/* ── SIDEBAR ── */}
-      <aside className="w-[280px] flex flex-col bg-gradient-to-b from-[#0a0f24] via-[#1b2a56] to-[#182848] text-white py-6 px-4 shadow-xl overflow-y-auto shrink-0">
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:relative w-[280px] h-screen lg:h-auto flex flex-col bg-gradient-to-b from-[#0a0f24] via-[#1b2a56] to-[#182848] text-white py-6 px-4 shadow-xl overflow-y-auto shrink-0 transition-transform duration-300 z-40 lg:z-auto`}>
         {/* Logo & Title */}
         <div className="flex items-center gap-3 mb-8 pb-5 border-b border-white/10">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white shadow-lg">

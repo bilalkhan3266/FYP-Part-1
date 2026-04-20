@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { getApiUrl } from "../../config/apiConfig";
+import api from "../../services/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
-import axios from "axios";
+import { Menu } from "lucide-react";
 import {
   FiGrid, FiUsers, FiMessageSquare, FiEdit, FiLogOut, FiShield, FiSend,
   FiInbox, FiMail, FiX, FiAlertCircle, FiCheckCircle, FiChevronRight,
@@ -18,9 +18,8 @@ export default function AdminMessages() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, logout } = useAuthContext();
-  const apiUrl = getApiUrl();
-  const axiosConfig = { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } };
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const messageType = searchParams.get("type") || "department";
   const deptParam = searchParams.get("dept");
 
@@ -107,10 +106,9 @@ export default function AdminMessages() {
         payload.roleTarget = formData.roleTarget;
       }
 
-      const response = await axios.post(
-        `${apiUrl}/api/admin/send-message`,
-        payload,
-        axiosConfig
+      const response = await api.post(
+        `/api/admin/send-message`,
+        payload
       );
 
       if (response.data.success) {
@@ -137,7 +135,7 @@ export default function AdminMessages() {
 
   const fetchMessageLog = async () => {
     try {
-      const response = await axios.get(apiUrl + "/api/admin/message-log", axiosConfig);
+      const response = await api.get("/api/admin/message-log");
       if (response.data.success) {
         setMessageLog(response.data.data || []);
         setShowMessageLog(true);
@@ -211,8 +209,24 @@ export default function AdminMessages() {
 
   return (
     <div className="admin-dashboard">
+      {/* Mobile Hamburger Button */}
+      <button 
+        className="admin-hamburger"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+      >
+        <Menu size={24} />
+      </button>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="admin-mobile-overlay open"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* ── Sidebar (shared CSS from AdminDashboard.css) ── */}
-      <aside className="admin-sidebar">
+      <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="admin-logo">
           <div className="logo-icon"><FiShield size={32} /></div>
           <h1>Admin Panel</h1>

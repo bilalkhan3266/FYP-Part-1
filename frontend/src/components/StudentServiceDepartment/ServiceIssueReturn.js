@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
-import { ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut, Inbox, AlertCircle, AlertTriangle } from "lucide-react";
+import { ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut, Inbox, AlertCircle, AlertTriangle, Menu } from "lucide-react";
 import DepartmentIssueReturn from "../shared/DepartmentIssueReturn";
 
 export default function ServiceIssueReturn() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const displayName = user?.full_name || "Service Staff";
   const displaySap = user?.sap || "N/A";
@@ -18,8 +19,12 @@ export default function ServiceIssueReturn() {
 
   return (
     <div className="h-screen bg-gray-50 flex">
+      <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+        <Menu size={24} className="text-gray-800" />
+      </button>
+      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/50 z-30" />}
       {/* Sidebar */}
-      <aside className="w-[280px] bg-gradient-to-b from-[#0a3d2e] via-[#1a5c47] to-[#0d4835] text-white p-6 shadow-lg overflow-y-auto">
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 w-[280px] fixed lg:relative h-screen lg:h-auto transition-transform duration-300 z-40 lg:z-auto bg-gradient-to-b from-[#0a3d2e] via-[#1a5c47] to-[#0d4835] text-white p-6 shadow-lg overflow-y-auto`}>
         {/* Profile Card */}
         <div className="mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full flex items-center justify-center text-xl font-bold text-white mb-3">
