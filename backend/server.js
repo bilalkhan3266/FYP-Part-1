@@ -738,84 +738,98 @@ app.post('/api/reset-password', async (req, res) => {
 // --------------------
 app.post('/api/clearance-requests', verifyToken, async (req, res) => {
   try {
-    const { student_name, sapid, registration_no, father_name, program, semester, degree_status, department } = req.body;
+    // ULTRA-DEFENSIVE: Log entire request body for debugging
+    console.log('\n📝 CLEARANCE REQUEST RECEIVED');
+    console.log('  Full request body:', JSON.stringify(req.body, null, 2));
+    console.log('  Content-Type:', req.get('content-type'));
+    console.log('  User authenticated:', !!req.user);
+    
+    // Extract fields with explicit error handling
+    const student_name = req.body?.student_name;
+    const sapid = req.body?.sapid;
+    const registration_no = req.body?.registration_no;
+    const father_name = req.body?.father_name;
+    const program = req.body?.program;
+    const semester = req.body?.semester;
+    const degree_status = req.body?.degree_status;
+    const department = req.body?.department;
 
-    console.log('📝 Clearance Request Received:');
-    console.log('  Full body:', JSON.stringify(req.body, null, 2));
-    console.log('  - Student Name:', student_name);
-    console.log('  - SAP ID:', sapid);
-    console.log('  - Registration No:', registration_no);
-    console.log('  - Father Name:', father_name);
-    console.log('  - Program:', program);
-    console.log('  - Semester:', semester);
-    console.log('  - Degree Status:', degree_status);
-    console.log('  - User ID:', req.user.id);
+    console.log('\n  Extracted values:');
+    console.log('    student_name:', student_name, '(type:', typeof student_name, ')');
+    console.log('    sapid:', sapid, '(type:', typeof sapid, ')');
+    console.log('    father_name:', father_name, '(type:', typeof father_name, ')');
+    console.log('    program:', program, '(type:', typeof program, ')');
+    console.log('    semester:', semester, '(type:', typeof semester, ')');
+    console.log('    degree_status:', degree_status, '(type:', typeof degree_status, ')');
 
-    // Validation with specific error messages - CHECK FOR UNDEFINED FIRST
-    if (typeof student_name === 'undefined' || student_name === null) {
+    // ==================== COMPREHENSIVE VALIDATION ====================
+    // STEP 1: Check all fields exist and are not undefined/null
+    const requiredFields = { student_name, sapid, father_name, program, semester, degree_status };
+    const missingFields = [];
+    
+    for (const [fieldName, value] of Object.entries(requiredFields)) {
+      if (value === undefined || value === null) {
+        missingFields.push(`${fieldName} (received: ${value})`);
+      }
+    }
+    
+    if (missingFields.length > 0) {
+      console.error('❌ Missing required fields:', missingFields);
       return res.status(400).json({ 
         success: false, 
-        message: 'Student name is required (received undefined)' 
+        message: `❌ Missing required fields: ${missingFields.join(', ')}`,
+        missingFields: missingFields
       });
     }
 
-    if (typeof sapid === 'undefined' || sapid === null) {
+    // STEP 2: Now safe to convert to string and trim
+    let student_name_str, sapid_str, father_name_str, program_str, semester_str, degree_status_str;
+    
+    try {
+      student_name_str = String(student_name).trim();
+      sapid_str = String(sapid).trim();
+      father_name_str = String(father_name).trim();
+      program_str = String(program).trim();
+      semester_str = String(semester).trim();
+      degree_status_str = String(degree_status).trim();
+    } catch (conversionErr) {
+      console.error('❌ Field conversion error:', conversionErr.message);
       return res.status(400).json({ 
         success: false, 
-        message: 'SAP ID is required (received undefined)' 
+        message: '❌ Error processing form fields: ' + conversionErr.message
       });
     }
 
-    if (typeof father_name === 'undefined' || father_name === null) {
+    console.log('\n  Converted string values:');
+    console.log('    student_name:', student_name_str);
+    console.log('    sapid:', sapid_str);
+    console.log('    father_name:', father_name_str);
+    console.log('    program:', program_str);
+    console.log('    semester:', semester_str);
+    console.log('    degree_status:', degree_status_str);
+
+    // STEP 3: Validate non-empty
+    if (!student_name_str) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Father name is required (received undefined)' 
+        message: '❌ Student name cannot be empty'
       });
     }
 
-    if (typeof program === 'undefined' || program === null) {
+    if (!sapid_str) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Program is required (received undefined)' 
-      });
-    }
-
-    if (typeof semester === 'undefined' || semester === null) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Semester is required (received undefined)' 
-      });
-    }
-
-    if (typeof degree_status === 'undefined' || degree_status === null) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Degree status is required (received undefined)' 
-      });
-    }
-
-    // Now safe to use .toString()
-    if (!student_name.toString().trim()) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Student name cannot be empty' 
-      });
-    }
-
-    if (!sapid.toString().trim()) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'SAP ID cannot be empty' 
+        message: '❌ SAP ID cannot be empty' 
       });
     }
 
     // ✅ Registration number is now OPTIONAL (user deleted this field)
-    const regNoFormatted = registration_no ? registration_no.toString().trim().toUpperCase() : null;
+    const regNoFormatted = registration_no ? String(registration_no).trim().toUpperCase() : null;
 
-    if (!father_name || father_name.toString().trim() === '') {
+    if (!father_name_str) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Father name is required' 
+        message: '❌ Father name cannot be empty'
       });
     }
 
@@ -832,24 +846,24 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
       });
     }
 
-    if (!program || program.toString().trim() === '') {
+    if (!program_str) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Program is required' 
+        message: '❌ Program is required'
       });
     }
 
-    if (!semester || semester.toString().trim() === '') {
+    if (!semester_str) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Semester is required' 
+        message: '❌ Semester is required'
       });
     }
 
-    if (!degree_status || degree_status.toString().trim() === '') {
+    if (!degree_status_str) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Degree status is required' 
+        message: '❌ Degree status is required'
       });
     }
 
@@ -871,13 +885,13 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
     // Create main clearance request
     const clearanceRequest = new ClearanceRequest({
       student_id: req.user.id,
-      student_name: student_name.toString().trim(),
-      sapid: sapid.toString().trim(),
-      registration_no: registration_no.toString().trim(),
-      father_name: father_name.toString().trim(),
-      program: program.toString().trim(),
-      semester: semester.toString().trim(),
-      degree_status: degree_status.toString().trim(),
+      student_name: student_name_str,
+      sapid: sapid_str,
+      registration_no: regNoFormatted,
+      father_name: father_name_str,
+      program: program_str,
+      semester: semester_str,
+      degree_status: degree_status_str,
       department: department || '',
       status: 'Pending'
     });

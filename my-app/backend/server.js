@@ -952,101 +952,135 @@ app.post('/api/reset-password', async (req, res) => {
 // --------------------
 app.post('/api/clearance-requests', verifyToken, async (req, res) => {
   try {
-    const { student_name, sapid, father_name, program, semester, degree_status } = req.body;
-
+    // ULTRA-DEFENSIVE: Log entire request body for debugging
     console.log('\n📝 CLEARANCE REQUEST RECEIVED');
-    console.log('  Full body:', JSON.stringify(req.body, null, 2));
-    console.log('  Student:', student_name);
-    console.log('  SAP ID:', sapid);
-    console.log('  Father Name:', father_name);
-    console.log('  Program:', program);
-    console.log('  Semester:', semester);
-    console.log('  Degree Status:', degree_status);
-    console.log('  User ID:', req.user.id);
+    console.log('  Full request body:', JSON.stringify(req.body, null, 2));
+    console.log('  Content-Type:', req.get('content-type'));
+    console.log('  User authenticated:', !!req.user);
+    
+    // Extract fields with explicit error handling
+    const student_name = req.body?.student_name;
+    const sapid = req.body?.sapid;
+    const father_name = req.body?.father_name;
+    const program = req.body?.program;
+    const semester = req.body?.semester;
+    const degree_status = req.body?.degree_status;
 
-    // ==================== VALIDATION WITH SAFE CHECKS ====================
-    // Check for undefined fields FIRST
-    if (typeof student_name === 'undefined' || student_name === null) {
-      return res.status(400).json({ success: false, message: 'Student name is required (received undefined)' });
+    console.log('\n  Extracted values:');
+    console.log('    student_name:', student_name, '(type:', typeof student_name, ')');
+    console.log('    sapid:', sapid, '(type:', typeof sapid, ')');
+    console.log('    father_name:', father_name, '(type:', typeof father_name, ')');
+    console.log('    program:', program, '(type:', typeof program, ')');
+    console.log('    semester:', semester, '(type:', typeof semester, ')');
+    console.log('    degree_status:', degree_status, '(type:', typeof degree_status, ')');
+
+    // ==================== COMPREHENSIVE VALIDATION ====================
+    // STEP 1: Check all fields exist and are not undefined/null
+    const requiredFields = { student_name, sapid, father_name, program, semester, degree_status };
+    const missingFields = [];
+    
+    for (const [fieldName, value] of Object.entries(requiredFields)) {
+      if (value === undefined || value === null) {
+        missingFields.push(`${fieldName} (received: ${value})`);
+      }
     }
-    if (typeof sapid === 'undefined' || sapid === null) {
-      return res.status(400).json({ success: false, message: 'SAP ID is required (received undefined)' });
-    }
-    if (typeof father_name === 'undefined' || father_name === null) {
-      return res.status(400).json({ success: false, message: 'Father name is required (received undefined)' });
-    }
-    if (typeof program === 'undefined' || program === null) {
-      return res.status(400).json({ success: false, message: 'Program is required (received undefined)' });
-    }
-    if (typeof semester === 'undefined' || semester === null) {
-      return res.status(400).json({ success: false, message: 'Semester is required (received undefined)' });
-    }
-    if (typeof degree_status === 'undefined' || degree_status === null) {
-      return res.status(400).json({ success: false, message: 'Degree status is required (received undefined)' });
+    
+    if (missingFields.length > 0) {
+      console.error('❌ Missing required fields:', missingFields);
+      return res.status(400).json({ 
+        success: false, 
+        message: `❌ Missing required fields: ${missingFields.join(', ')}`,
+        missingFields: missingFields
+      });
     }
 
-    // Now safe to call .toString()
-    if (!student_name.toString().trim()) {
-      return res.status(400).json({ success: false, message: 'Student name cannot be empty' });
+    // STEP 2: Now safe to convert to string and trim
+    let student_name_str, sapid_str, father_name_str, program_str, semester_str, degree_status_str;
+    
+    try {
+      student_name_str = String(student_name).trim();
+      sapid_str = String(sapid).trim();
+      father_name_str = String(father_name).trim();
+      program_str = String(program).trim();
+      semester_str = String(semester).trim();
+      degree_status_str = String(degree_status).trim();
+    } catch (conversionErr) {
+      console.error('❌ Field conversion error:', conversionErr.message);
+      return res.status(400).json({ 
+        success: false, 
+        message: '❌ Error processing form fields: ' + conversionErr.message
+      });
     }
 
-    if (!sapid.toString().trim()) {
-      return res.status(400).json({ success: false, message: 'SAP ID cannot be empty' });
+    console.log('\n  Converted string values:');
+    console.log('    student_name:', student_name_str);
+    console.log('    sapid:', sapid_str);
+    console.log('    father_name:', father_name_str);
+    console.log('    program:', program_str);
+    console.log('    semester:', semester_str);
+    console.log('    degree_status:', degree_status_str);
+
+    // STEP 3: Validate non-empty
+    if (!student_name_str) {
+      return res.status(400).json({ success: false, message: '❌ Student name cannot be empty' });
+    }
+
+    if (!sapid_str) {
+      return res.status(400).json({ success: false, message: '❌ SAP ID cannot be empty' });
     }
 
     // ✅ CHECK IF SAPID EXISTS IN DEPARTMENT ISSUES (NEW VALIDATION)
-    const sapidStr = sapid.toString().trim();
-    const issueRecord = await DepartmentIssue.findOne({ studentId: sapidStr });
+    const issueRecord = await DepartmentIssue.findOne({ studentId: sapid_str });
 
     console.log(`\n🔍 SAPID VALIDATION CHECK:`);
-    console.log(`   📌 SAPID from form: "${sapidStr}"`);
+    console.log(`   📌 SAPID from form: "${sapid_str}"`);
     console.log(`   🔎 Searching in DepartmentIssue collection...`);
 
     if (!issueRecord) {
-      console.error(`❌ VALIDATION FAILED: SAPID "${sapidStr}" NOT FOUND in DepartmentIssue records`);
+      console.error(`❌ VALIDATION FAILED: SAPID "${sapid_str}" NOT FOUND in DepartmentIssue records`);
       return res.status(404).json({
         success: false,
         message: "The Record Is Not Found Against This sapid",
         errorCode: "SAPID_NOT_FOUND",
         details: {
-          sapid: sapidStr,
+          sapid: sapid_str,
           reason: "This SAPID is not registered in the system for clearance processing"
         }
       });
     }
 
-    console.log(`✅ VALIDATION PASSED: SAPID "${sapidStr}" found in DepartmentIssue`);
+    console.log(`✅ VALIDATION PASSED: SAPID "${sapid_str}" found in DepartmentIssue`);
     console.log(`   Department: ${issueRecord.departmentName}`);
     console.log(`   Status: ${issueRecord.status}\n`);
 
-    if (!father_name.toString().trim()) {
-      return res.status(400).json({ success: false, message: 'Father name cannot be empty' });
+    if (!father_name_str) {
+      return res.status(400).json({ success: false, message: '❌ Father name cannot be empty' });
     }
 
-    if (!program.toString().trim()) {
-      return res.status(400).json({ success: false, message: 'Program cannot be empty' });
+    if (!program_str) {
+      return res.status(400).json({ success: false, message: '❌ Program cannot be empty' });
     }
 
-    if (!semester.toString().trim()) {
-      return res.status(400).json({ success: false, message: 'Semester cannot be empty' });
+    if (!semester_str) {
+      return res.status(400).json({ success: false, message: '❌ Semester cannot be empty' });
     }
 
-    const semesterNum = parseInt(semester.toString().trim());
+    const semesterNum = parseInt(semester_str);
     if (isNaN(semesterNum) || semesterNum < 1 || semesterNum > 12) {
       return res.status(400).json({
         success: false,
-        message: 'Semester must be a number between 1 and 12'
+        message: '❌ Semester must be a number between 1 and 12'
       });
     }
 
-    if (!degree_status.toString().trim()) {
-      return res.status(400).json({ success: false, message: 'Degree status cannot be empty' });
+    if (!degree_status_str) {
+      return res.status(400).json({ success: false, message: '❌ Degree status cannot be empty' });
     }
 
     // ==================== SUBMISSION CONTROL ====================
     console.log('\n🔒 CHECKING SUBMISSION CONTROL...');
     
-    const submissionCheck = await canStudentSubmitClearance(sapid.toString().trim(), ComprehensiveClearanceValidation);
+    const submissionCheck = await canStudentSubmitClearance(sapid_str, ComprehensiveClearanceValidation);
     
     if (!submissionCheck.canSubmit) {
       console.log(`❌ Cannot submit: ${submissionCheck.reason}`);
@@ -1064,18 +1098,18 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
 
     // ==================== COMPREHENSIVE VALIDATION ====================
     console.log('\n🚀 STARTING COMPREHENSIVE CLEARANCE VALIDATION');
-    console.log(`   Technology: Using sapId ${sapid} to check ALL departments at once`);
+    console.log(`   Technology: Using sapId ${sapid_str} to check ALL departments at once`);
 
     const studentInfo = {
-      student_name: student_name.toString().trim(),
-      father_name: father_name.toString().trim(),
-      program: program.toString().trim(),
+      student_name: student_name_str,
+      father_name: father_name_str,
+      program: program_str,
       semester: semesterNum.toString(),
-      degree_status: degree_status.toString().trim()
+      degree_status: degree_status_str
     };
 
     const validationResult = await validateStudentClearanceAllDepartments(
-      sapid.toString().trim(),
+      sapid_str,
       studentInfo
     );
 
@@ -1100,8 +1134,8 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
       const departmentRecords = validationResult.departmentStatuses.map(dept => ({
         clearance_request_id: savedRecord._id,
         student_id: req.user.id,
-        sapid: sapid.toString().trim(),
-        student_name: student_name.toString().trim(),
+        sapid: sapid_str,
+        student_name: student_name_str,
         department_name: dept.name,
         status: dept.status === 'Approved' ? 'Approved' : 'Pending',
         remarks: `Auto-validated by comprehensive clearance system`,
