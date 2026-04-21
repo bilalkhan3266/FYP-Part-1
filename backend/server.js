@@ -504,6 +504,98 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// ✅ CHANGE PASSWORD - Dedicated endpoint
+app.post('/api/users/change-password', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { current_password, new_password } = req.body;
+
+    console.log('🔐 Change Password Request');
+    console.log('  User ID:', userId);
+    console.log('  Current password provided:', !!current_password);
+    console.log('  New password provided:', !!new_password);
+
+    // Validation
+    if (!current_password || !new_password) {
+      console.log('❌ Validation failed - missing passwords');
+      return res.status(400).json({
+        success: false,
+        message: 'Current password and new password are required'
+      });
+    }
+
+    if (new_password.length < 6) {
+      console.log('❌ New password too short');
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters'
+      });
+    }
+
+    // Get user with password hash
+    console.log('🔍 Finding user by ID...');
+    const user = await User.findById(userId);
+    if (!user) {
+      console.log('❌ User not found:', userId);
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    console.log('✅ User found:', user.email);
+
+    // Verify current password
+    console.log('🔒 Verifying current password...');
+    const isCurrentPasswordValid = await bcrypt.compare(current_password, user.password);
+    if (!isCurrentPasswordValid) {
+      console.log('❌ Invalid current password for user:', userId);
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+    console.log('✅ Current password verified');
+
+    // Check if new password is same as current
+    console.log('🔄 Checking if new password is different...');
+    const isSamePassword = await bcrypt.compare(new_password, user.password);
+    if (isSamePassword) {
+      console.log('❌ New password same as current');
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be different from current password'
+      });
+    }
+    console.log('✅ New password is different');
+
+    // Hash new password
+    console.log('🔐 Hashing new password...');
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+
+    // Update password
+    console.log('💾 Updating password in database...');
+    await User.findByIdAndUpdate(
+      userId,
+      { password: hashedPassword },
+      { new: true }
+    );
+
+    console.log('✅ Password changed successfully for user:', userId);
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (err) {
+    console.error('❌ Change Password Error:', err.message);
+    console.error('   Stack:', err.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to change password: ' + err.message
+    });
+  }
+});
+
 // Update User Profile
 app.put('/api/update-profile', verifyToken, async (req, res) => {
   try {
