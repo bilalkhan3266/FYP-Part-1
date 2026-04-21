@@ -863,9 +863,16 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
         student_id: req.user.id,
         sapid: sapid_str,
         student_name: student_name_str,
+        father_name: father_name_str,
+        program: program_str,
+        semester: semester_str,
+        degree_status: degree_status_str,
+        registration_no: issueRecord.registration_no || '',
         department_name: dept.name,
         status: dept.status === 'Approved' ? 'Approved' : 'Pending',
-        remarks: 'Auto-validated by comprehensive clearance system',
+        remarks: validationResult.certificateGenerated 
+          ? '✅ Certificate generated - All departments cleared' 
+          : 'Auto-validated by comprehensive clearance system',
         submittedAt: new Date(),
         approvedAt: dept.status === 'Approved' ? new Date() : null
       }));
@@ -1113,10 +1120,13 @@ app.put('/api/clearance-requests/:requestId/approve', verifyToken, async (req, r
       if (allApproved) {
         console.log(`✅ ALL DEPARTMENTS APPROVED! Moving to HOD for final approval`);
         
-        // Update all records to mark them as ready for HOD
+        // Update all records to mark them as ready for HOD and update remarks to show certificate generated
         await DepartmentClearance.updateMany(
           { clearance_request_id: clearanceRequestId },
-          { ready_for_hod: true }
+          { 
+            ready_for_hod: true,
+            remarks: '✅ Certificate generated - All departments cleared'
+          }
         );
 
         // Update the main clearance request
