@@ -1990,6 +1990,66 @@ app.post('/api/messages/:conversation_id/reply', verifyToken, async (req, res) =
   }
 });
 
+// ✅ REPLY TO A SPECIFIC MESSAGE BY MESSAGE ID (for student & department replies)
+app.post('/api/messages/reply/:messageId', verifyToken, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const senderId = req.user.id;
+    const senderName = req.user.full_name;
+    const senderRole = req.user.role;
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        message: '❌ Message is required'
+      });
+    }
+
+    // Find the original message to get details
+    const originalMessage = await Message.findById(messageId);
+    
+    if (!originalMessage) {
+      return res.status(404).json({
+        success: false,
+        message: '❌ Message not found'
+      });
+    }
+    
+    const conversation_id = originalMessage.conversation_id;
+
+    // Create reply message
+    const replyMessage = new Message({
+      conversation_id,
+      sender_id: senderId,
+      sender_name: senderName,
+      sender_role: senderRole,
+      sender_sapid: senderRole === 'student' ? req.user.sap : originalMessage.sender_sapid,
+      recipient_sapid: senderRole === 'student' ? req.user.sap : originalMessage.sender_sapid,
+      recipient_id: senderRole === 'student' ? senderId : originalMessage.sender_id,
+      recipient_department: originalMessage.recipient_department,
+      subject: `Re: ${originalMessage.subject}`,
+      message,
+      message_type: 'reply',
+      parent_message_id: originalMessage._id
+    });
+
+    await replyMessage.save();
+
+    res.status(201).json({
+      success: true,
+      message: `✅ Reply sent`,
+      messageId: replyMessage._id
+    });
+  } catch (err) {
+    console.error('Reply Error:', err);
+    res.status(500).json({
+      success: false,
+      message: '❌ Failed to send reply'
+    });
+  }
+});
+
 // --------------------
 // DEPARTMENT STAFF - SEND MESSAGE TO STUDENT
 // --------------------
