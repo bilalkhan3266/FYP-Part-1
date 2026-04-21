@@ -102,9 +102,42 @@ mongoose.connect(MONGO_URI, {
   maxPoolSize: 10,
   serverSelectionTimeoutMS: 5000,
 })
-  .then(() => {
+  .then(async () => {
     console.log('\n✅ MongoDB connected successfully!');
     console.log(`📊 Database: role_based_system`);
+    
+    // Backfill missing program/semester in DepartmentClearance records
+    try {
+      console.log('\n🔄 Backfilling missing program/semester in DepartmentClearance records...');
+      const missingRecords = await DepartmentClearance.find({
+        $or: [
+          { program: { $in: [null, '', 'N/A', undefined] } },
+          { semester: { $in: [null, '', 'N/A', undefined] } }
+        ]
+      }).select('sapid program semester');
+      
+      console.log(`   Found ${missingRecords.length} records with missing program/semester`);
+      
+      let updatedCount = 0;
+      for (const record of missingRecords) {
+        const comprehensiveRecord = await ComprehensiveClearanceValidation.findOne({
+          sapid: record.sapid
+        }).select('program semester').lean();
+        
+        if (comprehensiveRecord) {
+          await DepartmentClearance.findByIdAndUpdate(record._id, {
+            program: comprehensiveRecord.program || 'N/A',
+            semester: comprehensiveRecord.semester || 'N/A'
+          });
+          updatedCount++;
+        }
+      }
+      
+      console.log(`✅ Updated ${updatedCount} DepartmentClearance records with missing data\n`);
+    } catch (backfillErr) {
+      console.error('⚠️  Backfill error (non-fatal):', backfillErr.message);
+    }
+    
     console.log(`🚀 Server ready to accept requests\n`);
   })
   .catch(err => {
