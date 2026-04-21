@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { 
   ClipboardList, CheckCircle2, XCircle, MessageSquare, UserPen, LogOut,
-  GitCompare, AlertCircle, CheckCircle, Inbox, AlertTriangle, Menu
+  GitCompare, AlertCircle, CheckCircle, Inbox, AlertTriangle, Menu, Loader
 } from "lucide-react";
 import api from "../../services/api";
 
@@ -291,7 +291,7 @@ export default function CoordinationDashboard() {
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
               title="Manually refresh the data"
             >
-              <RiLoader4Line size={18} className={`${loading ? 'animate-spin' : 'group-hover:animate-spin'}`} /> 
+              <Loader size={18} className={`${loading ? 'animate-spin' : 'group-hover:animate-spin'}`} /> 
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
             )}
