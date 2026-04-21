@@ -3,6 +3,7 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const ClearanceWorkflow = require("../models/ClearanceWorkflow");
 const DepartmentClearance = require("../models/DepartmentClearance");
+const ComprehensiveClearanceValidation = require("../models/ComprehensiveClearanceValidation");
 const Message = require("../models/Message");
 const User = require("../models/User");
 const { generateQRCode, generateCertificatePDF, CERTIFICATES_DIR } = require("../utils/certificateGenerator");
@@ -185,21 +186,43 @@ router.get("/department", verifyToken, async (req, res) => {
       status: 'Rejected'
     }).sort({ createdAt: -1 }).limit(100);
 
-    const formatDeptClearance = (dc) => ({
-      _id: dc._id,
-      studentName: dc.student_name || "Unknown Student",
-      sapid: dc.sapid,
-      program: dc.program,
-      semester: dc.semester,
-      overallStatus: dc.status,
-      currentPhase: phaseIndex,
-      phaseStatus: dc.status,
-      phaseRemarks: dc.remarks || "",
-      phaseApprovedBy: dc.approved_by || "",
-      phaseApprovedAt: dc.approved_at,
-      submittedAt: dc.createdAt,
-      source: "comprehensive"
-    });
+    // ── Helper to fill in missing program/semester from ComprehensiveClearanceValidation ──
+    const formatDeptClearance = async (dc) => {
+      let program = dc.program;
+      let semester = dc.semester;
+      
+      // If program/semester missing, look up from ComprehensiveClearanceValidation
+      if ((!program || program === 'N/A') || (!semester || semester === 'N/A')) {
+        const comprehensiveRecord = await ComprehensiveClearanceValidation.findOne({
+          sapid: dc.sapid
+        }).sort({ submittedAt: -1 }).lean();
+        
+        if (comprehensiveRecord) {
+          program = program || comprehensiveRecord.program || 'N/A';
+          semester = semester || comprehensiveRecord.semester || 'N/A';
+        }
+      }
+      
+      return {
+        _id: dc._id,
+        studentName: dc.student_name || "Unknown Student",
+        sapid: dc.sapid,
+        program: program || 'N/A',
+        semester: semester || 'N/A',
+        overallStatus: dc.status,
+        currentPhase: phaseIndex,
+        phaseStatus: dc.status,
+        phaseRemarks: dc.remarks || "",
+        phaseApprovedBy: dc.approved_by || "",
+        phaseApprovedAt: dc.approved_at,
+        submittedAt: dc.createdAt,
+        source: "comprehensive"
+      };
+    };
+
+    // Format all records
+    const formattedApproved = await Promise.all(deptApproved.map(formatDeptClearance));
+    const formattedRejected = await Promise.all(deptRejected.map(formatDeptClearance));
 
     res.json({
       success: true,
@@ -208,11 +231,11 @@ router.get("/department", verifyToken, async (req, res) => {
       pending: [],
       rejected: [
         ...rejected.map((w) => formatWorkflowForDepartment(w, phaseIndex)),
-        ...deptRejected.map(formatDeptClearance)
+        ...formattedRejected
       ],
       approved: [
         ...approved.map((w) => formatWorkflowForDepartment(w, phaseIndex)),
-        ...deptApproved.map(formatDeptClearance)
+        ...formattedApproved
       ],
     });
   } catch (err) {
