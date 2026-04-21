@@ -85,8 +85,11 @@ export default function CoordinationDashboard() {
   }, [activeTab, allData]);
 
   // Fetch all data only on mount
+  // AUTO-REFRESH DISABLED - Manual refresh only
   useEffect(() => {
     fetchRequests();
+    // const interval = setInterval(() => { fetchRequests(); }, 5000);
+    // return () => clearInterval(interval);
   }, []);
 
   const handleOpenRemarksModal = (requestId, action, sapId) => {
@@ -277,18 +280,21 @@ export default function CoordinationDashboard() {
                 <p className="text-gray-600 mt-1">Review and manage student clearance requests</p>
               </div>
             </div>
+            {/* REFRESH BUTTON HIDDEN */}
+            {false && (
             <button
               onClick={() => {
                 console.log("🔄 Manual refresh triggered");
                 fetchRequests();
               }}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500 text-white font-medium hover:bg-purple-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
               title="Manually refresh the data"
             >
-              <ClipboardList size={18} className={`${loading ? 'animate-spin' : 'group-hover:animate-spin'}`} /> 
+              <RiLoader4Line size={18} className={`${loading ? 'animate-spin' : 'group-hover:animate-spin'}`} /> 
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
+            )}
           </div>
         </div>
 

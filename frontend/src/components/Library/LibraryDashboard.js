@@ -85,8 +85,11 @@ export default function LibraryDashboard() {
   }, [activeTab, allData]);
 
   // Fetch all data only on mount
+  // AUTO-REFRESH DISABLED - Manual refresh only
   useEffect(() => {
     fetchRequests();
+    // const interval = setInterval(() => { fetchRequests(); }, 5000);
+    // return () => clearInterval(interval);
   }, []);
 
   const handleOpenRemarksModal = (requestId, action) => {
@@ -272,6 +275,8 @@ export default function LibraryDashboard() {
                 <p className="text-gray-600 mt-1">Review and manage student clearance requests</p>
               </div>
             </div>
+            {/* REFRESH BUTTON HIDDEN */}
+            {false && (
             <button
               onClick={() => {
                 console.log("🔄 Manual refresh triggered");
@@ -284,6 +289,7 @@ export default function LibraryDashboard() {
               <RiLoader4Line size={18} className={`${loading ? 'animate-spin' : 'group-hover:animate-spin'}`} /> 
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
+            )}
           </div>
         </div>
 
