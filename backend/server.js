@@ -26,6 +26,9 @@ const DepartmentStats = require("./models/DepartmentStats");
 const DocumentQRCode = require("./models/DocumentQRCode");
 const PendingUser = require("./models/PendingUser");
 const { sendClearanceCertificateEmail, sendOtpEmail, sendPasswordResetEmail } = require("./utils/emailService");
+const DepartmentIssue = require("./models/DepartmentIssue");
+const ComprehensiveClearanceValidation = require("./models/ComprehensiveClearanceValidation");
+const { validateStudentClearanceAllDepartments, canStudentSubmitClearance } = require("./utils/clearanceValidator");
 
 // --------------------
 // Express app
@@ -738,21 +741,15 @@ app.post('/api/reset-password', async (req, res) => {
 // --------------------
 app.post('/api/clearance-requests', verifyToken, async (req, res) => {
   try {
-    // ULTRA-DEFENSIVE: Log entire request body for debugging
     console.log('\n📝 CLEARANCE REQUEST RECEIVED');
-    console.log('  Full request body:', JSON.stringify(req.body, null, 2));
-    console.log('  Content-Type:', req.get('content-type'));
-    console.log('  User authenticated:', !!req.user);
-    
-    // Extract fields with explicit error handling
+    console.log('  Body:', JSON.stringify(req.body, null, 2));
+
     const student_name = req.body?.student_name;
     const sapid = req.body?.sapid;
-    const registration_no = req.body?.registration_no;
     const father_name = req.body?.father_name;
     const program = req.body?.program;
     const semester = req.body?.semester;
     const degree_status = req.body?.degree_status;
-    const department = req.body?.department;
 
     console.log('\n  Extracted values:');
     console.log('    student_name:', student_name, '(type:', typeof student_name, ')');
@@ -808,149 +805,109 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
     console.log('    semester:', semester_str);
     console.log('    degree_status:', degree_status_str);
 
-    // STEP 3: Validate non-empty
-    if (!student_name_str) {
-      return res.status(400).json({ 
-        success: false, 
-        message: '❌ Student name cannot be empty'
-      });
+    // Validate all required fields present
+    if (!student_name_str) return res.status(400).json({ success: false, message: '❌ Student name cannot be empty' });
+    if (!sapid_str) return res.status(400).json({ success: false, message: '❌ SAP ID cannot be empty' });
+    if (!father_name_str) return res.status(400).json({ success: false, message: '❌ Father name cannot be empty' });
+    if (!program_str) return res.status(400).json({ success: false, message: '❌ Program cannot be empty' });
+    if (!semester_str) return res.status(400).json({ success: false, message: '❌ Semester cannot be empty' });
+    if (!degree_status_str) return res.status(400).json({ success: false, message: '❌ Degree status cannot be empty' });
+
+    const semesterNum = parseInt(semester_str);
+    if (isNaN(semesterNum) || semesterNum < 1 || semesterNum > 12) {
+      return res.status(400).json({ success: false, message: '❌ Semester must be a number between 1 and 12' });
     }
 
-    if (!sapid_str) {
-      return res.status(400).json({ 
-        success: false, 
-        message: '❌ SAP ID cannot be empty' 
-      });
-    }
-
-    // ✅ Registration number is now OPTIONAL (user deleted this field)
-    const regNoFormatted = registration_no ? String(registration_no).trim().toUpperCase() : null;
-
-    if (!father_name_str) {
-      return res.status(400).json({ 
-        success: false, 
-        message: '❌ Father name cannot be empty'
-      });
-    }
-
-    // ✅ Check if student has already submitted a clearance request
-    const existingRequest = await ClearanceRequest.findOne({ 
-      student_id: req.user.id,
-      status: { $in: ['Pending', 'In Progress', 'Approved', 'Completed'] }
-    });
-
-    if (existingRequest && existingRequest.status !== 'Rejected') {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'You already have a clearance request in progress. Cannot submit new request.' 
-      });
-    }
-
-    if (!program_str) {
-      return res.status(400).json({ 
-        success: false, 
-        message: '❌ Program is required'
-      });
-    }
-
-    if (!semester_str) {
-      return res.status(400).json({ 
-        success: false, 
-        message: '❌ Semester is required'
-      });
-    }
-
-    if (!degree_status_str) {
-      return res.status(400).json({ 
-        success: false, 
-        message: '❌ Degree status is required'
-      });
-    }
-
-    // Check if student already has pending requests
-    console.log('🔍 Checking for existing clearance requests...');
-    const existingRequests = await DepartmentClearance.find({
-      student_id: req.user.id,
-      status: 'Pending'
-    });
-
-    if (existingRequests.length > 0) {
-      console.log(`⚠️ Student already has ${existingRequests.length} pending request(s)`);
-      return res.status(400).json({
+    // Check if SAPID exists in DepartmentIssue
+    const issueRecord = await DepartmentIssue.findOne({ studentId: sapid_str });
+    if (!issueRecord) {
+      return res.status(404).json({
         success: false,
-        message: 'You already have a pending clearance request. Please wait for it to be reviewed before submitting again.'
+        message: 'The Record Is Not Found Against This sapid',
+        errorCode: 'SAPID_NOT_FOUND'
       });
     }
 
-    // Create main clearance request
-    const clearanceRequest = new ClearanceRequest({
-      student_id: req.user.id,
+    // Check submission eligibility via ComprehensiveClearanceValidation
+    const submissionCheck = await canStudentSubmitClearance(sapid_str, ComprehensiveClearanceValidation);
+    if (!submissionCheck.canSubmit) {
+      return res.status(409).json({
+        success: false,
+        message: submissionCheck.reason,
+        existingRecord: submissionCheck.existingRecord
+      });
+    }
+
+    // Run full comprehensive validation
+    const studentInfo = {
       student_name: student_name_str,
-      sapid: sapid_str,
-      registration_no: regNoFormatted,
       father_name: father_name_str,
       program: program_str,
-      semester: semester_str,
-      degree_status: degree_status_str,
-      department: department || '',
-      status: 'Pending'
-    });
+      semester: semesterNum.toString(),
+      degree_status: degree_status_str
+    };
+    const validationResult = await validateStudentClearanceAllDepartments(sapid_str, studentInfo);
 
-    console.log('💾 Saving main clearance request...');
-    const mainRequest = await clearanceRequest.save();
-    console.log('✅ Main request saved:', mainRequest._id);
-
-    const departments = [
-      'Library',
-      'Transport',
-      'Laboratory',
-      'Student Service',
-      'Fee Department',
-      'Coordination',
-      'HOD'
-    ];
-
-    // Create clearance record for each department
-    const departmentRecords = departments.map(dept => ({
-      clearance_request_id: mainRequest._id,
+    // Save ComprehensiveClearanceValidation record
+    const comprehensiveRecord = new ComprehensiveClearanceValidation({
       student_id: req.user.id,
-      sapid: sapid.toString().trim(),
-      student_name: student_name.toString().trim(),
-      registration_no: registration_no.toString().trim(),
-      father_name: father_name.toString().trim(),
-      program: program.toString().trim(),
-      semester: semester.toString().trim(),
-      degree_status: degree_status.toString().trim(),
-      department_name: dept,
-      status: 'Pending',
-      createdAt: new Date()
-    }));
+      ...validationResult
+    });
+    const savedRecord = await comprehensiveRecord.save();
+    console.log(`✅ Validation saved: ${savedRecord._id}, status: ${validationResult.overallStatus}`);
 
-    console.log('💾 Saving department clearance records...');
-    await DepartmentClearance.insertMany(departmentRecords);
-    console.log(`✅ Saved ${departmentRecords.length} department records`);
+    // Create DepartmentClearance records (for department dashboards)
+    try {
+      const deptRecords = validationResult.departmentStatuses.map(dept => ({
+        clearance_request_id: savedRecord._id,
+        student_id: req.user.id,
+        sapid: sapid_str,
+        student_name: student_name_str,
+        department_name: dept.name,
+        status: dept.status === 'Approved' ? 'Approved' : 'Pending',
+        remarks: 'Auto-validated by comprehensive clearance system',
+        submittedAt: new Date(),
+        approvedAt: dept.status === 'Approved' ? new Date() : null
+      }));
+      await DepartmentClearance.insertMany(deptRecords);
+      console.log(`✅ Created ${deptRecords.length} DepartmentClearance records`);
+    } catch (deptErr) {
+      console.error('❌ Error creating DepartmentClearance records:', deptErr.message);
+    }
 
-    res.status(201).json({
+    // Send notification
+    const notifMsg = validationResult.overallStatus === 'Completed'
+      ? 'Congratulations! Your clearance has been APPROVED by all departments.'
+      : `Your clearance was rejected. Reasons: ${validationResult.departmentStatuses.filter(d => d.status === 'Rejected').map(d => `${d.name}: ${d.reason}`).join('; ')}`;
+    new Message({
+      conversation_id: `${sapid_str}-clearance-${Date.now()}`,
+      sender_id: new mongoose.Types.ObjectId(),
+      sender_name: 'Clearance System',
+      sender_role: 'system',
+      sender_sapid: 'SYSTEM',
+      recipient_sapid: sapid_str,
+      recipient_id: req.user.id,
+      recipient_department: 'System',
+      subject: validationResult.overallStatus === 'Completed' ? '✅ CLEARANCE APPROVED' : '⚠️ CLEARANCE REJECTED',
+      message: notifMsg,
+      message_type: 'notification'
+    }).save().catch(e => console.error('Notification save error:', e));
+
+    return res.status(201).json({
       success: true,
-      message: 'Clearance request submitted successfully to all departments',
-      requestId: mainRequest._id,
-      details: {
-        student: sapid,
-        departments: departments.length,
-        timestamp: new Date()
-      }
+      message: validationResult.overallStatus === 'Completed'
+        ? '✅ Clearance APPROVED - All departments cleared!'
+        : '❌ Clearance REJECTED - Please fix the issues and resubmit',
+      validationId: savedRecord._id,
+      overallStatus: validationResult.overallStatus,
+      certificateGenerated: validationResult.certificateGenerated,
+      departmentStatuses: validationResult.departmentStatuses.map(d => ({ name: d.name, status: d.status, reason: d.reason })),
+      approvedDepartments: validationResult.approvedDepartments,
+      rejectedDepartments: validationResult.rejectedDepartments
     });
   } catch (err) {
-    console.error('❌ Clearance Request Error:', err);
-    console.error('Error Details:', {
-      message: err.message,
-      stack: err.stack,
-      name: err.name
-    });
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to submit clearance request: ' + err.message
-    });
+    console.error('❌ Clearance Request Error:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to process clearance request: ' + err.message });
   }
 });
 
@@ -1015,39 +972,54 @@ app.get('/api/clearance-certificate', verifyToken, async (req, res) => {
 app.get('/api/clearance-status', verifyToken, async (req, res) => {
   try {
     const studentId = req.user.id;
-    console.log('🔍 Fetching clearance status for student:', studentId);
+    const studentSap = req.user.sap;
+    console.log('🔍 Fetching clearance status for student:', studentSap || studentId);
 
-    // Get all department statuses for this student
-    const statuses = await DepartmentClearance.find({ student_id: studentId })
-      .sort({ department_name: 1 });
+    // Try student_id first, fall back to sapid
+    let validationRecord = await ComprehensiveClearanceValidation.findOne({ student_id: studentId }).sort({ submittedAt: -1 });
+    if (!validationRecord && studentSap) {
+      console.log('⚠️ Not found by student_id, trying sapid fallback:', studentSap);
+      validationRecord = await ComprehensiveClearanceValidation.findOne({ sapid: studentSap.toString().trim() }).sort({ submittedAt: -1 });
+      if (validationRecord) {
+        await ComprehensiveClearanceValidation.findByIdAndUpdate(validationRecord._id, { student_id: studentId });
+      }
+    }
 
-    console.log(`✅ Found ${statuses.length} department clearance records`);
-    console.log('📋 Statuses:', statuses.map(s => `${s.department_name}: ${s.status}`).join(', '));
+    if (!validationRecord) {
+      return res.json({
+        success: true,
+        data: null,
+        summary: { total: 5, cleared: 0, rejected: 0, pending: 0, notStarted: 5, progressPercentage: 0 },
+        departmentStatuses: [],
+        message: 'No clearance request submitted yet'
+      });
+    }
 
-    // Calculate progress
-    const clearedCount = statuses.filter(s => s.status === 'Approved' || s.status === 'Cleared').length;
-    const rejectedCount = statuses.filter(s => s.status === 'Rejected').length;
-    const pendingCount = statuses.filter(s => s.status === 'Pending').length;
-    const totalCount = statuses.length;
-    const progressPercentage = totalCount > 0 ? Math.round((clearedCount / totalCount) * 100) : 0;
+    const mappedDepartmentStatuses = validationRecord.departmentStatuses.map(d => ({
+      name: d.name, status: d.status, reason: d.reason, pendingItems: d.pendingItems || [], validatedAt: d.validatedAt
+    }));
+    const clearedCount = mappedDepartmentStatuses.filter(d => d.status === 'Approved').length;
+    const rejectedCount = mappedDepartmentStatuses.filter(d => d.status === 'Rejected').length;
 
     res.json({
       success: true,
-      data: statuses,
+      data: validationRecord,
+      departmentStatuses: mappedDepartmentStatuses,
       summary: {
-        total: totalCount,
+        total: 5,
         cleared: clearedCount,
         rejected: rejectedCount,
-        pending: pendingCount,
-        progressPercentage: progressPercentage
-      }
+        pending: 0,
+        notStarted: 0,
+        progressPercentage: Math.round((clearedCount / 5) * 100)
+      },
+      overallStatus: validationRecord.overallStatus,
+      certificateGenerated: validationRecord.certificateGenerated,
+      qrCode: validationRecord.qr_code || null
     });
   } catch (err) {
     console.error('❌ Clearance Status Error:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch clearance status: ' + err.message
-    });
+    res.status(500).json({ success: false, message: 'Failed to fetch clearance status: ' + err.message });
   }
 });
 
@@ -1195,23 +1167,48 @@ async function checkAllDepartmentsApproved(clearanceRequestId) {
 // Get Student's Existing Clearance Requests
 app.get('/api/clearance-requests', verifyToken, async (req, res) => {
   try {
-    console.log('📋 Fetching clearance requests for student:', req.user.id);
+    const studentId = req.user.id;
+    const studentSap = req.user.sap;
+    console.log('📋 Fetching clearance request history for student:', studentSap || studentId);
 
-    const requests = await DepartmentClearance.find({
-      student_id: req.user.id
-    }).sort({ createdAt: -1 });
+    // Try student_id first, fall back to sapid
+    let validationRecords = await ComprehensiveClearanceValidation.find({ student_id: studentId }).sort({ submittedAt: -1 });
+    if ((!validationRecords || validationRecords.length === 0) && studentSap) {
+      validationRecords = await ComprehensiveClearanceValidation.find({ sapid: studentSap.toString().trim() }).sort({ submittedAt: -1 });
+      if (validationRecords.length > 0) {
+        await ComprehensiveClearanceValidation.updateMany(
+          { sapid: studentSap.toString().trim(), student_id: { $exists: false } },
+          { $set: { student_id: studentId } }
+        );
+      }
+    }
 
-    res.json({
-      success: true,
-      requests: requests || [],
-      count: requests.length
-    });
+    if (!validationRecords || validationRecords.length === 0) {
+      return res.json({ success: true, data: [], count: 0 });
+    }
+
+    const statusMap = { 'Completed': 'Approved', 'Pending': 'Pending', 'Rejected': 'Rejected', 'Resubmission': 'Resubmission' };
+    const transformedRecords = validationRecords.map(record => ({
+      _id: record._id,
+      student_id: record.student_id,
+      sapid: record.sapid,
+      student_name: record.student_name,
+      father_name: record.father_name,
+      program: record.program,
+      semester: record.semester,
+      submitted_at: record.submittedAt,
+      overallStatus: record.overallStatus,
+      status: statusMap[record.overallStatus] || record.overallStatus,
+      certificateGenerated: record.certificateGenerated,
+      departmentStatuses: record.departmentStatuses.map(d => ({
+        name: d.name, status: d.status, reason: d.reason, pendingItems: d.pendingItems || [], validatedAt: d.validatedAt
+      }))
+    }));
+
+    res.json({ success: true, data: transformedRecords, count: transformedRecords.length });
   } catch (err) {
     console.error('❌ Fetch Requests Error:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch requests: ' + err.message
-    });
+    res.status(500).json({ success: false, message: 'Failed to fetch requests: ' + err.message });
   }
 });
 
