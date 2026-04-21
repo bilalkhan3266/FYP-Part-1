@@ -394,7 +394,11 @@ export default function ServiceDashboard() {
                       </span>
                     </td>
                     <td className="px-5 py-4 text-gray-600 text-xs max-w-[250px]">
-                      {req.overallStatus === "Completed" ? (
+                        {req.remarks && req.remarks.includes('Certificate generated') ? (
+                          <div className="flex items-center gap-2 bg-green-50 p-2 rounded border border-green-200">
+                            <span className="text-green-700 font-semibold">✅ {req.remarks}</span>
+                          </div>
+                        ) : req.overallStatus === "Completed" ? (
                         <div className="flex flex-col gap-1">
                           <span className="font-semibold text-emerald-700">✓ Certificate Generated</span>
                           <span className="text-xs text-gray-500">
