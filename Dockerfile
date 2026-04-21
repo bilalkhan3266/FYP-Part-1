@@ -3,29 +3,20 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY backend/package*.json ./backend/
-COPY frontend/package*.json ./frontend/
+# Copy backend package files only
+COPY backend/package*.json ./
 
 # Install backend dependencies
-RUN cd backend && npm ci --only=production && cd ..
+RUN npm install --production
 
-# Install frontend dependencies
-RUN cd frontend && npm ci && cd ..
+# Copy backend code
+COPY backend/ .
 
-# Copy project files
-COPY . .
-
-# Build frontend
-RUN cd frontend && npm run build && cd ..
-
-# Expose ports
-EXPOSE 5000 3000
+# Expose backend port
+EXPOSE 5000
 
 # Set environment
 ENV NODE_ENV=production
 
 # Start backend server
-WORKDIR /app/backend
 CMD ["npm", "start"]
