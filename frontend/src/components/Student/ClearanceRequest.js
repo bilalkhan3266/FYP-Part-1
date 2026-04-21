@@ -89,6 +89,19 @@ const PROGRAM_BY_DEPARTMENT = {
   ]
 };
 
+// Department descriptions for clarity
+const DEPARTMENT_DESCRIPTIONS = {
+  "Computer Science": "BS Computer Science, BS Software Engineering, BS Cybersecurity, BS Information Technology, BS Data Science",
+  "Media Studies": "BS Media Studies, BA Journalism, BA Mass Communication, BS Digital Media, BA Broadcasting",
+  "Medical Sciences": "Doctor of Medicine (MD), BS Nursing, BS Allied Health Sciences, PharmD, BS Medical Technology",
+  "Business Administration": "MBA, BS Business Administration, BS Accounting, BS Finance, BS Marketing, BS Human Resource Management",
+  "Engineering": "BS Civil Engineering, BS Electrical Engineering, BS Mechanical Engineering, BS Software Engineering, BS Environmental Engineering",
+  "Law": "LLB - Bachelor of Laws, LLM - Master of Laws, BS Law and Business",
+  "Arts & Humanities": "BA English Literature, BA History, BA Islamic Studies, BA Urdu Literature, BA Philosophy",
+  "Islamic Studies": "BS Islamic Studies, BA Islamic Jurisprudence, MA Islamic Theology",
+  "Other": "Other Program"
+};
+
 export default function ClearanceRequest() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
@@ -676,6 +689,11 @@ export default function ClearanceRequest() {
                       </option>
                     ))}
                   </select>
+                  {availablePrograms.length > 0 && (
+                    <small className="text-blue-300 block mt-2 text-xs">
+                      📚 Department: {user?.department}
+                    </small>
+                  )}
                   {!availablePrograms.length && (
                     <small className="text-yellow-400 block mt-2">
                       Please update your profile with a valid department in Edit Profile

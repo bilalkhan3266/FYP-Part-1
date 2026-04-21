@@ -19,7 +19,18 @@ const DEPARTMENTS = [
   "Other"
 ];
 
-// Validation helpers
+// Department descriptions showing available programs
+const DEPARTMENT_DESCRIPTIONS = {
+  "Computer Science": "BS Computer Science, BS Software Engineering, BS Cybersecurity, BS Information Technology, BS Data Science",
+  "Media Studies": "BS Media Studies, BA Journalism, BA Mass Communication, BS Digital Media, BA Broadcasting",
+  "Medical Sciences": "Doctor of Medicine (MD), BS Nursing, BS Allied Health Sciences, PharmD, BS Medical Technology",
+  "Business Administration": "MBA, BS Business Administration, BS Accounting, BS Finance, BS Marketing, BS Human Resource Management",
+  "Engineering": "BS Civil Engineering, BS Electrical Engineering, BS Mechanical Engineering, BS Software Engineering, BS Environmental Engineering",
+  "Law": "LLB - Bachelor of Laws, LLM - Master of Laws, BS Law and Business",
+  "Arts & Humanities": "BA English Literature, BA History, BA Islamic Studies, BA Urdu Literature, BA Philosophy",
+  "Islamic Studies": "BS Islamic Studies, BA Islamic Jurisprudence, MA Islamic Theology",
+  "Other": "Other Program"
+};
 const validateFullName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
 const validateEmail = (email) => /^[0-9]+@students\.riphah\.edu\.pk$/.test(email.trim().toLowerCase());
 const validateSapId = (sap) => /^[0-9]+$/.test(sap.trim());
@@ -426,6 +437,11 @@ export default function Signup() {
                     ))}
                   </select>
                 </div>
+                {formData.department && DEPARTMENT_DESCRIPTIONS[formData.department] && (
+                  <small style={{ color: "#0066cc", marginTop: 8, display: "block", fontSize: "0.85rem", fontWeight: "500", lineHeight: "1.5" }}>
+                    📚 Programs: {DEPARTMENT_DESCRIPTIONS[formData.department]}
+                  </small>
+                )}
               </div>
 
               {/* Password */}
