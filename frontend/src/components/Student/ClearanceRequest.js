@@ -279,12 +279,22 @@ export default function ClearanceRequest() {
       );
 
       if (response.data.success) {
+        console.log('✅ Clearance request submitted successfully!');
+        console.log('   Response:', response.data);
+        console.log('   Overall Status:', response.data.overallStatus);
+        console.log('   Department Statuses:', response.data.departmentStatuses);
+        
         setSubmitted(true);
         setCanSubmitNew(false);
         setCurrentStage(response.data.currentStage || "Stage 1 of 5: Coordination");
         
         // Analyze department statuses from response
         const deptStatuses = response.data.departmentStatuses || [];
+        console.log(`   Found ${deptStatuses.length} department statuses:`);
+        deptStatuses.forEach(dept => {
+          console.log(`      ${dept.name}: ${dept.status} - ${dept.reason}`);
+        });
+        
         const allApproved = deptStatuses.length > 0 && deptStatuses.every(dept => dept.status === 'Approved');
         const anyRejected = deptStatuses.some(dept => dept.status === 'Rejected');
         
@@ -294,11 +304,14 @@ export default function ClearanceRequest() {
         
         setSuccess(`✅ ${response.data.message}\n${response.data.currentStage}`);
         
+        console.log(`ℹ️ Redirecting to Dashboard in 3 seconds...`);
         // Redirect after 3 seconds
         setTimeout(() => {
+          console.log('🔄 Redirecting to /student-clearance-status');
           navigate("/student-clearance-status");
         }, 3000);
       } else {
+        console.error('❌ Request not successful:', response.data.message);
         setError(response.data.message || "❌ Failed to submit request");
       }
     } catch (err) {
@@ -323,8 +336,18 @@ export default function ClearanceRequest() {
       } else if (err.response?.status === 404) {
         setError(err.response?.data?.message || "❌ The record is not found in the system");
       } else if (err.response?.status === 409) {
+        console.error('❌ 409 Conflict Error - Cannot submit');
+        console.error('   Message:', err.response?.data?.message);
+        console.error('   Existing record:', err.response?.data?.existingRecord);
         setError(`⚠️ ${err.response?.data?.message || "You already have an active request"}`);
         setCanSubmitNew(false);
+        // Redirect to Dashboard to show existing request
+        console.log('ℹ️ Redirecting to Dashboard to show existing request');
+        setTimeout(() => {
+          navigate("/student-clearance-status", {
+            state: { message: 'You have an active clearance request.' }
+          });
+        }, 2000);
       } else if (err.response?.status === 400) {
         setError(err.response?.data?.message || "❌ Invalid input - please check your details");
       } else {

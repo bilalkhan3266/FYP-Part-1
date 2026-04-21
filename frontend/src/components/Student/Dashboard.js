@@ -56,34 +56,43 @@ export default function StudentDashboard() {
       const response = await api.get("/api/clearance-status");
 
       console.log("✅ Clearance status response:", response.data);
+      console.log("📋 Department Statuses Array:", response.data.departmentStatuses);
+      console.log("📊 Summary Data:", response.data.summary);
 
       if (response.data.success && response.data.summary) {
         setClearanceStatus(response.data.summary);
-        setDepartmentStatuses(response.data.departmentStatuses || []);
+        const deptStats = response.data.departmentStatuses || [];
+        console.log(`✅ Setting ${deptStats.length} department statuses`);
+        console.log(`   Departments:`, deptStats.map(d => ({ name: d.name, status: d.status, reason: d.reason })));
+        setDepartmentStatuses(deptStats);
         setError("");
         console.log("📈 Status set:", response.data.summary);
       } else {
         console.log("⚠️ No summary in response");
         // Set default values if no summary
         setClearanceStatus({
-          total: 0,
+          total: 5,
           cleared: 0,
           pending: 0,
           rejected: 0,
           progressPercentage: 0
         });
+        setDepartmentStatuses([]);
+        console.log("⚠️ No clearance record yet - showing empty state");
       }
     } catch (err) {
       console.error("❌ Error fetching clearance status:", err);
+      console.error("❌ Error details:", err.response?.data || err.message);
       setError("Failed to load clearance status");
       // Set default values on error
       setClearanceStatus({
-        total: 0,
+        total: 5,
         cleared: 0,
         pending: 0,
         rejected: 0,
         progressPercentage: 0
       });
+      setDepartmentStatuses([]);
     }
   }, []);
 
