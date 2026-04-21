@@ -9,11 +9,13 @@ const logo512 = "/logo512.png";
 
 const DEPARTMENTS = [
   "Computer Science",
-  "Software Engineering",
-  "Information Technology",
-  "Pharmacy",
-  "Management Sciences",
+  "Media Studies",
+  "Medical Sciences",
+  "Business Administration",
   "Engineering",
+  "Law",
+  "Arts & Humanities",
+  "Islamic Studies",
   "Other"
 ];
 

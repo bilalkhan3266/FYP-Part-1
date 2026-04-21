@@ -35,31 +35,37 @@ const PROGRAM_BY_DEPARTMENT = {
     "BS Computer Science",
     "BS Software Engineering",
     "BS Cybersecurity",
-    "BS Information Technology"
+    "BS Information Technology",
+    "BS Data Science"
   ],
   "Media Studies": [
     "BS Media Studies",
     "BA Journalism",
     "BA Mass Communication",
-    "BS Digital Media"
+    "BS Digital Media",
+    "BA Broadcasting"
   ],
   "Medical Sciences": [
     "Doctor of Medicine (MD)",
     "BS Nursing",
     "BS Allied Health Sciences",
-    "PharmD - Doctor of Pharmacy"
+    "PharmD - Doctor of Pharmacy",
+    "BS Medical Technology"
   ],
   "Business Administration": [
     "MBA - Master of Business Administration",
     "BS Business Administration",
     "BS Accounting",
-    "BS Finance"
+    "BS Finance",
+    "BS Marketing",
+    "BS Human Resource Management"
   ],
   "Engineering": [
     "BS Civil Engineering",
     "BS Electrical Engineering",
     "BS Mechanical Engineering",
-    "BS Software Engineering"
+    "BS Software Engineering",
+    "BS Environmental Engineering"
   ],
   "Law": [
     "LLB - Bachelor of Laws",
@@ -70,7 +76,8 @@ const PROGRAM_BY_DEPARTMENT = {
     "BA English Literature",
     "BA History",
     "BA Islamic Studies",
-    "BA Urdu Literature"
+    "BA Urdu Literature",
+    "BA Philosophy"
   ],
   "Islamic Studies": [
     "BS Islamic Studies",
@@ -162,6 +169,18 @@ export default function ClearanceRequest() {
 
     fetchClearanceHistory();
   }, []);
+
+  // ✅ AUTO-POPULATE program field based on user's department
+  useEffect(() => {
+    if (availablePrograms.length > 0 && !formData.program) {
+      // Auto-set to first program if user has a valid department
+      setFormData(prev => ({
+        ...prev,
+        program: availablePrograms[0]
+      }));
+      console.log(`✅ Auto-populated program with: ${availablePrograms[0]}`);
+    }
+  }, [availablePrograms, user?.department]);
 
   // ✅ AUTO-REDIRECT if student already has active request (Pending or In Progress)
   useEffect(() => {
