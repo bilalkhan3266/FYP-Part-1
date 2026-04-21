@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const ClearanceWorkflow = require("../models/ClearanceWorkflow");
+const DepartmentClearance = require("../models/DepartmentClearance");
 const Message = require("../models/Message");
 const User = require("../models/User");
 const { generateQRCode, generateCertificatePDF, CERTIFICATES_DIR } = require("../utils/certificateGenerator");
@@ -163,30 +164,56 @@ router.get("/department", verifyToken, async (req, res) => {
 
     const phaseIndex = PHASE_ORDER.indexOf(phaseName);
 
-    // Fetch all workflows where this department is the current phase
-    const workflows = await ClearanceWorkflow.find({
-      overallStatus: "In Progress",
-      currentPhase: phaseIndex,
-    }).sort({ createdAt: -1 });
-
-    // Also fetch rejected ones for this phase (so dept can see history)
+    // ── Old ClearanceWorkflow records ──
     const rejected = await ClearanceWorkflow.find({
       overallStatus: "Rejected",
       [`phases.${phaseIndex}.status`]: "Rejected",
     }).sort({ updatedAt: -1 }).limit(50);
 
-    // Also fetch approved ones that passed through this phase
     const approved = await ClearanceWorkflow.find({
       [`phases.${phaseIndex}.status`]: "Approved",
     }).sort({ updatedAt: -1 }).limit(50);
+
+    // ── New DepartmentClearance records (ComprehensiveClearanceValidation system) ──
+    const deptApproved = await DepartmentClearance.find({
+      department_name: phaseName,
+      status: 'Approved'
+    }).sort({ createdAt: -1 }).limit(100);
+
+    const deptRejected = await DepartmentClearance.find({
+      department_name: phaseName,
+      status: 'Rejected'
+    }).sort({ createdAt: -1 }).limit(100);
+
+    const formatDeptClearance = (dc) => ({
+      _id: dc._id,
+      studentName: dc.student_name || "Unknown Student",
+      sapid: dc.sapid,
+      program: dc.program,
+      semester: dc.semester,
+      overallStatus: dc.status,
+      currentPhase: phaseIndex,
+      phaseStatus: dc.status,
+      phaseRemarks: dc.remarks || "",
+      phaseApprovedBy: dc.approved_by || "",
+      phaseApprovedAt: dc.approved_at,
+      submittedAt: dc.createdAt,
+      source: "comprehensive"
+    });
 
     res.json({
       success: true,
       phaseName,
       phaseIndex,
-      pending: workflows.map((w) => formatWorkflowForDepartment(w, phaseIndex)),
-      rejected: rejected.map((w) => formatWorkflowForDepartment(w, phaseIndex)),
-      approved: approved.map((w) => formatWorkflowForDepartment(w, phaseIndex)),
+      pending: [],
+      rejected: [
+        ...rejected.map((w) => formatWorkflowForDepartment(w, phaseIndex)),
+        ...deptRejected.map(formatDeptClearance)
+      ],
+      approved: [
+        ...approved.map((w) => formatWorkflowForDepartment(w, phaseIndex)),
+        ...deptApproved.map(formatDeptClearance)
+      ],
     });
   } catch (err) {
     console.error("❌ Department fetch error:", err);

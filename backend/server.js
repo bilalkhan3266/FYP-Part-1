@@ -917,46 +917,46 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
 app.get('/api/clearance-certificate', verifyToken, async (req, res) => {
   try {
     const studentId = req.user.id;
+    const studentSap = req.user.sap;
 
-    // Get the clearance request
-    const clearanceReq = await ClearanceRequest.findOne({ student_id: studentId })
-      .sort({ createdAt: -1 });
+    // Find a completed ComprehensiveClearanceValidation record
+    let validationRecord = await ComprehensiveClearanceValidation.findOne({
+      student_id: studentId,
+      overallStatus: 'Completed'
+    }).sort({ submittedAt: -1 });
 
-    if (!clearanceReq) {
-      return res.status(404).json({ success: false, message: 'No clearance request found' });
+    // Sapid fallback
+    if (!validationRecord && studentSap) {
+      validationRecord = await ComprehensiveClearanceValidation.findOne({
+        sapid: studentSap.toString().trim(),
+        overallStatus: 'Completed'
+      }).sort({ submittedAt: -1 });
     }
 
-    // Get all department statuses
-    const statuses = await DepartmentClearance.find({ student_id: studentId });
-    const allApproved = statuses.length > 0 && statuses.every(s => s.status === 'Approved' || s.status === 'Cleared');
-
-    if (!allApproved) {
-      return res.status(400).json({ success: false, message: 'Not all departments have approved your clearance' });
+    if (!validationRecord) {
+      return res.status(400).json({
+        success: false,
+        message: 'No approved clearance found. All departments must clear you first.'
+      });
     }
 
-    // Get student info
     const student = await User.findById(studentId);
 
     res.json({
       success: true,
       certificate: {
-        student_name: clearanceReq.student_name || student?.full_name,
-        sapid: clearanceReq.sapid || student?.sap,
-        registration_no: clearanceReq.registration_no,
-        father_name: clearanceReq.father_name,
-        program: clearanceReq.program,
-        semester: clearanceReq.semester,
-        department: clearanceReq.department || student?.department,
-        degree_status: clearanceReq.degree_status,
-        qr_code: clearanceReq.qr_code,
-        hod_approved_by: clearanceReq.hod_approved_by,
-        hod_approved_at: clearanceReq.hod_approved_at,
-        submitted_at: clearanceReq.submitted_at,
-        departments: statuses.map(s => ({
-          name: s.department_name,
-          status: s.status,
-          approved_by: s.approved_by,
-          approved_at: s.approved_at
+        student_name: validationRecord.student_name || student?.full_name,
+        sapid: validationRecord.sapid || student?.sap,
+        father_name: validationRecord.father_name,
+        program: validationRecord.program,
+        semester: validationRecord.semester,
+        degree_status: validationRecord.degree_status,
+        qr_code: validationRecord.qr_code,
+        submitted_at: validationRecord.submittedAt,
+        departments: (validationRecord.departmentStatuses || []).map(d => ({
+          name: d.name,
+          status: d.status,
+          approved_at: d.validatedAt
         }))
       }
     });
