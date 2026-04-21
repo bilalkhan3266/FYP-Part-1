@@ -1627,13 +1627,26 @@ app.get('/api/clearance-status', verifyToken, async (req, res) => {
     const studentSap = req.user.sap;
     console.log('🔍 Fetching clearance status for student:', studentSap || studentId);
 
-    // Fetch  latest comprehensive clearance validation
-    const validationRecord = await ComprehensiveClearanceValidation.findOne({
+    // Fetch latest comprehensive clearance validation - try student_id first, then sapid fallback
+    let validationRecord = await ComprehensiveClearanceValidation.findOne({
       student_id: studentId
     }).sort({ submittedAt: -1 });
 
+    // Fallback: search by sapid if student_id lookup missed
+    if (!validationRecord && studentSap) {
+      console.log('⚠️ Not found by student_id, trying sapid fallback:', studentSap);
+      validationRecord = await ComprehensiveClearanceValidation.findOne({
+        sapid: studentSap.toString().trim()
+      }).sort({ submittedAt: -1 });
+      if (validationRecord) {
+        console.log('✅ Found via sapid fallback - fixing student_id mismatch');
+        // Fix the student_id so future queries work
+        await ComprehensiveClearanceValidation.findByIdAndUpdate(validationRecord._id, { student_id: studentId });
+      }
+    }
+
     if (!validationRecord) {
-      console.log('⚠️ No clearance validation record found');
+      console.log('⚠️ No clearance validation record found for student:', studentSap || studentId);
       return res.json({
         success: true,
         data: null,
@@ -2050,13 +2063,29 @@ app.get('/api/clearance-requests', verifyToken, async (req, res) => {
     const studentSap = req.user.sap;
     console.log('📋 Fetching clearance request history for student:', studentSap || studentId);
 
-    // Get all comprehensive clearance validations for this student
-    const validationRecords = await ComprehensiveClearanceValidation.find({
+    // Get all comprehensive clearance validations for this student - try student_id first
+    let validationRecords = await ComprehensiveClearanceValidation.find({
       student_id: studentId
     }).sort({ submittedAt: -1 });
 
+    // Fallback: search by sapid if student_id lookup returned nothing
+    if ((!validationRecords || validationRecords.length === 0) && studentSap) {
+      console.log('⚠️ No records by student_id, trying sapid fallback:', studentSap);
+      validationRecords = await ComprehensiveClearanceValidation.find({
+        sapid: studentSap.toString().trim()
+      }).sort({ submittedAt: -1 });
+      if (validationRecords.length > 0) {
+        console.log(`✅ Found ${validationRecords.length} record(s) via sapid fallback - fixing student_id`);
+        // Fix student_id on all found records
+        await ComprehensiveClearanceValidation.updateMany(
+          { sapid: studentSap.toString().trim(), student_id: { $exists: false } },
+          { $set: { student_id: studentId } }
+        );
+      }
+    }
+
     if (!validationRecords || validationRecords.length === 0) {
-      console.log('⚠️ No clearance requests found');
+      console.log('⚠️ No clearance requests found for student:', studentSap || studentId);
       return res.json({
         success: true,
         data: [],

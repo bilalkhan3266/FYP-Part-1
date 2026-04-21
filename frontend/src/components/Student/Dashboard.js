@@ -43,6 +43,7 @@ export default function StudentDashboard() {
   const [clearanceStatus, setClearanceStatus] = useState(null);
   const [departmentStatuses, setDepartmentStatuses] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [navMessage, setNavMessage] = useState(location.state?.message || "");
   const [error, setError] = useState("");
 
   const displayName = user?.full_name || "Student";
@@ -746,6 +747,16 @@ export default function StudentDashboard() {
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 flex items-center gap-3">
             <AlertCircle size={20} />
             <span>{error}</span>
+          </div>
+        )}
+
+        {navMessage && (
+          <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl text-blue-300 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 size={20} className="text-blue-400 shrink-0" />
+              <span>{navMessage}</span>
+            </div>
+            <button onClick={() => setNavMessage("")} className="text-blue-400 hover:text-white text-lg leading-none">×</button>
           </div>
         )}
 

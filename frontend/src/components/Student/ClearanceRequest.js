@@ -315,43 +315,34 @@ export default function ClearanceRequest() {
         setError(response.data.message || "❌ Failed to submit request");
       }
     } catch (err) {
-      console.error("Error:", err);
-      console.error("Error response:", err.response?.data);
-      
-      // Handle specific error status codes
-      if (err.response?.status === 400) {
-        const errorMsg = err.response?.data?.message || "❌ Invalid input - please check your details";
-        console.error("❌ 400 Bad Request:", errorMsg);
-        setError(errorMsg);
-        
-        // If it's "already have a request", redirect to Dashboard
-        if (errorMsg.includes('already have') || errorMsg.includes('in progress')) {
-          console.log('ℹ️ Active request detected - redirecting to Dashboard');
-          setTimeout(() => {
-            navigate("/student-clearance-status", {
-              state: { message: 'You have an active clearance request. Check your progress below.' }
-            });
-          }, 1500);
-        }
-      } else if (err.response?.status === 404) {
-        setError(err.response?.data?.message || "❌ The record is not found in the system");
-      } else if (err.response?.status === 409) {
-        console.error('❌ 409 Conflict Error - Cannot submit');
-        console.error('   Message:', err.response?.data?.message);
-        console.error('   Existing record:', err.response?.data?.existingRecord);
-        setError(`⚠️ ${err.response?.data?.message || "You already have an active request"}`);
-        setCanSubmitNew(false);
-        // Redirect to Dashboard to show existing request
-        console.log('ℹ️ Redirecting to Dashboard to show existing request');
-        setTimeout(() => {
-          navigate("/student-clearance-status", {
-            state: { message: 'You have an active clearance request.' }
-          });
-        }, 2000);
-      } else if (err.response?.status === 400) {
-        setError(err.response?.data?.message || "❌ Invalid input - please check your details");
+      const status = err.response?.status;
+      const errMsg = err.response?.data?.message || "";
+      console.error("❌ Submission error:", status, errMsg);
+
+      // 409 = already have an active/completed request → go show it on Dashboard
+      if (status === 409) {
+        console.log('ℹ️ 409: existing request found - redirecting to Dashboard');
+        navigate("/student-clearance-status", {
+          state: { message: errMsg || 'You already have a clearance request. See your progress below.' }
+        });
+        return;
+      }
+
+      // 400 "already have" message (belt-and-suspenders) → same redirect
+      if (status === 400 && (errMsg.includes('already have') || errMsg.includes('in progress'))) {
+        console.log('ℹ️ 400 active-request message - redirecting to Dashboard');
+        navigate("/student-clearance-status", {
+          state: { message: 'You have an active clearance request. Check your progress below.' }
+        });
+        return;
+      }
+
+      if (status === 404) {
+        setError(errMsg || "❌ Your SAP ID was not found in the system. Please contact admin.");
+      } else if (status === 400) {
+        setError(errMsg || "❌ Invalid input - please check your details");
       } else {
-        setError(err.response?.data?.message || "❌ Failed to submit request");
+        setError(errMsg || "❌ Failed to submit request. Please try again.");
       }
     } finally {
       setLoading(false);
