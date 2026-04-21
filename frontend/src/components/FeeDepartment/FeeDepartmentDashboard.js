@@ -24,7 +24,6 @@ export default function FeeDepartmentDashboard() {
   const [modalAction, setModalAction] = useState("");
   const [modalRequestId, setModalRequestId] = useState(null);
   const [modalStudentSapId, setModalStudentSapId] = useState(null);
-  const [refreshInterval, setRefreshInterval] = useState(null);
 
   const fetchRequests = async () => {
     try {
@@ -85,24 +84,9 @@ export default function FeeDepartmentDashboard() {
     setRequests(allData[activeTab] || []);
   }, [activeTab, allData]);
 
-  // Fetch all data only on mount and set up auto-refresh
+  // Fetch all data only on mount
   useEffect(() => {
     fetchRequests();
-
-    // Set up auto-refresh every 5 seconds to update rejected tab when students resubmit
-    const interval = setInterval(() => {
-      console.log("🔄 Auto-refreshing fee department dashboard data...");
-      fetchRequests();
-    }, 5000); // Refresh every 5 seconds
-
-    setRefreshInterval(interval);
-
-    // Cleanup interval on component unmount
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
   }, []);
 
   const handleOpenRemarksModal = (requestId, action, sapId) => {
@@ -297,7 +281,7 @@ export default function FeeDepartmentDashboard() {
               }}
               disabled={loading}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white font-medium hover:bg-orange-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
-              title="Manually refresh the data (auto-refreshes every 5 seconds)"
+              title="Manually refresh the data"
             >
               <DollarSign size={18} className={`${loading ? 'animate-spin' : 'group-hover:animate-spin'}`} /> 
               {loading ? 'Refreshing...' : 'Refresh'}

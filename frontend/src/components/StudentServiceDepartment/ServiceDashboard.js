@@ -15,7 +15,6 @@ export default function ServiceDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [refreshInterval, setRefreshInterval] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [showRemarksModal, setShowRemarksModal] = useState(false);
   const [remarks, setRemarks] = useState("");
@@ -92,14 +91,6 @@ export default function ServiceDashboard() {
   // Fetch all data only on mount
   useEffect(() => {
     fetchRequests();
-    const interval = setInterval(() => {
-      console.log("🔄 Auto-refreshing student service dashboard data...");
-      fetchRequests();
-    }, 5000);
-    setRefreshInterval(interval);
-    return () => {
-      if (interval) clearInterval(interval);
-    };
   }, []);
 
   const handleApprove = async () => {

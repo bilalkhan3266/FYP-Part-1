@@ -24,7 +24,6 @@ export default function LibraryDashboard() {
   const [modalAction, setModalAction] = useState("");
   const [modalRequestId, setModalRequestId] = useState(null);
   const [modalStudentSapId, setModalStudentSapId] = useState(null);
-  const [refreshInterval, setRefreshInterval] = useState(null);
 
   const fetchRequests = async () => {
     try {
@@ -85,24 +84,9 @@ export default function LibraryDashboard() {
     setRequests(allData[activeTab] || []);
   }, [activeTab, allData]);
 
-  // Fetch all data only on mount and set up auto-refresh
+  // Fetch all data only on mount
   useEffect(() => {
     fetchRequests();
-
-    // Set up auto-refresh every 5 seconds to update rejected tab when students resubmit
-    const interval = setInterval(() => {
-      console.log("🔄 Auto-refreshing library dashboard data...");
-      fetchRequests();
-    }, 5000); // Refresh every 5 seconds
-
-    setRefreshInterval(interval);
-
-    // Cleanup interval on component unmount
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
   }, []);
 
   const handleOpenRemarksModal = (requestId, action) => {
@@ -295,7 +279,7 @@ export default function LibraryDashboard() {
               }}
               disabled={loading}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
-              title="Manually refresh the data (auto-refreshes every 5 seconds)"
+              title="Manually refresh the data"
             >
               <RiLoader4Line size={18} className={`${loading ? 'animate-spin' : 'group-hover:animate-spin'}`} /> 
               {loading ? 'Refreshing...' : 'Refresh'}
