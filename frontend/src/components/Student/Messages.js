@@ -486,30 +486,30 @@ export default function StudentMessages() {
                     type="button"
                     onClick={() => setDepartmentDropdownOpen(!departmentDropdownOpen)}
                     disabled={loading}
-                    className="w-full px-4 py-3 border-2 border-slate-700 bg-slate-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 flex items-center justify-between"
+                    className="w-full px-4 py-3 border-2 border-slate-700 bg-slate-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 flex items-center justify-between hover:border-slate-600 transition-colors"
                   >
                     <span>
                       {sendFormData.recipient_department ? (
-                        <span className="flex items-center gap-2">
-                          {departmentOptions.find(opt => opt.value === sendFormData.recipient_department)?.icon && 
-                            React.createElement(
-                              departmentOptions.find(opt => opt.value === sendFormData.recipient_department).icon,
-                              { size: 16 }
-                            )
-                          }
-                          {sendFormData.recipient_department}
+                        <span className="flex items-center gap-3">
+                          {(() => {
+                            const selected = departmentOptions.find(opt => opt.value === sendFormData.recipient_department);
+                            const IconComponent = selected?.icon;
+                            return IconComponent ? <IconComponent size={18} className="text-blue-400 flex-shrink-0" /> : null;
+                          })()}
+                          <span className="text-white font-medium">{sendFormData.recipient_department}</span>
                         </span>
                       ) : (
-                        "Select a department"
+                        <span className="text-gray-400">Select a department...</span>
                       )}
                     </span>
-                    <ChevronRight size={18} className={`transition-transform ${departmentDropdownOpen ? 'rotate-90' : ''}`} />
+                    <ChevronRight size={18} className={`text-gray-400 transition-transform duration-200 ${departmentDropdownOpen ? 'rotate-90' : ''}`} />
                   </button>
 
                   {departmentDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border-2 border-slate-700 rounded-lg shadow-lg z-10">
-                      {departmentOptions.map((option) => {
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border-2 border-slate-700 rounded-lg shadow-xl z-10 overflow-hidden">
+                      {departmentOptions.map((option, index) => {
                         const IconComponent = option.icon;
+                        const isSelected = sendFormData.recipient_department === option.value;
                         return (
                           <button
                             key={option.value}
@@ -518,14 +518,19 @@ export default function StudentMessages() {
                               setSendFormData({ ...sendFormData, recipient_department: option.value });
                               setDepartmentDropdownOpen(false);
                             }}
-                            className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors text-left ${
-                              sendFormData.recipient_department === option.value
-                                ? "bg-blue-500/20 border-l-2 border-blue-500"
-                                : "border-l-2 border-transparent"
-                            }`}
+                            className={`w-full flex items-center gap-4 px-5 py-3.5 transition-all text-left border-l-3 ${
+                              isSelected
+                                ? "bg-blue-500/20 border-l-blue-500 text-blue-300"
+                                : "border-l-transparent hover:bg-slate-700/50 text-gray-300 hover:text-white"
+                            } ${index !== departmentOptions.length - 1 ? 'border-b border-b-slate-700/50' : ''}`}
                           >
-                            <IconComponent size={18} className="text-blue-400 flex-shrink-0" />
-                            <span className="text-white">{option.label}</span>
+                            <IconComponent size={20} className={`flex-shrink-0 ${isSelected ? 'text-blue-400' : 'text-gray-400'}`} />
+                            <div className="flex-1">
+                              <p className="font-medium">{option.label}</p>
+                            </div>
+                            {isSelected && (
+                              <CheckCircle2 size={18} className="text-blue-400 flex-shrink-0" />
+                            )}
                           </button>
                         );
                       })}
