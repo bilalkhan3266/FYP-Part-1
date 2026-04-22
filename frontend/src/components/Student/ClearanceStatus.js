@@ -352,11 +352,11 @@ export default function ClearanceStatus() {
                     {(() => {
                       // Define all required departments with colors and icons
                       const allDepartments = [
-                        { name: "Library", id: "library", icon: BookOpen, color: "from-blue-400 to-blue-600" },
+                        { name: "Coordination", id: "coordination", icon: CheckCircle2, color: "from-green-400 to-green-600" },
                         { name: "Transport", id: "transport", icon: Bus, color: "from-purple-400 to-purple-600" },
-                        { name: "Student Service", id: "student-service", icon: Users, color: "from-cyan-400 to-cyan-600" },
+                        { name: "Library", id: "library", icon: BookOpen, color: "from-blue-400 to-blue-600" },
                         { name: "Fee Department", id: "fee-department", icon: CreditCard, color: "from-red-400 to-red-600" },
-                        { name: "Coordination", id: "coordination", icon: CheckCircle2, color: "from-green-400 to-green-600" }
+                        { name: "Student Service", id: "student-service", icon: Users, color: "from-cyan-400 to-cyan-600" }
                       ];
 
                       // Create a map of existing department statuses
