@@ -3235,6 +3235,33 @@ app.put('/api/library/requests/:id/approve', verifyToken, async (req, res) => {
     const librarianId = req.user.id;
     const librarianName = req.user.full_name;
 
+    // Fetch the record first to get sapid
+    const fetchRecord = await DepartmentClearance.findById(id);
+    if (!fetchRecord) {
+      return res.status(404).json({
+        success: false,
+        message: '❌ Request not found'
+      });
+    }
+
+    // Check if all departments are approved
+    const allDepartments = ['Library', 'Transport', 'Fee Department', 'Student Service', 'Coordination'];
+    const deptStatus = await Promise.all(
+      allDepartments.map(dept => 
+        DepartmentClearance.findOne({ sapid: fetchRecord.sapid, department_name: dept }).lean()
+      )
+    );
+    
+    const allApprovedExceptCurrent = deptStatus
+      .filter((_, idx) => allDepartments[idx] !== 'Library')
+      .every(d => d && d.status === 'Approved');
+
+    // Add certificate generated message if all will be approved
+    let finalRemarks = remarks || '';
+    if (allApprovedExceptCurrent) {
+      finalRemarks = remarks ? `${remarks}\n🎉 Certificate Generated - All departments cleared!` : '🎉 Certificate Generated - All departments cleared!';
+    }
+
     // Update DepartmentClearance record
     const departmentClearance = await DepartmentClearance.findByIdAndUpdate(
       id,
@@ -3242,23 +3269,15 @@ app.put('/api/library/requests/:id/approve', verifyToken, async (req, res) => {
         status: 'Approved',
         approved_by: librarianName,
         approved_at: new Date(),
-        remarks: remarks || ''
+        remarks: finalRemarks
       },
       { new: true }
     ).populate('clearance_request_id').populate('student_id', 'full_name sap');
 
-    if (!departmentClearance) {
-      return res.status(404).json({
-        success: false,
-        message: '❌ Request not found'
-      });
-    }
-
     console.log(`✅ Library approved clearance`);
     console.log(`   Student: ${departmentClearance.student_name} (SAP ID: ${departmentClearance.sapid})`);
     console.log(`   Approved by: ${librarianName}`);
-    console.log(`   Remarks: ${remarks || 'None'}`);
-
+    console.log(`   Remarks: ${finalRemarks || 'None'}`);
 
     // Create approval message in conversation
     const conversationId = `${departmentClearance.sapid}-Library-approval-${Date.now()}`;
@@ -3272,7 +3291,7 @@ app.put('/api/library/requests/:id/approve', verifyToken, async (req, res) => {
       recipient_id: departmentClearance.student_id,
       recipient_department: 'Library',
       subject: '✅ Library Clearance Approved',
-      message: `Your library clearance has been approved. ${remarks ? `Comment: ${remarks}` : 'No additional remarks.'}`,
+      message: `Your library clearance has been approved. ${allApprovedExceptCurrent ? '🎉 All departments have cleared your request - Certificate ready!' : ''}${remarks ? `\nComment: ${remarks}` : ''}`,
       message_type: 'notification'
     });
 
@@ -3476,28 +3495,48 @@ app.put('/api/fee/requests/:id/approve', verifyToken, async (req, res) => {
     const staffId = req.user.id;
     const staffName = req.user.full_name;
 
-    const departmentClearance = await DepartmentClearance.findByIdAndUpdate(
-      id,
-      {
-        status: 'Approved',
-        approved_by: staffName,
-        approved_at: new Date(),
-        remarks: remarks || ''
-      },
-      { new: true }
-    ).populate('clearance_request_id').populate('student_id', 'full_name sap');
-
-    if (!departmentClearance) {
+    // Fetch the record first to get sapid
+    const fetchRecord = await DepartmentClearance.findById(id);
+    if (!fetchRecord) {
       return res.status(404).json({
         success: false,
         message: '❌ Request not found'
       });
     }
 
+    // Check if all departments are approved
+    const allDepartments = ['Library', 'Transport', 'Fee Department', 'Student Service', 'Coordination'];
+    const deptStatus = await Promise.all(
+      allDepartments.map(dept => 
+        DepartmentClearance.findOne({ sapid: fetchRecord.sapid, department_name: dept }).lean()
+      )
+    );
+    
+    const allApprovedExceptCurrent = deptStatus
+      .filter((_, idx) => allDepartments[idx] !== 'Fee Department')
+      .every(d => d && d.status === 'Approved');
+
+    // Add certificate generated message if all will be approved
+    let finalRemarks = remarks || '';
+    if (allApprovedExceptCurrent) {
+      finalRemarks = remarks ? `${remarks}\n🎉 Certificate Generated - All departments cleared!` : '🎉 Certificate Generated - All departments cleared!';
+    }
+
+    const departmentClearance = await DepartmentClearance.findByIdAndUpdate(
+      id,
+      {
+        status: 'Approved',
+        approved_by: staffName,
+        approved_at: new Date(),
+        remarks: finalRemarks
+      },
+      { new: true }
+    ).populate('clearance_request_id').populate('student_id', 'full_name sap');
+
     console.log(`✅ Fee Department approved clearance`);
     console.log(`   Student: ${departmentClearance.student_name} (SAP ID: ${departmentClearance.sapid})`);
     console.log(`   Approved by: ${staffName}`);
-    console.log(`   Remarks: ${remarks || 'None'}`);
+    console.log(`   Remarks: ${finalRemarks || 'None'}`);
 
     const conversationId = `${departmentClearance.sapid}-FeeApproval-${Date.now()}`;
     const approvalMessage = new Message({
@@ -3510,7 +3549,7 @@ app.put('/api/fee/requests/:id/approve', verifyToken, async (req, res) => {
       recipient_id: departmentClearance.student_id,
       recipient_department: 'Fee Department',
       subject: '✅ Fee Clearance Approved',
-      message: `Your fee clearance has been approved. ${remarks ? `Comment: ${remarks}` : 'No additional remarks.'}`,
+      message: `Your fee clearance has been approved. ${allApprovedExceptCurrent ? '🎉 All departments have cleared your request - Certificate ready!' : ''}${remarks ? `\nComment: ${remarks}` : ''}`,
       message_type: 'notification'
     });
 
@@ -3693,10 +3732,32 @@ app.put('/api/transport/requests/:id/approve', verifyToken, async (req, res) => 
     const { remarks } = req.body;
     const staffId = req.user.id;
     const staffName = req.user.full_name;
-    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Approved', approved_by: staffName, approved_at: new Date(), remarks: remarks || '' }, { new: true })
+    
+    // Fetch the record first to get sapid
+    const fetchRecord = await DepartmentClearance.findById(id);
+    if (!fetchRecord) return res.status(404).json({ success: false, message: '❌ Request not found' });
+    
+    // Check if all departments are approved
+    const allDepartments = ['Library', 'Transport', 'Fee Department', 'Student Service', 'Coordination'];
+    const deptStatus = await Promise.all(
+      allDepartments.map(dept => 
+        DepartmentClearance.findOne({ sapid: fetchRecord.sapid, department_name: dept }).lean()
+      )
+    );
+    
+    const allApprovedExceptCurrent = deptStatus
+      .filter((_, idx) => allDepartments[idx] !== 'Transport')
+      .every(d => d && d.status === 'Approved');
+    
+    // Add certificate generated message if all will be approved
+    let finalRemarks = remarks || '';
+    if (allApprovedExceptCurrent) {
+      finalRemarks = remarks ? `${remarks}\n🎉 Certificate Generated - All departments cleared!` : '🎉 Certificate Generated - All departments cleared!';
+    }
+    
+    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Approved', approved_by: staffName, approved_at: new Date(), remarks: finalRemarks }, { new: true })
       .populate('clearance_request_id').populate('student_id', 'full_name sap');
-    if (!record) return res.status(404).json({ success: false, message: '❌ Request not found' });
-    const message = new Message({ conversation_id: `${record.sapid}-Transport-approval-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'transport', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'Transport', subject: '✅ Transport Clearance Approved', message: `Your transport clearance has been approved. ${remarks ? `Comment: ${remarks}` : 'No additional remarks.'}`, message_type: 'notification' });
+    const message = new Message({ conversation_id: `${record.sapid}-Transport-approval-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'transport', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'Transport', subject: '✅ Transport Clearance Approved', message: `Your transport clearance has been approved. ${allApprovedExceptCurrent ? '🎉 All departments have cleared your request - Certificate ready!' : ''}${remarks ? `\nComment: ${remarks}` : ''}`, message_type: 'notification' });
     await message.save();
     res.status(200).json({ success: true, message: '✅ Request approved and student notified' });
   } catch (error) {
@@ -3843,10 +3904,32 @@ app.put('/api/studentservice/requests/:id/approve', verifyToken, async (req, res
     const { remarks } = req.body;
     const staffId = req.user.id;
     const staffName = req.user.full_name;
-    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Approved', approved_by: staffName, approved_at: new Date(), remarks: remarks || '' }, { new: true })
+    
+    // Fetch the record first to get sapid
+    const fetchRecord = await DepartmentClearance.findById(id);
+    if (!fetchRecord) return res.status(404).json({ success: false, message: '❌ Request not found' });
+    
+    // Check if all departments are approved
+    const allDepartments = ['Library', 'Transport', 'Fee Department', 'Student Service', 'Coordination'];
+    const deptStatus = await Promise.all(
+      allDepartments.map(dept => 
+        DepartmentClearance.findOne({ sapid: fetchRecord.sapid, department_name: dept }).lean()
+      )
+    );
+    
+    const allApprovedExceptCurrent = deptStatus
+      .filter((_, idx) => allDepartments[idx] !== 'Student Service')
+      .every(d => d && d.status === 'Approved');
+    
+    // Add certificate generated message if all will be approved
+    let finalRemarks = remarks || '';
+    if (allApprovedExceptCurrent) {
+      finalRemarks = remarks ? `${remarks}\n🎉 Certificate Generated - All departments cleared!` : '🎉 Certificate Generated - All departments cleared!';
+    }
+    
+    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Approved', approved_by: staffName, approved_at: new Date(), remarks: finalRemarks }, { new: true })
       .populate('clearance_request_id').populate('student_id', 'full_name sap');
-    if (!record) return res.status(404).json({ success: false, message: '❌ Request not found' });
-    const message = new Message({ conversation_id: `${record.sapid}-StudentService-approval-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'studentservice', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'Student Service', subject: '✅ Student Service Clearance Approved', message: `Your student service clearance has been approved. ${remarks ? `Comment: ${remarks}` : 'No additional remarks.'}`, message_type: 'notification' });
+    const message = new Message({ conversation_id: `${record.sapid}-StudentService-approval-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'studentservice', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'Student Service', subject: '✅ Student Service Clearance Approved', message: `Your student service clearance has been approved. ${allApprovedExceptCurrent ? '🎉 All departments have cleared your request - Certificate ready!' : ''}${remarks ? `\nComment: ${remarks}` : ''}`, message_type: 'notification' });
     await message.save();
     res.status(200).json({ success: true, message: '✅ Request approved and student notified' });
   } catch (error) {
@@ -3918,10 +4001,45 @@ app.put('/api/coordination/requests/:id/approve', verifyToken, async (req, res) 
     const { remarks } = req.body;
     const staffId = req.user.id;
     const staffName = req.user.full_name;
-    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Approved', approved_by: staffName, approved_at: new Date(), remarks: remarks || '' }, { new: true })
+    
+    // First, fetch the record to get sapid
+    const fetchRecord = await DepartmentClearance.findById(id);
+    if (!fetchRecord) return res.status(404).json({ success: false, message: '❌ Request not found' });
+    
+    // Check if all departments are approved
+    const allDepartments = ['Library', 'Transport', 'Fee Department', 'Student Service', 'Coordination'];
+    const deptStatus = await Promise.all(
+      allDepartments.map(dept => 
+        DepartmentClearance.findOne({ sapid: fetchRecord.sapid, department_name: dept }).lean()
+      )
+    );
+    
+    const allApprovedExceptCurrent = deptStatus
+      .filter((_, idx) => allDepartments[idx] !== 'Coordination')
+      .every(d => d && d.status === 'Approved');
+    
+    // Add certificate generated message if all will be approved
+    let finalRemarks = remarks || '';
+    if (allApprovedExceptCurrent) {
+      finalRemarks = remarks ? `${remarks}\n🎉 Certificate Generated - All departments cleared!` : '🎉 Certificate Generated - All departments cleared!';
+    }
+    
+    const record = await DepartmentClearance.findByIdAndUpdate(id, { status: 'Approved', approved_by: staffName, approved_at: new Date(), remarks: finalRemarks }, { new: true })
       .populate('clearance_request_id').populate('student_id', 'full_name sap');
-    if (!record) return res.status(404).json({ success: false, message: '❌ Request not found' });
-    const message = new Message({ conversation_id: `${record.sapid}-Coordination-approval-${Date.now()}`, sender_id: staffId, sender_name: staffName, sender_role: 'coordination', sender_sapid: req.user.sap, recipient_sapid: record.sapid, recipient_id: record.student_id, recipient_department: 'Coordination', subject: '✅ Coordination Clearance Approved', message: `Your coordination clearance has been approved. ${remarks ? `Comment: ${remarks}` : 'No additional remarks.'}`, message_type: 'notification' });
+    
+    const message = new Message({ 
+      conversation_id: `${record.sapid}-Coordination-approval-${Date.now()}`, 
+      sender_id: staffId, 
+      sender_name: staffName, 
+      sender_role: 'coordination', 
+      sender_sapid: req.user.sap, 
+      recipient_sapid: record.sapid, 
+      recipient_id: record.student_id, 
+      recipient_department: 'Coordination', 
+      subject: '✅ Coordination Clearance Approved', 
+      message: `Your coordination clearance has been approved. ${allApprovedExceptCurrent ? '🎉 All departments have cleared your request - Certificate ready!' : ''}${remarks ? `\nComment: ${remarks}` : ''}`, 
+      message_type: 'notification' 
+    });
     await message.save();
     res.status(200).json({ success: true, message: '✅ Request approved and student notified' });
   } catch (error) {
