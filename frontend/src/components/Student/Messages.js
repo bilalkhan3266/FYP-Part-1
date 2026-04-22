@@ -21,6 +21,11 @@ import {
   Loader,
   Clock,
   Menu,
+  BookOpen,
+  Bus,
+  Users,
+  CreditCard,
+  HandshakeIcon,
 } from "lucide-react";
 import api from "../../services/api";
 
@@ -40,6 +45,7 @@ export default function StudentMessages() {
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
   const [replyLoading, setReplyLoading] = useState(false);
+  const [departmentDropdownOpen, setDepartmentDropdownOpen] = useState(false);
 
   const [sendFormData, setSendFormData] = useState({
     recipient_department: "",
@@ -58,6 +64,14 @@ export default function StudentMessages() {
     { path: "/student-clearance-status", icon: CheckCircle2, label: "Clearance Status" },
     { path: "/student-messages", icon: MessageSquare, label: "Messages" },
     { path: "/student-edit-profile", icon: UserPen, label: "Edit Profile" },
+  ];
+
+  const departmentOptions = [
+    { value: "Library", label: "Library", icon: BookOpen },
+    { value: "Transport", label: "Transport", icon: Bus },
+    { value: "Student Service", label: "Student Service", icon: Users },
+    { value: "Fee Department", label: "Fee Department", icon: CreditCard },
+    { value: "Coordination", label: "Coordination", icon: HandshakeIcon },
   ];
 
   // ✅ FETCH RECEIVED MESSAGES
@@ -467,20 +481,57 @@ export default function StudentMessages() {
                 <label className="block text-sm font-semibold text-white mb-2">
                   Department <span className="text-red-400">*</span>
                 </label>
-                <select
-                  value={sendFormData.recipient_department}
-                  onChange={(e) => setSendFormData({...sendFormData, recipient_department: e.target.value})}
-                  disabled={loading}
-                  className="w-full px-4 py-3 border-2 border-slate-700 bg-slate-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
-                >
-                  <option value="">Select a department</option>
-                  <option value="Library">📚 Library</option>
-                  <option value="Transport">🚌 Transport</option>
-                  <option value="Laboratory">🔬 Laboratory</option>
-                  <option value="Student Service">🤝 Student Service</option>
-                  <option value="Fee Department">💳 Fee Department</option>
-                  <option value="Coordination">✓ Coordination</option>
-                </select>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setDepartmentDropdownOpen(!departmentDropdownOpen)}
+                    disabled={loading}
+                    className="w-full px-4 py-3 border-2 border-slate-700 bg-slate-900 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 flex items-center justify-between"
+                  >
+                    <span>
+                      {sendFormData.recipient_department ? (
+                        <span className="flex items-center gap-2">
+                          {departmentOptions.find(opt => opt.value === sendFormData.recipient_department)?.icon && 
+                            React.createElement(
+                              departmentOptions.find(opt => opt.value === sendFormData.recipient_department).icon,
+                              { size: 16 }
+                            )
+                          }
+                          {sendFormData.recipient_department}
+                        </span>
+                      ) : (
+                        "Select a department"
+                      )}
+                    </span>
+                    <ChevronRight size={18} className={`transition-transform ${departmentDropdownOpen ? 'rotate-90' : ''}`} />
+                  </button>
+
+                  {departmentDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border-2 border-slate-700 rounded-lg shadow-lg z-10">
+                      {departmentOptions.map((option) => {
+                        const IconComponent = option.icon;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => {
+                              setSendFormData({ ...sendFormData, recipient_department: option.value });
+                              setDepartmentDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors text-left ${
+                              sendFormData.recipient_department === option.value
+                                ? "bg-blue-500/20 border-l-2 border-blue-500"
+                                : "border-l-2 border-transparent"
+                            }`}
+                          >
+                            <IconComponent size={18} className="text-blue-400 flex-shrink-0" />
+                            <span className="text-white">{option.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
