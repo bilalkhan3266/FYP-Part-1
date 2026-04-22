@@ -1,9 +1,15 @@
 {
-  "buildCommand": "cd frontend && npm run build",
+  "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/build",
+  "installCommand": "cd frontend && npm install",
   "build": {
     "env": {
-      "REACT_APP_API_URL": "https://fyp-part-1-production.up.railway.app"
+      "REACT_APP_API_URL": "https://fyp-part-1-production.up.railway.app",
+      "CI": "false"
     }
+  },
+  "env": {
+    "REACT_APP_API_URL": "https://fyp-part-1-production.up.railway.app",
+    "CI": "false"
   }
 }
