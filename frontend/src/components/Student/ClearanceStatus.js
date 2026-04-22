@@ -30,6 +30,9 @@ import {
   AlertTriangle,
   Checkmark,
   Menu,
+  Bus,
+  Users,
+  CreditCard,
 } from "lucide-react";
 import api from "../../services/api";
 import "../../styles/scrollbar.css";
@@ -340,20 +343,20 @@ export default function ClearanceStatus() {
                     </div>
                   </div>
 
-                  {/* Department Approvals */}
+                  {/* Department Approvals - Dashboard Style */}
                   <div className="mb-6">
-                    <h4 className="text-sm font-bold text-blue-300 mb-4 uppercase tracking-widest flex items-center gap-2">
-                      <Zap size={16} />
-                      Department Status
+                    <h4 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                      <Users size={24} />
+                      Required Clearance Departments
                     </h4>
                     {(() => {
-                      // Define all required departments
+                      // Define all required departments with colors and icons
                       const allDepartments = [
-                        { name: "Library", id: "library" },
-                        { name: "Transport", id: "transport" },
-                        { name: "Student Service", id: "student-service" },
-                        { name: "Fee Department", id: "fee-department" },
-                        { name: "Coordination", id: "coordination" }
+                        { name: "Library", id: "library", icon: BookOpen, color: "from-blue-400 to-blue-600" },
+                        { name: "Transport", id: "transport", icon: Bus, color: "from-purple-400 to-purple-600" },
+                        { name: "Student Service", id: "student-service", icon: Users, color: "from-cyan-400 to-cyan-600" },
+                        { name: "Fee Department", id: "fee-department", icon: CreditCard, color: "from-red-400 to-red-600" },
+                        { name: "Coordination", id: "coordination", icon: CheckCircle2, color: "from-green-400 to-green-600" }
                       ];
 
                       // Create a map of existing department statuses
@@ -369,72 +372,52 @@ export default function ClearanceStatus() {
                         const matchedDept = Object.values(deptMap).find(
                           d => d.name?.toLowerCase() === allDept.name.toLowerCase()
                         );
-                        return matchedDept || { name: allDept.name, status: "waiting" };
+                        return { ...allDept, ...matchedDept } || { ...allDept, status: "waiting" };
                       });
 
                       return (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                           {completeDeptList.map((dept, idx) => {
+                            const DeptIcon = dept.icon;
                             const isApproved = dept.status?.toLowerCase() === "approved";
                             const isPending = dept.status?.toLowerCase() === "pending";
                             const isRejected = dept.status?.toLowerCase() === "rejected";
                             const isWaiting = dept.status?.toLowerCase() === "waiting";
 
+                            const statusConfig = {
+                              approved: { label: 'Approved', bgColor: 'bg-green-500/20', textColor: 'text-green-400', borderColor: 'border-green-500/50', icon: CheckCircle2 },
+                              pending: { label: 'Pending', bgColor: 'bg-yellow-500/20', textColor: 'text-yellow-400', borderColor: 'border-yellow-500/50', icon: Clock },
+                              rejected: { label: 'Rejected', bgColor: 'bg-red-500/20', textColor: 'text-red-400', borderColor: 'border-red-500/50', icon: AlertCircle },
+                              waiting: { label: 'Waiting', bgColor: 'bg-slate-600/20', textColor: 'text-gray-400', borderColor: 'border-slate-600/50', icon: Clock },
+                            };
+                            
+                            const statusKey = isApproved ? 'approved' : isPending ? 'pending' : isRejected ? 'rejected' : 'waiting';
+                            const sc = statusConfig[statusKey];
+                            const StatusIcon = sc.icon;
+
                             return (
                               <div
                                 key={idx}
-                                className={`rounded-xl p-4 border transition-all ${
-                                  isApproved
-                                    ? "bg-green-500/10 border-green-500/30"
-                                    : isPending
-                                    ? "bg-yellow-500/10 border-yellow-500/20"
-                                    : isRejected
-                                    ? "bg-red-500/10 border-l-4 border-l-red-500 border-red-500/30"
-                                    : "bg-slate-700/30 border-slate-600/50"
-                                }`}
+                                className={`bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 border ${sc.borderColor} hover:shadow-lg transition-all group cursor-pointer ${isRejected ? 'border-l-4' : ''}`}
+                                style={isRejected ? { borderLeftColor: '#ef4444', borderLeftWidth: '4px' } : {}}
                               >
-                                <div className="flex items-center justify-between mb-3">
-                                  <div className="flex items-center gap-3 flex-1">
-                                    <div className={`p-2 rounded-lg ${
-                                      isApproved ? "bg-green-500/20" : isPending ? "bg-yellow-500/20" : isRejected ? "bg-red-500/20" : "bg-slate-600/50"
-                                    }`}>
-                                      {isApproved ? (
-                                        <CheckCircle className="text-green-400" size={20} />
-                                      ) : isPending ? (
-                                        <Clock className="text-yellow-400" size={20} />
-                                      ) : isRejected ? (
-                                        <XCircle className="text-red-400" size={20} />
-                                      ) : (
-                                        <AlertCircle className="text-gray-400" size={20} />
-                                      )}
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="text-white font-semibold text-sm">{dept.name}</p>
-                                      <p className={`text-xs mt-1 font-medium flex items-center gap-1 ${
-                                        isApproved ? "text-green-300" : isPending ? "text-yellow-300" : isRejected ? "text-red-300" : "text-gray-400"
-                                      }`}>
-                                        {isApproved ? (
-                                          <><CheckCircle size={12} /> Approved</>
-                                        ) : isPending ? (
-                                          <><Clock size={12} /> Pending</>
-                                        ) : isRejected ? (
-                                          <><XCircle size={12} /> Rejected</>
-                                        ) : (
-                                          <><AlertCircle size={12} /> Waiting</>
-                                        )}
-                                      </p>
-                                    </div>
+                                <div className="flex items-center justify-between mb-4">
+                                  <div className={`inline-flex p-3 rounded-lg bg-gradient-to-br ${dept.color}`}>
+                                    <DeptIcon size={24} className="text-white" />
                                   </div>
+                                  <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${sc.bgColor} ${sc.textColor}`}>
+                                    <StatusIcon size={14} />
+                                    {sc.label}
+                                  </span>
                                 </div>
-                                {dept.approvedAt && (
-                                  <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                                    <Calendar size={12} />
-                                    {new Date(dept.approvedAt).toLocaleDateString()}
-                                  </p>
-                                )}
-                                {isRejected && (dept.reason || dept.remarks) && (
-                                  <div className="mt-3 p-3 bg-red-500/20 rounded-lg border border-red-500/40">
-                                    <p className="text-xs text-red-300 font-bold flex items-center gap-1 mb-2">
+                                
+                                <h3 className="text-white font-semibold text-lg group-hover:text-blue-400 transition-all mb-2">
+                                  {dept.name}
+                                </h3>
+                                
+                                {isRejected && (dept.reason || dept.remarks) ? (
+                                  <div className="mt-3 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                                    <p className="text-xs text-red-300 font-bold mb-2 flex items-center gap-1">
                                       <AlertTriangle size={14} />
                                       Rejection Reason:
                                     </p>
@@ -447,7 +430,7 @@ export default function ClearanceStatus() {
                                         <ul className="text-xs text-red-100 space-y-1">
                                           {dept.pendingItems.map((item, i) => (
                                             <li key={i} className="flex items-start gap-2">
-                                              <span className="text-red-400 font-bold">•</span>
+                                              <span className="text-red-400 mt-1">•</span>
                                               <span>{item}</span>
                                             </li>
                                           ))}
@@ -455,10 +438,19 @@ export default function ClearanceStatus() {
                                       </div>
                                     )}
                                   </div>
+                                ) : (
+                                  <p className="text-gray-400 text-sm mt-2">
+                                    {dept.isAutoApproved ? 'Auto-approved by system' : 
+                                     isApproved ? `Approved by ${dept.approverName || 'department'}` :
+                                     isPending ? 'Under review' :
+                                     'Waiting for previous department'}
+                                  </p>
                                 )}
-                                {isApproved && dept.approverName && (
-                                  <p className="text-xs text-green-300 mt-2 font-medium flex items-center gap-1">
-                                    <CheckCircle size={12} /> Approved by: {dept.approverName}
+                                
+                                {dept.approvedAt && (
+                                  <p className="text-xs text-gray-400 mt-3 flex items-center gap-1">
+                                    <Calendar size={12} />
+                                    {new Date(dept.approvedAt).toLocaleDateString()}
                                   </p>
                                 )}
                               </div>
