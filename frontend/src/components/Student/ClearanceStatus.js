@@ -346,89 +346,127 @@ export default function ClearanceStatus() {
                       <Zap size={16} />
                       Department Status
                     </h4>
-                    {deptStatuses && deptStatuses.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {deptStatuses.map((dept, idx) => {
-                          const isApproved = dept.status?.toLowerCase() === "approved";
-                          const isPending = dept.status?.toLowerCase() === "pending";
-                          const isRejected = dept.status?.toLowerCase() === "rejected";
+                    {(() => {
+                      // Define all required departments
+                      const allDepartments = [
+                        { name: "Library", id: "library" },
+                        { name: "Transport", id: "transport" },
+                        { name: "Student Service", id: "student-service" },
+                        { name: "Fee Department", id: "fee-department" },
+                        { name: "Coordination", id: "coordination" }
+                      ];
 
-                          return (
-                            <div
-                              key={idx}
-                              className={`rounded-xl p-4 border transition-all ${
-                                isApproved
-                                  ? "bg-green-500/10 border-green-500/30"
-                                  : isPending
-                                  ? "bg-yellow-500/10 border-yellow-500/20"
-                                  : "bg-red-500/10 border-l-4 border-l-red-500 border-red-500/30"
-                              }`}
-                            >
-                              <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-3 flex-1">
-                                  <div className={`p-2 rounded-lg ${
-                                    isApproved ? "bg-green-500/20" : isPending ? "bg-yellow-500/20" : "bg-red-500/20"
-                                  }`}>
-                                    {isApproved ? (
-                                      <CheckCircle className="text-green-400" size={20} />
-                                    ) : isPending ? (
-                                      <Clock className="text-yellow-400" size={20} />
-                                    ) : (
-                                      <XCircle className="text-red-400" size={20} />
+                      // Create a map of existing department statuses
+                      const deptMap = {};
+                      if (deptStatuses && deptStatuses.length > 0) {
+                        deptStatuses.forEach(dept => {
+                          deptMap[dept.name?.toLowerCase() || ""] = dept;
+                        });
+                      }
+
+                      // Build complete department list with waiting status for missing ones
+                      const completeDeptList = allDepartments.map(allDept => {
+                        const matchedDept = Object.values(deptMap).find(
+                          d => d.name?.toLowerCase() === allDept.name.toLowerCase()
+                        );
+                        return matchedDept || { name: allDept.name, status: "waiting" };
+                      });
+
+                      return (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {completeDeptList.map((dept, idx) => {
+                            const isApproved = dept.status?.toLowerCase() === "approved";
+                            const isPending = dept.status?.toLowerCase() === "pending";
+                            const isRejected = dept.status?.toLowerCase() === "rejected";
+                            const isWaiting = dept.status?.toLowerCase() === "waiting";
+
+                            return (
+                              <div
+                                key={idx}
+                                className={`rounded-xl p-4 border transition-all ${
+                                  isApproved
+                                    ? "bg-green-500/10 border-green-500/30"
+                                    : isPending
+                                    ? "bg-yellow-500/10 border-yellow-500/20"
+                                    : isRejected
+                                    ? "bg-red-500/10 border-l-4 border-l-red-500 border-red-500/30"
+                                    : "bg-slate-700/30 border-slate-600/50"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center gap-3 flex-1">
+                                    <div className={`p-2 rounded-lg ${
+                                      isApproved ? "bg-green-500/20" : isPending ? "bg-yellow-500/20" : isRejected ? "bg-red-500/20" : "bg-slate-600/50"
+                                    }`}>
+                                      {isApproved ? (
+                                        <CheckCircle className="text-green-400" size={20} />
+                                      ) : isPending ? (
+                                        <Clock className="text-yellow-400" size={20} />
+                                      ) : isRejected ? (
+                                        <XCircle className="text-red-400" size={20} />
+                                      ) : (
+                                        <AlertCircle className="text-gray-400" size={20} />
+                                      )}
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-white font-semibold text-sm">{dept.name}</p>
+                                      <p className={`text-xs mt-1 font-medium flex items-center gap-1 ${
+                                        isApproved ? "text-green-300" : isPending ? "text-yellow-300" : isRejected ? "text-red-300" : "text-gray-400"
+                                      }`}>
+                                        {isApproved ? (
+                                          <><CheckCircle size={12} /> Approved</>
+                                        ) : isPending ? (
+                                          <><Clock size={12} /> Pending</>
+                                        ) : isRejected ? (
+                                          <><XCircle size={12} /> Rejected</>
+                                        ) : (
+                                          <><AlertCircle size={12} /> Waiting</>
+                                        )}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                                {dept.approvedAt && (
+                                  <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                                    <Calendar size={12} />
+                                    {new Date(dept.approvedAt).toLocaleDateString()}
+                                  </p>
+                                )}
+                                {isRejected && (dept.reason || dept.remarks) && (
+                                  <div className="mt-3 p-3 bg-red-500/20 rounded-lg border border-red-500/40">
+                                    <p className="text-xs text-red-300 font-bold flex items-center gap-1 mb-2">
+                                      <AlertTriangle size={14} />
+                                      Rejection Reason:
+                                    </p>
+                                    <p className="text-sm text-red-100 mb-0">
+                                      {dept.reason || dept.remarks}
+                                    </p>
+                                    {dept.pendingItems && dept.pendingItems.length > 0 && (
+                                      <div className="mt-2 pt-2 border-t border-red-500/30">
+                                        <p className="text-xs text-red-300 font-bold mb-1">Pending Items:</p>
+                                        <ul className="text-xs text-red-100 space-y-1">
+                                          {dept.pendingItems.map((item, i) => (
+                                            <li key={i} className="flex items-start gap-2">
+                                              <span className="text-red-400 font-bold">•</span>
+                                              <span>{item}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
                                     )}
                                   </div>
-                                  <div className="flex-1">
-                                    <p className="text-white font-semibold text-sm">{dept.name}</p>
-                                    <p className={`text-xs mt-1 font-medium flex items-center gap-1 ${
-                                      isApproved ? "text-green-300" : isPending ? "text-yellow-300" : "text-red-300"
-                                    }`}>
-                                      {isApproved ? <><CheckCircle size={12} /> Approved</> : isPending ? <><Clock size={12} /> Pending</> : <><XCircle size={12} /> Rejected</>}
-                                    </p>
-                                  </div>
-                                </div>
+                                )}
+                                {isApproved && dept.approverName && (
+                                  <p className="text-xs text-green-300 mt-2 font-medium flex items-center gap-1">
+                                    <CheckCircle size={12} /> Approved by: {dept.approverName}
+                                  </p>
+                                )}
                               </div>
-                              {dept.approvedAt && (
-                                <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                                  <Calendar size={12} />
-                                  {new Date(dept.approvedAt).toLocaleDateString()}
-                                </p>
-                              )}
-                              {isRejected && (dept.reason || dept.remarks) && (
-                                <div className="mt-3 p-3 bg-red-500/20 rounded-lg border border-red-500/40">
-                                  <p className="text-xs text-red-300 font-bold flex items-center gap-1 mb-2">
-                                    <AlertTriangle size={14} />
-                                    Rejection Reason:
-                                  </p>
-                                  <p className="text-sm text-red-100 mb-0">
-                                    {dept.reason || dept.remarks}
-                                  </p>
-                                  {dept.pendingItems && dept.pendingItems.length > 0 && (
-                                    <div className="mt-2 pt-2 border-t border-red-500/30">
-                                      <p className="text-xs text-red-300 font-bold mb-1">Pending Items:</p>
-                                      <ul className="text-xs text-red-100 space-y-1">
-                                        {dept.pendingItems.map((item, i) => (
-                                          <li key={i} className="flex items-start gap-2">
-                                            <span className="text-red-400 font-bold">•</span>
-                                            <span>{item}</span>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                              {isApproved && dept.approverName && (
-                                <p className="text-xs text-green-300 mt-2 font-medium flex items-center gap-1">
-                                  <CheckCircle size={12} /> Approved by: {dept.approverName}
-                                </p>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p className="text-gray-400 bg-slate-900 rounded-lg p-4 text-center">No department approvals yet</p>
-                    )}
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Timeline and Actions */}
