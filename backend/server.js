@@ -89,71 +89,6 @@ app.get('/api/health', (req, res) => {
 });
 
 // --------------------
-// Department clearance requests (Coordination, Library, etc.)
-// Returns pending, approved, rejected split — used by department dashboards
-// --------------------
-app.get('/api/clearance/department', verifyToken, async (req, res) => {
-  try {
-    const ccvDeptName = req.user.department;
-    console.log('\n🔍 Department staff fetching requests for:', ccvDeptName);
-
-    const allRecords = await ComprehensiveClearanceValidation.find().sort({ createdAt: -1 });
-
-    const transformRecord = (record, statusOverride) => {
-      const deptStatus = record.departmentStatuses.find(d => d.name === ccvDeptName);
-      return {
-        _id: record._id,
-        studentName: record.student_name || 'Unknown Student',
-        sapid: record.sapid,
-        program: record.program,
-        semester: record.semester,
-        phaseStatus: statusOverride || (deptStatus ? deptStatus.status : record.overallStatus),
-        phaseRemarks: deptStatus ? deptStatus.reason : '',
-        pendingItems: deptStatus ? (deptStatus.pendingItems || []) : [],
-        submittedAt: record.submittedAt || record.createdAt,
-        completedAt: record.completedAt,
-        overallStatus: record.overallStatus,
-        isAutoApproved: true,
-      };
-    };
-
-    // APPROVED: fully completed clearances
-    const approvedRecords = allRecords
-      .filter(r => r.overallStatus === 'Completed')
-      .map(r => transformRecord(r, 'Approved'));
-
-    // REJECTED: this department specifically rejected the student
-    const rejectedRecords = allRecords
-      .filter(r => {
-        const deptStatus = r.departmentStatuses.find(d => d.name === ccvDeptName);
-        return deptStatus && deptStatus.status === 'Rejected';
-      })
-      .map(r => transformRecord(r, 'Rejected'));
-
-    // PENDING: in-progress requests for this department
-    const pendingRecords = allRecords
-      .filter(r => {
-        if (r.overallStatus === 'Completed') return false;
-        const deptStatus = r.departmentStatuses.find(d => d.name === ccvDeptName);
-        return deptStatus && (deptStatus.status === 'Pending' || deptStatus.status === 'Not Processed');
-      })
-      .map(r => transformRecord(r, 'Pending'));
-
-    console.log(`  ✅ Approved: ${approvedRecords.length}, ❌ Rejected: ${rejectedRecords.length}, ⏳ Pending: ${pendingRecords.length}`);
-
-    res.json({
-      success: true,
-      pending: pendingRecords,
-      approved: approvedRecords,
-      rejected: rejectedRecords,
-    });
-  } catch (err) {
-    console.error('❌ Error fetching department requests:', err);
-    res.status(500).json({ success: false, message: 'Failed to fetch requests: ' + err.message });
-  }
-});
-
-// --------------------
 // Email Diagnostic (Admin only — no auth to allow early testing)
 // --------------------
 app.get('/api/test-email', async (req, res) => {
@@ -283,6 +218,71 @@ app.options('/api/auth/resend-otp', cors());
 app.options('/api/login', cors());
 app.options('/api/clearance-requests', cors());
 app.options('/api/health', cors());
+
+// --------------------
+// Department clearance requests (Coordination, Library, etc.)
+// Returns pending, approved, rejected split — used by department dashboards
+// --------------------
+app.get('/api/clearance/department', verifyToken, async (req, res) => {
+  try {
+    const ccvDeptName = req.user.department;
+    console.log('\n🔍 Department staff fetching requests for:', ccvDeptName);
+
+    const allRecords = await ComprehensiveClearanceValidation.find().sort({ createdAt: -1 });
+
+    const transformRecord = (record, statusOverride) => {
+      const deptStatus = record.departmentStatuses.find(d => d.name === ccvDeptName);
+      return {
+        _id: record._id,
+        studentName: record.student_name || 'Unknown Student',
+        sapid: record.sapid,
+        program: record.program,
+        semester: record.semester,
+        phaseStatus: statusOverride || (deptStatus ? deptStatus.status : record.overallStatus),
+        phaseRemarks: deptStatus ? deptStatus.reason : '',
+        pendingItems: deptStatus ? (deptStatus.pendingItems || []) : [],
+        submittedAt: record.submittedAt || record.createdAt,
+        completedAt: record.completedAt,
+        overallStatus: record.overallStatus,
+        isAutoApproved: true,
+      };
+    };
+
+    // APPROVED: fully completed clearances
+    const approvedRecords = allRecords
+      .filter(r => r.overallStatus === 'Completed')
+      .map(r => transformRecord(r, 'Approved'));
+
+    // REJECTED: this department specifically rejected the student
+    const rejectedRecords = allRecords
+      .filter(r => {
+        const deptStatus = r.departmentStatuses.find(d => d.name === ccvDeptName);
+        return deptStatus && deptStatus.status === 'Rejected';
+      })
+      .map(r => transformRecord(r, 'Rejected'));
+
+    // PENDING: in-progress requests for this department
+    const pendingRecords = allRecords
+      .filter(r => {
+        if (r.overallStatus === 'Completed') return false;
+        const deptStatus = r.departmentStatuses.find(d => d.name === ccvDeptName);
+        return deptStatus && (deptStatus.status === 'Pending' || deptStatus.status === 'Not Processed');
+      })
+      .map(r => transformRecord(r, 'Pending'));
+
+    console.log(`  ✅ Approved: ${approvedRecords.length}, ❌ Rejected: ${rejectedRecords.length}, ⏳ Pending: ${pendingRecords.length}`);
+
+    res.json({
+      success: true,
+      pending: pendingRecords,
+      approved: approvedRecords,
+      rejected: rejectedRecords,
+    });
+  } catch (err) {
+    console.error('❌ Error fetching department requests:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch requests: ' + err.message });
+  }
+});
 
 // --------------------
 // AUTHENTICATION ROUTES
