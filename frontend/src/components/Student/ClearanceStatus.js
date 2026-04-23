@@ -46,8 +46,10 @@ export default function ClearanceStatus() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [filter, setFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
+  const [resubmittingId, setResubmittingId] = useState(null);
 
   const displayName = user?.full_name || "Student";
   const displaySap = user?.sap || "SAP ID";
@@ -88,6 +90,32 @@ export default function ClearanceStatus() {
     setRefreshing(true);
     await fetchRequests();
     setRefreshing(false);
+  };
+
+  const handleResubmit = async (requestId) => {
+    try {
+      setResubmittingId(requestId);
+      setError("");
+      setSuccess("");
+      const response = await api.post(`/api/clearance-requests/${requestId}/resubmit`);
+      if (response.data.success) {
+        setSuccess(response.data.message);
+        // Update the request in state with fresh department statuses
+        setRequests(prev => prev.map(r => {
+          if (String(r._id) !== String(requestId)) return r;
+          const rec = response.data.record;
+          return { ...r, overallStatus: rec.overallStatus, status: rec.status, departmentStatuses: rec.departmentStatuses };
+        }));
+        // Auto-clear success message after 5s
+        setTimeout(() => setSuccess(""), 5000);
+      } else {
+        setError(response.data.message || "Failed to resubmit");
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to resubmit clearance request");
+    } finally {
+      setResubmittingId(null);
+    }
   };
 
   const getStatusIcon = (status) => {
@@ -227,6 +255,14 @@ export default function ClearanceStatus() {
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3 backdrop-blur-sm">
             <AlertTriangle size={20} className="text-red-400 flex-shrink-0" />
             <span className="text-red-300 font-medium">{error}</span>
+          </div>
+        )}
+
+        {/* Success Alert */}
+        {success && (
+          <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-xl flex items-center gap-3 backdrop-blur-sm">
+            <CheckCircle size={20} className="text-green-400 flex-shrink-0" />
+            <span className="text-green-300 font-medium">{success}</span>
           </div>
         )}
 
@@ -496,7 +532,7 @@ export default function ClearanceStatus() {
                   </div>
 
                   {/* Action Buttons */}
-                  {isFullyApproved && (
+                  {isFullyApproved ? (
                     <div className="mt-6 pt-6 border-t border-slate-700">
                       <button
                         onClick={() => navigate("/student-certificate")}
@@ -506,7 +542,34 @@ export default function ClearanceStatus() {
                         Download Certificate
                       </button>
                     </div>
-                  )}
+                  ) : request.status?.toLowerCase() === "rejected" || request.overallStatus === "Rejected" ? (
+                    <div className="mt-6 pt-6 border-t border-slate-700">
+                      {/* Rejection summary */}
+                      <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+                        <p className="text-red-300 font-semibold flex items-center gap-2 mb-2">
+                          <AlertTriangle size={16} />
+                          Your request was rejected by the following department(s):
+                        </p>
+                        <ul className="text-sm text-red-200 space-y-1">
+                          {(request.departmentStatuses || []).filter(d => d.status?.toLowerCase() === "rejected").map((d, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <XCircle size={14} className="text-red-400 mt-0.5 shrink-0" />
+                              <span><span className="font-semibold">{d.name}:</span> {d.reason || "No reason provided"}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="text-xs text-gray-400 mt-3">Resolve the issues above, then click Resubmit to re-validate your clearance.</p>
+                      </div>
+                      <button
+                        onClick={() => handleResubmit(request._id)}
+                        disabled={resubmittingId === String(request._id)}
+                        className="w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-semibold hover:shadow-xl hover:from-orange-600 hover:to-red-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        <RotateCw size={20} className={resubmittingId === String(request._id) ? "animate-spin" : ""} />
+                        {resubmittingId === String(request._id) ? "Re-validating..." : "Resubmit Request"}
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               );
             })}

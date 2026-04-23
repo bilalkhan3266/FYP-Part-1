@@ -1545,6 +1545,148 @@ app.post('/api/clearance-requests/resubmit', verifyToken, async (req, res) => {
 });
 
 // --------------------
+// Re-run validation for a rejected clearance request (student resubmit)
+// --------------------
+app.post('/api/clearance-requests/:id/resubmit', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.user.id;
+    const studentSap = req.user.sap;
+    console.log('\n🔄 RESUBMIT VALIDATION for record:', id, 'student:', studentSap || studentId);
+
+    // Find the existing rejected record belonging to this student
+    let existingRecord = await ComprehensiveClearanceValidation.findOne({ _id: id, student_id: studentId });
+    if (!existingRecord && studentSap) {
+      existingRecord = await ComprehensiveClearanceValidation.findOne({ _id: id, sapid: studentSap.toString().trim() });
+    }
+    if (!existingRecord) {
+      return res.status(404).json({ success: false, message: 'Clearance record not found' });
+    }
+    if (existingRecord.overallStatus === 'Completed') {
+      return res.status(400).json({ success: false, message: 'This clearance request is already completed' });
+    }
+
+    // Archive current state before overwriting
+    const snapshot = {
+      submissionDate: new Date(),
+      overallStatus: existingRecord.overallStatus,
+      departmentStatuses: existingRecord.departmentStatuses.map(d => ({
+        name: d.name, status: d.status, reason: d.reason
+      }))
+    };
+
+    // Re-run the full validation
+    const studentInfo = {
+      student_name: existingRecord.student_name,
+      father_name: existingRecord.father_name,
+      program: existingRecord.program,
+      semester: existingRecord.semester,
+      degree_status: existingRecord.degree_status || 'Final'
+    };
+    const sapid = existingRecord.sapid;
+    const validationResult = await validateStudentClearanceAllDepartments(sapid, studentInfo);
+    console.log(`  New overall status: ${validationResult.overallStatus}`);
+
+    // Update the record with fresh validation results
+    const updatedRecord = await ComprehensiveClearanceValidation.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          overallStatus: validationResult.overallStatus,
+          departmentStatuses: validationResult.departmentStatuses,
+          approvedDepartments: validationResult.approvedDepartments,
+          rejectedDepartments: validationResult.rejectedDepartments,
+          pendingDepartments: validationResult.pendingDepartments,
+          certificateGenerated: validationResult.certificateGenerated,
+          submissionCount: (existingRecord.submissionCount || 1) + 1,
+          updatedAt: new Date(),
+          ...(validationResult.overallStatus === 'Completed' ? { completedAt: new Date() } : {})
+        },
+        $push: { previousSubmissions: snapshot }
+      },
+      { new: true }
+    );
+
+    // Sync DepartmentClearance records for department dashboards
+    for (const dept of validationResult.departmentStatuses) {
+      const newStatus = dept.status === 'Approved' ? 'Approved' : (dept.status === 'Not Processed' ? 'Pending' : 'Pending');
+      await DepartmentClearance.findOneAndUpdate(
+        { clearance_request_id: id, department_name: dept.name },
+        {
+          $set: {
+            status: newStatus,
+            remarks: dept.status === 'Approved' ? 'Re-validated: Approved' : (dept.reason || 'Resubmitted'),
+            approved_at: dept.status === 'Approved' ? new Date() : null
+          }
+        }
+      );
+    }
+
+    // Send certificate email if now completed
+    if (validationResult.overallStatus === 'Completed') {
+      try {
+        const studentUser = await User.findById(studentId);
+        if (studentUser && studentUser.email) {
+          sendClearanceCertificateEmail({
+            studentName: existingRecord.student_name,
+            studentEmail: studentUser.email,
+            sapId: sapid,
+            department: studentUser.department || '',
+            program: existingRecord.program,
+            qrCode: updatedRecord.qr_code || '',
+            approvedBy: 'All Departments',
+            approvedAt: new Date(),
+            departments: validationResult.departmentStatuses.map(d => ({ name: d.name, status: d.status }))
+          }).then(r => {
+            if (r.success) console.log(`✅ Certificate email sent to ${studentUser.email}`);
+            else console.warn(`⚠️ Certificate email failed: ${r.reason || r.error}`);
+          }).catch(e => console.error('Certificate email error:', e.message));
+        }
+      } catch (emailErr) {
+        console.error('Certificate email lookup error:', emailErr.message);
+      }
+
+      // Notification to student
+      new Message({
+        conversation_id: `${sapid}-resubmit-complete-${Date.now()}`,
+        sender_id: new mongoose.Types.ObjectId(),
+        sender_name: 'Clearance System',
+        sender_role: 'system',
+        sender_sapid: 'SYSTEM',
+        recipient_sapid: sapid,
+        recipient_id: studentId,
+        recipient_department: 'System',
+        subject: '✅ CLEARANCE APPROVED',
+        message: 'Congratulations! Your resubmitted clearance request has been APPROVED by all departments.',
+        message_type: 'notification'
+      }).save().catch(e => console.error('Notification error:', e));
+    }
+
+    // Build transformed response (same shape as GET /api/clearance-requests)
+    const statusMap = { 'Completed': 'Approved', 'Pending': 'Pending', 'Rejected': 'Rejected', 'Resubmission': 'Resubmission' };
+    const responseRecord = {
+      _id: updatedRecord._id,
+      overallStatus: updatedRecord.overallStatus,
+      status: statusMap[updatedRecord.overallStatus] || updatedRecord.overallStatus,
+      departmentStatuses: updatedRecord.departmentStatuses.map(d => ({
+        name: d.name, status: d.status, reason: d.reason, pendingItems: d.pendingItems || [], validatedAt: d.validatedAt
+      }))
+    };
+
+    res.json({
+      success: true,
+      message: validationResult.overallStatus === 'Completed'
+        ? '✅ Clearance APPROVED - All departments cleared!'
+        : '⚠️ Resubmitted. Some departments still have pending issues.',
+      record: responseRecord
+    });
+  } catch (err) {
+    console.error('❌ Resubmit Validation Error:', err);
+    res.status(500).json({ success: false, message: 'Failed to resubmit: ' + err.message });
+  }
+});
+
+// --------------------
 // HOD CLEARANCE APPROVAL ROUTES
 // --------------------
 
