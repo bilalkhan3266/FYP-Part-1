@@ -1,60 +1,68 @@
+const sgMail = require("@sendgrid/mail");
 const nodemailer = require("nodemailer");
 
-// Persistent transporter with connection pooling
+// ============================================================
+// PRIMARY: SendGrid HTTP API (works on Railway - no SMTP ports needed)
+// FALLBACK: Nodemailer SMTP (works locally)
+// ============================================================
+
+const useSendGrid = () => !!process.env.SENDGRID_API_KEY;
+
+// Nodemailer transporter (for local dev fallback)
 let transporter = null;
 let lastTransporterReset = 0;
 
 const createTransporter = () => {
-  // Reset transporter every 30 minutes to clear stale connections
   const now = Date.now();
-  const thirtyMinutes = 30 * 60 * 1000;
-  
-  if (transporter && (now - lastTransporterReset) < thirtyMinutes) {
-    return transporter;
-  }
+  if (transporter && (now - lastTransporterReset) < 30 * 60 * 1000) return transporter;
+  if (transporter) { try { transporter.close(); } catch (e) {} }
 
-  // Close old transporter if exists
-  if (transporter) {
-    try {
-      transporter.close();
-    } catch (e) {
-      // Ignore errors
-    }
-  }
-
-  // Create new transporter with OPTIMIZED settings for Railway
-  // Use port 587 (STARTTLS) instead of 465 (SSL) - port 465 is often blocked on cloud platforms
   transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
-    secure: false,               // false = STARTTLS on port 587
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    // Connection pool settings (top-level, not nested)
+    secure: false,
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
     pool: true,
     maxConnections: 3,
-    maxMessages: 50,
-    // INCREASED TIMEOUTS FOR CLOUD PLATFORMS
-    connectionTimeout: 30000,    // 30 seconds to connect
-    socketTimeout: 30000,        // 30 seconds for socket operations
-    greetingTimeout: 30000,      // 30 seconds for greeting
-    logger: false,
-    debug: false,
-    tls: {
-      rejectUnauthorized: false  // For cloud platforms with proxy
-    }
+    connectionTimeout: 30000,
+    socketTimeout: 30000,
+    greetingTimeout: 30000,
+    tls: { rejectUnauthorized: false }
   });
 
   lastTransporterReset = now;
   return transporter;
 };
 
-// Initialize transporter on module load
-if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+/**
+ * Unified send function - uses SendGrid if API key set, else nodemailer
+ */
+const sendEmail = async ({ to, from, subject, html, text }) => {
+  const fromAddr = from || `"Riphah Clearance System" <${process.env.EMAIL_USER || "noreply@riphah.edu.pk"}>`;
+
+  if (useSendGrid()) {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    const msg = { to, from: fromAddr, subject, html, text };
+    const [response] = await sgMail.send(msg);
+    return { success: true, messageId: response.headers["x-message-id"] };
+  }
+
+  // Nodemailer fallback
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    return { success: false, reason: "Email not configured (no SENDGRID_API_KEY or EMAIL_USER/PASS)" };
+  }
+  const xport = createTransporter();
+  const info = await xport.sendMail({ from: fromAddr, to, subject, html, text });
+  return { success: true, messageId: info.messageId };
+};
+
+if (process.env.SENDGRID_API_KEY) {
+  console.log("✅ Email: SendGrid HTTP API (Railway-compatible)");
+} else if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
   createTransporter();
-  console.log("✅ Email transporter initialized with 30-second timeout for cloud platforms");
+  console.log("✅ Email: Nodemailer SMTP (local dev)");
+} else {
+  console.warn("⚠️ Email not configured. Set SENDGRID_API_KEY for production.");
 }
 
 /**
@@ -71,8 +79,8 @@ const sendClearanceCertificateEmail = async ({
   approvedAt,
   departments,
 }) => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn("⚠️ Email not configured (EMAIL_USER / EMAIL_PASS missing). Skipping email.");
+  if (!useSendGrid() && (!process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
+    console.warn("⚠️ Email not configured. Skipping certificate email.");
     return { success: false, reason: "Email not configured" };
   }
 
@@ -177,18 +185,17 @@ const sendClearanceCertificateEmail = async ({
   `;
 
   try {
-    const transporter = createTransporter();
-
-    const mailOptions = {
-      from: `"Student Clearance System" <${process.env.EMAIL_USER}>`,
+    const result = await sendEmail({
       to: studentEmail,
       subject: "✅ Student Clearance Certificate Approved",
       html: htmlContent,
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`📧 Clearance email sent to ${studentEmail}: ${info.messageId}`);
-    return { success: true, messageId: info.messageId };
+    });
+    if (result.success) {
+      console.log(`📧 Clearance email sent to ${studentEmail}: ${result.messageId}`);
+    } else {
+      console.error(`❌ Failed to send clearance email: ${result.reason || result.error}`);
+    }
+    return result;
   } catch (err) {
     console.error(`❌ Failed to send clearance email to ${studentEmail}:`, err.message);
     return { success: false, error: err.message };
@@ -204,7 +211,7 @@ const sendPasswordResetEmail = async ({
   resetCode,
   expiresInMinutes = 15
 }) => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+  if (!useSendGrid() && (!process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
     console.warn("⚠️ Email not configured. Skipping password reset email.");
     return { success: false, reason: "Email not configured" };
   }
@@ -241,16 +248,13 @@ const sendPasswordResetEmail = async ({
   `;
 
   try {
-    const transporter = createTransporter();
-    const mailOptions = {
-      from: `"Riphah Clearance System" <${process.env.EMAIL_USER}>`,
+    const result = await sendEmail({
       to: userEmail,
       subject: "🔐 Password Reset Code - Riphah Clearance Portal",
       html: htmlContent,
-    };
-    const info = await transporter.sendMail(mailOptions);
+    });
     console.log(`✅ Password reset email sent to ${userEmail}`);
-    return { success: true, messageId: info.messageId };
+    return result;
   } catch (err) {
     console.error(`❌ Failed to send password reset email: ${err.message}`);
     return { success: false, error: err.message };
@@ -261,9 +265,8 @@ const sendPasswordResetEmail = async ({
  * Send OTP verification email for signup
  */
 const sendOtpEmail = async ({ userName, userEmail, otp, expiresInMinutes = 5 }) => {
-  // Validate email configuration
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error("❌ EMAIL_USER or EMAIL_PASS not configured in environment variables");
+  if (!useSendGrid() && (!process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
+    console.error("❌ Email not configured. Set SENDGRID_API_KEY on Railway.");
     return { success: false, reason: "Email credentials not configured" };
   }
 
@@ -305,60 +308,22 @@ const sendOtpEmail = async ({ userName, userEmail, otp, expiresInMinutes = 5 }) 
   </div>
   `;
 
+  console.log(`📬 Sending OTP email to ${userEmail}...`);
   try {
-    const transporter = createTransporter();
-    
-    const mailOptions = {
-      from: `"Riphah Clearance System" <${process.env.EMAIL_USER}>`,
+    const result = await sendEmail({
       to: userEmail,
       subject: "🔐 Your Verification Code - Riphah Clearance Portal",
       html: htmlContent,
-      text: `Riphah Clearance Portal - Email Verification\n\nYour OTP: ${otp}\n\nThis code will expire in ${expiresInMinutes} minutes.\n\nIf you did not request this, please ignore this email.`,
-      // Headers for better deliverability
-      headers: {
-        'X-Priority': '3',
-        'X-Mailer': 'Riphah-Clearance-System/1.0',
-        'X-MSMail-Priority': 'Normal'
-      }
-    };
-    
-    console.log(`📬 Sending OTP email to ${userEmail}...`);
-    
-    // Retry logic with exponential backoff
-    let lastError;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const sendPromise = transporter.sendMail(mailOptions);
-        
-        // 30-second timeout (increased for Railway)
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Email send timeout")), 30000)
-        );
-        
-        const info = await Promise.race([sendPromise, timeoutPromise]);
-        
-        console.log(`✅ OTP email successfully sent to ${userEmail} | Message ID: ${info.messageId}`);
-        return { success: true, messageId: info.messageId };
-      } catch (err) {
-        lastError = err;
-        console.warn(`⚠️ Attempt ${attempt}/3 failed for ${userEmail}: ${err.message}`);
-        
-        if (attempt < 3) {
-          // Wait before retry: 2s, then 4s
-          const waitTime = Math.pow(2, attempt) * 1000;
-          console.log(`⏳ Retrying in ${waitTime}ms...`);
-          await new Promise(r => setTimeout(r, waitTime));
-        }
-      }
+      text: `Riphah Clearance Portal - Email Verification\n\nYour OTP: ${otp}\n\nExpires in ${expiresInMinutes} minutes.`,
+    });
+    if (result.success) {
+      console.log(`✅ OTP email successfully sent to ${userEmail} | Message ID: ${result.messageId}`);
+    } else {
+      console.error(`❌ OTP email failed for ${userEmail}: ${result.reason || result.error}`);
     }
-    
-    // All retries failed
-    console.error(`❌ FAILED to send OTP email to ${userEmail} after 3 attempts`);
-    console.error(`   Error: ${lastError.message}`);
-    console.error(`   Full error:`, lastError);
-    return { success: false, error: lastError.message };
+    return result;
   } catch (err) {
-    console.error(`❌ Error in OTP email service for ${userEmail}:`, err.message);
+    console.error(`❌ Error sending OTP email to ${userEmail}:`, err.message);
     return { success: false, error: err.message };
   }
 };
