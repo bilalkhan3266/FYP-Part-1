@@ -89,8 +89,35 @@ app.get('/api/health', (req, res) => {
 });
 
 // --------------------
-// MongoDB Connection
+// Email Diagnostic (Admin only — no auth to allow early testing)
 // --------------------
+app.get('/api/test-email', async (req, res) => {
+  const emailConfigured = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+  if (!emailConfigured) {
+    return res.status(500).json({
+      success: false,
+      message: 'Email not configured: EMAIL_USER or EMAIL_PASS missing from Railway environment variables',
+      EMAIL_USER: process.env.EMAIL_USER ? 'SET' : 'MISSING',
+      EMAIL_PASS: process.env.EMAIL_PASS ? 'SET' : 'MISSING'
+    });
+  }
+  try {
+    const result = await sendOtpEmail({
+      userName: 'Test User',
+      userEmail: process.env.EMAIL_USER, // send to self
+      otp: '123456',
+      expiresInMinutes: 5
+    });
+    res.json({
+      success: result.success,
+      message: result.success ? 'Test OTP email sent successfully!' : 'Email send failed',
+      detail: result.error || result.reason || result.messageId,
+      EMAIL_USER: process.env.EMAIL_USER
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Email test threw error', error: err.message });
+  }
+});
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/role_based_system';
 
 console.log('🔄 Attempting to connect to MongoDB...');
@@ -1024,6 +1051,40 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
       message: notifMsg,
       message_type: 'notification'
     }).save().catch(e => console.error('Notification save error:', e));
+
+    // Send certificate email when all departments approve (non-blocking)
+    if (validationResult.overallStatus === 'Completed') {
+      try {
+        const studentUser = await User.findById(req.user.id);
+        if (studentUser && studentUser.email) {
+          const departments = validationResult.departmentStatuses.map(d => ({
+            name: d.name,
+            status: d.status
+          }));
+          sendClearanceCertificateEmail({
+            studentName: student_name_str,
+            studentEmail: studentUser.email,
+            sapId: sapid_str,
+            department: studentUser.department || '',
+            program: program_str,
+            qrCode: savedRecord.qr_code || '',
+            approvedBy: 'All Departments',
+            approvedAt: new Date(),
+            departments,
+          }).then(emailResult => {
+            if (emailResult.success) {
+              console.log(`✅ Certificate email sent to ${studentUser.email}`);
+            } else {
+              console.warn(`⚠️ Certificate email failed: ${emailResult.reason || emailResult.error}`);
+            }
+          }).catch(err => console.error('Certificate email error:', err.message));
+        } else {
+          console.warn('⚠️ Could not find student email for certificate notification');
+        }
+      } catch (emailLookupErr) {
+        console.error('Certificate email lookup error:', emailLookupErr.message);
+      }
+    }
 
     return res.status(201).json({
       success: true,
