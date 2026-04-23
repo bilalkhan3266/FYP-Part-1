@@ -23,33 +23,27 @@ const createTransporter = () => {
   }
 
   // Create new transporter with OPTIMIZED settings for Railway
+  // Use port 587 (STARTTLS) instead of 465 (SSL) - port 465 is often blocked on cloud platforms
   transporter = nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || "gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,               // false = STARTTLS on port 587
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-    // PRODUCTION-GRADE SETTINGS FOR CLOUD PLATFORMS (Railway)
-    pool: {
-      maxConnections: 3,           // Reduced to 3 for stability
-      maxMessages: 50,             // Max 50 messages per connection
-      rateDelta: 1000,             // 1 second between messages (safer)
-      rateLimit: true              // Enable rate limiting
-    },
+    // Connection pool settings (top-level, not nested)
+    pool: true,
+    maxConnections: 3,
+    maxMessages: 50,
     // INCREASED TIMEOUTS FOR CLOUD PLATFORMS
-    connectionTimeout: 30000,      // 30 seconds to connect (was 5)
-    socketTimeout: 30000,          // 30 seconds for socket operations (was 5)
-    greetingTimeout: 30000,        // 30 seconds for greeting
-    
-    // Connection settings
-    logger: false,                 // Disable verbose logging
-    debug: false,                  // Disable debug mode
-    
-    // TLS/SSL settings for better reliability
-    secure: true,                  // Use TLS
-    requireTLS: false,             // But don't require it
+    connectionTimeout: 30000,    // 30 seconds to connect
+    socketTimeout: 30000,        // 30 seconds for socket operations
+    greetingTimeout: 30000,      // 30 seconds for greeting
+    logger: false,
+    debug: false,
     tls: {
-      rejectUnauthorized: false   // For cloud platforms with proxy
+      rejectUnauthorized: false  // For cloud platforms with proxy
     }
   });
 
