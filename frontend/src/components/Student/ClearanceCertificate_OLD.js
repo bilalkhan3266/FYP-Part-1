@@ -79,7 +79,7 @@ export default function ClearanceCertificate() {
         setCertificate({
           student_name: wf.studentName,
           sapid: wf.sapid,
-          registration_no: wf.registrationNo,
+         
           father_name: wf.fatherName,
           program: wf.program,
           department: wf.department,
@@ -239,176 +239,196 @@ export default function ClearanceCertificate() {
 
             {/* ===== PRINTABLE CERTIFICATE ===== */}
             <div id="certificate-area" ref={certificateRef}>
-              <div className="certificate-container">
-                {/* Header */}
-                <div className="cert-header">
-                  <div className="cert-logo">
-                    <div className="cert-logo-icon">🎓</div>
+              <div className="certificate-container" style={{ padding: '40px', fontFamily: 'serif', maxWidth: '850px', margin: '0 auto', border: '3px solid #1e3a8a', borderRadius: '8px', backgroundColor: '#ffffff' }}>
+                {/* Top Decorative Bar */}
+                <div style={{ height: '4px', background: 'linear-gradient(to right, #1e3a8a 0%, #fbbf24 50%, #1e3a8a 100%)', marginBottom: '30px' }}></div>
+
+                {/* Header with Logo and Text */}
+                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                  {/* Riphah Logo */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <img 
+                      src="/logo192.png" 
+                      alt="Riphah International University" 
+                      style={{ width: '80px', height: '80px', objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.1))' }}
+                    />
                   </div>
-                  <div className="cert-title-block">
-                    <h1 className="cert-university">
-                      Riphah International University
-                    </h1>
-                    <h2 className="cert-doc-title">
-                      Student Clearance Certificate
-                    </h2>
-                    <p className="cert-subtitle">
-                      Office of the Registrar
-                    </p>
-                  </div>
-                </div>
 
-                <div className="cert-divider"></div>
-
-                {/* Certificate Number & Date */}
-                <div className="cert-meta-row">
-                  <span>
-                    <strong>Certificate No:</strong>{" "}
-                    {certificate.qr_code || "N/A"}
-                  </span>
-                  <span>
-                    <strong>Date:</strong> {formatDate(certificate.completed_at || new Date())}
-                  </span>
-                </div>
-
-                {/* Body */}
-                <div className="cert-body">
-                  <p className="cert-intro">
-                    This is to certify that the following student has obtained
-                    clearance from all departments of the university and has no
-                    outstanding dues or obligations.
+                  {/* University Name */}
+                  <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e3a8a', margin: '0 0 5px 0', letterSpacing: '0.05em' }}>
+                    RIPHAH INTERNATIONAL UNIVERSITY
+                  </h1>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '0 0 20px 0', letterSpacing: '0.1em', fontWeight: '500' }}>
+                    OFFICE OF THE REGISTRAR
                   </p>
 
-                  {/* Student Details Table */}
-                  <table className="cert-details-table">
-                    <tbody>
-                      <tr>
-                        <td className="label">Student Name</td>
-                        <td className="value">{certificate.student_name}</td>
-                      </tr>
-                      <tr>
-                        <td className="label">SAP ID</td>
-                        <td className="value">{certificate.sapid}</td>
-                      </tr>
-                      {certificate.registration_no && (
-                        <tr>
-                          <td className="label">Registration No</td>
-                          <td className="value">
-                            {certificate.registration_no}
-                          </td>
-                        </tr>
-                      )}
-                      {certificate.father_name && (
-                        <tr>
-                          <td className="label">Father's Name</td>
-                          <td className="value">{certificate.father_name}</td>
-                        </tr>
-                      )}
-                      <tr>
-                        <td className="label">Program</td>
-                        <td className="value">
-                          {certificate.program || "N/A"}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="label">Department</td>
-                        <td className="value">
-                          {certificate.department || "N/A"}
-                        </td>
-                      </tr>
-                      {certificate.semester && (
-                        <tr>
-                          <td className="label">Semester</td>
-                          <td className="value">{certificate.semester}</td>
-                        </tr>
-                      )}
-                      {certificate.degree_status && (
-                        <tr>
-                          <td className="label">Degree Status</td>
-                          <td className="value">
-                            {certificate.degree_status}
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                  {/* Certificate Title */}
+                  <h2 style={{ fontSize: '36px', fontWeight: 'bold', color: '#1e3a8a', margin: '10px 0 20px 0', letterSpacing: '0.08em', fontFamily: 'Georgia, serif' }}>
+                    CLEARANCE CERTIFICATE
+                  </h2>
 
-                  {/* Department Clearance Table */}
-                  <h3 className="dept-table-title">
-                    Department Clearance Status
-                  </h3>
-                  <table className="cert-dept-table">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Department</th>
-                        <th>Status</th>
-                        <th>Approved By</th>
-                        <th>Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {certificate.departments.map((dept, i) => (
-                        <tr key={i}>
-                          <td>{i + 1}</td>
-                          <td>{dept.name}</td>
-                          <td className="status-approved">✓ {dept.status}</td>
-                          <td>{dept.approved_by || "—"}</td>
-                          <td>{formatDate(dept.approved_at)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  {/* Decorative divider */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '20px' }}>
+                    <div style={{ width: '40px', height: '1px', backgroundColor: '#fbbf24' }}></div>
+                    <div style={{ width: '8px', height: '8px', backgroundColor: '#fbbf24', borderRadius: '50%' }}></div>
+                    <div style={{ width: '40px', height: '1px', backgroundColor: '#fbbf24' }}></div>
+                  </div>
                 </div>
 
-                {/* Footer with QR Code and Signatures */}
-                <div className="cert-footer-section">
-                  <div className="cert-qr-block" ref={qrRef}>
+                {/* Certificate Body Text */}
+                <div style={{ textAlign: 'center', marginBottom: '30px', lineHeight: '1.8' }}>
+                  <p style={{ fontSize: '14px', color: '#374151', margin: '0 0 15px 0' }}>
+                    This is to certify that the student mentioned below has successfully completed
+                  </p>
+                  <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e3a8a', fontStyle: 'italic', margin: '0 0 15px 0' }}>
+                    all required clearance procedures
+                  </p>
+                  <p style={{ fontSize: '14px', color: '#374151', margin: '0' }}>
+                    and has been cleared by all departments to proceed.
+                  </p>
+                </div>
+
+                {/* Student Information Card */}
+                <div style={{ background: 'linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%)', border: '2px solid #93c5fd', borderRadius: '12px', padding: '25px', marginBottom: '30px' }}>
+                  <h3 style={{ fontSize: '28px', fontWeight: 'bold', color: '#1e3a8a', textAlign: 'center', margin: '0 0 20px 0', fontFamily: 'Georgia, serif' }}>
+                    {certificate.student_name}
+                  </h3>
+
+                  {/* Details Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.8)', border: '1px solid #dbeafe', borderRadius: '8px', padding: '15px' }}>
+                      <p style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e3a8a', textTransform: 'uppercase', margin: '0 0 8px 0', letterSpacing: '0.05em' }}>
+                        Student ID
+                      </p>
+                      <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e3a8a', margin: '0', fontFamily: 'monospace' }}>
+                        {certificate.sapid}
+                      </p>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.8)', border: '1px solid #dbeafe', borderRadius: '8px', padding: '15px' }}>
+                      <p style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e3a8a', textTransform: 'uppercase', margin: '0 0 8px 0', letterSpacing: '0.05em' }}>
+                        Issue Date
+                      </p>
+                      <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e3a8a', margin: '0' }}>
+                        {formatDate(certificate.completed_at || new Date())}
+                      </p>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.8)', border: '1px solid #dbeafe', borderRadius: '8px', padding: '15px' }}>
+                      <p style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e3a8a', textTransform: 'uppercase', margin: '0 0 8px 0', letterSpacing: '0.05em' }}>
+                        Program
+                      </p>
+                      <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e3a8a', margin: '0' }}>
+                        {certificate.program || 'N/A'}
+                      </p>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.8)', border: '1px solid #dbeafe', borderRadius: '8px', padding: '15px' }}>
+                      <p style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e3a8a', textTransform: 'uppercase', margin: '0 0 8px 0', letterSpacing: '0.05em' }}>
+                        Valid Until
+                      </p>
+                      <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e3a8a', margin: '0' }}>
+                        Graduation
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Departments Section */}
+                <div style={{ borderTop: '2px solid #93c5fd', borderBottom: '2px solid #93c5fd', padding: '25px 0', marginBottom: '30px' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#1e3a8a', textAlign: 'center', textTransform: 'uppercase', marginBottom: '15px', letterSpacing: '0.1em' }}>
+                    Departmental Clearances
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+                    {certificate.departments && certificate.departments.length > 0 ? (
+                      certificate.departments.map((dept, idx) => (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'linear-gradient(135deg, #f0fdf4 0%, #dbeafe 100%)', padding: '12px', borderRadius: '8px', border: '2px solid #22c55e' }}>
+                          <span style={{ fontSize: '18px', color: '#16a34a', fontWeight: 'bold' }}>✓</span>
+                          <span style={{ fontSize: '13px', color: '#1e3a8a', fontWeight: '500' }}>
+                            {dept.name}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#1e3a8a', fontWeight: '500' }}>
+                        All Required Departments
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* QR Code Section */}
+                <div style={{ textAlign: 'center', marginBottom: '30px', paddingTop: '20px', borderTop: '2px solid #93c5fd' }}>
+                  <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#1e3a8a', textTransform: 'uppercase', marginBottom: '5px', letterSpacing: '0.05em' }}>
+                    Verify Certificate Authenticity
+                  </p>
+                  <p style={{ fontSize: '11px', color: '#6b7280', marginBottom: '15px' }}>
+                    Scan the QR code below using any smartphone
+                  </p>
+                  <div className="cert-qr-block" ref={qrRef} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#f9fafb', border: '3px solid #1e3a8a', borderRadius: '12px', padding: '15px' }}>
                     {certificate.qr_code ? (
                       <>
                         <QRCodeCanvas
                           value={certificate.verification_url || certificate.qr_code}
-                          size={150}
+                          size={180}
                           level="M"
                           includeMargin={true}
                           onLoad={onQrReady}
                         />
-                        <p className="qr-label">Scan to Verify</p>
-                        <p className="qr-id">ID: {certificate.qr_code}</p>
+                        <p style={{ fontSize: '11px', color: '#1e3a8a', fontWeight: 'bold', marginTop: '10px', marginBottom: '0', fontFamily: 'monospace' }}>
+                          {certificate.qr_code}
+                        </p>
                       </>
                     ) : (
-                      <div className="no-qr">
+                      <div style={{ padding: '20px', color: '#6b7280' }}>
                         <p>QR verification pending</p>
                       </div>
                     )}
                   </div>
+                </div>
 
-                  <div className="cert-signatures">
-                    <div className="signature-box">
-                      <div className="sig-line"></div>
-                      <p className="sig-title">Student Service</p>
-                      <p className="sig-name">
-                        {certificate.departments?.[4]?.approved_by || "________________"}
-                      </p>
+                {/* Signature Section */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '30px', textAlign: 'center', paddingTop: '40px', borderTop: '3px solid #1e3a8a', marginTop: '30px' }}>
+                  <div>
+                    <div style={{ height: '70px', borderBottom: '2px solid #374151', marginBottom: '8px' }}></div>
+                    <p style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e3a8a', textTransform: 'uppercase', margin: '0', letterSpacing: '0.05em' }}>
+                      Registrar
+                    </p>
+                    <p style={{ fontSize: '10px', color: '#6b7280', margin: '2px 0 0 0' }}>
+                      Authorized Signature
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end' }}>
+                    <div style={{ width: '60px', height: '60px', border: '3px solid #9ca3af', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px', background: '#f3f4f6' }}>
+                      <span style={{ fontSize: '10px', color: '#9ca3af', fontWeight: 'bold' }}>SEAL</span>
                     </div>
-                    <div className="signature-box">
-                      <div className="sig-line"></div>
-                      <p className="sig-title">Registrar</p>
-                      <p className="sig-name">________________</p>
-                    </div>
+                    <p style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e3a8a', textTransform: 'uppercase', margin: '0', letterSpacing: '0.05em' }}>
+                      Official Seal
+                    </p>
+                  </div>
+                  <div>
+                    <div style={{ height: '70px', borderBottom: '2px solid #374151', marginBottom: '8px' }}></div>
+                    <p style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e3a8a', textTransform: 'uppercase', margin: '0', letterSpacing: '0.05em' }}>
+                      HOD
+                    </p>
+                    <p style={{ fontSize: '10px', color: '#6b7280', margin: '2px 0 0 0' }}>
+                      Authorized Signature
+                    </p>
                   </div>
                 </div>
 
-                <div className="cert-bottom-note">
-                  <p>
-                    This is a computer-generated certificate. Verify authenticity
-                    by scanning the QR code above.
+                {/* Footer */}
+                <div style={{ textAlign: 'center', marginTop: '30px', paddingTop: '20px', borderTop: '2px solid #93c5fd' }}>
+                  <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#1e3a8a', margin: '0 0 5px 0' }}>
+                    Riphah International University
                   </p>
-                  <p>
-                    Generated on: {formatDate(new Date())} | Riphah
-                    International University
+                  <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 10px 0' }}>
+                    Office of the Registrar | Islamabad, Pakistan
+                  </p>
+                  <p style={{ fontSize: '10px', color: '#9ca3af', fontStyle: 'italic', margin: '0' }}>
+                    This certificate signifies that the student has fulfilled all clearance requirements and is eligible to graduate.
                   </p>
                 </div>
+
+                {/* Bottom Decorative Bar */}
+                <div style={{ height: '4px', background: 'linear-gradient(to right, #1e3a8a 0%, #fbbf24 50%, #1e3a8a 100%)', marginTop: '30px' }}></div>
               </div>
             </div>
           </>
