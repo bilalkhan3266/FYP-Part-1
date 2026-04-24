@@ -123,27 +123,27 @@ export default function ProfessionalCertificateDesign({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-50 p-4 md:p-8">
       {/* Header Actions */}
-      <div className="max-w-4xl mx-auto mb-6 flex gap-3 justify-end">
+      <div className="max-w-5xl mx-auto mb-6 flex gap-3 justify-end">
         <button
           onClick={handleDownloadPDF}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:shadow-lg transition disabled:opacity-50 font-semibold"
         >
           {loading ? <Loader className="animate-spin" size={20} /> : <Download size={20} />}
           Download PDF
         </button>
         <button
           onClick={handlePrint}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+          className="flex items-center gap-2 px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-semibold border border-gray-300"
         >
           <Printer size={20} />
           Print
         </button>
         <button
           onClick={handleShare}
-          className="flex items-center gap-2 px-4 py-2 bg-green-200 text-green-800 rounded-lg hover:bg-green-300 transition"
+          className="flex items-center gap-2 px-6 py-2.5 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition font-semibold border border-green-300"
         >
           <Share2 size={20} />
           Share
@@ -151,188 +151,203 @@ export default function ProfessionalCertificateDesign({
       </div>
 
       {/* Certificate Container */}
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div
           ref={certificateRef}
-          className="bg-white rounded-xl shadow-2xl overflow-hidden print:shadow-none print:m-0 print:rounded-none"
+          className="bg-white rounded-2xl shadow-2xl overflow-hidden print:shadow-none print:m-0 print:rounded-none"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%)',
+            backgroundAttachment: 'fixed'
+          }}
         >
-          <div className="relative p-12 text-center bg-gradient-to-b from-blue-50 to-white">
-            {/* Decorative Top Border */}
-            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-700 via-yellow-500 to-blue-700"></div>
-            
-            {/* Header Section */}
-            <div className="mb-8">
-              {/* Riphah University Logo */}
-              <div className="flex justify-center mb-6">
-                <img 
-                  src="/logo192.png" 
-                  alt="Riphah International University" 
-                  className="w-24 h-24 object-contain drop-shadow-md"
-                  style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}
-                />
+          {/* Top Decorative Bar */}
+          <div className="h-3 bg-gradient-to-r from-blue-800 via-yellow-500 to-blue-800"></div>
+          
+          <div className="p-16 text-center">
+            {/* University Header */}
+            <div className="mb-12">
+              {/* Logo */}
+              <div className="flex justify-center mb-8">
+                <div className="relative">
+                  <img 
+                    src="/logo192.png" 
+                    alt="Riphah International University" 
+                    className="w-32 h-32 object-contain"
+                    style={{ filter: 'drop-shadow(0 2px 8px rgba(31, 41, 55, 0.1))' }}
+                  />
+                  <div className="absolute inset-0 rounded-full border-2 border-blue-200 opacity-30"></div>
+                </div>
               </div>
 
-              <h3 className="text-xs font-bold text-blue-700 tracking-widest uppercase letter-spacing">
-                Office of the Registrar
-              </h3>
-              <h1 className="text-6xl font-serif text-blue-900 my-4 font-bold tracking-tight" style={{ fontSize: '3.5rem', letterSpacing: '0.05em' }}>
-                CLEARANCE CERTIFICATE
-              </h1>
-              <p className="text-blue-700 text-lg font-semibold">
+              {/* Institution Name */}
+              <h2 className="text-xs font-bold text-blue-700 tracking-widest uppercase letter-spacing mb-2">
                 Riphah International University
+              </h2>
+              <p className="text-xs text-gray-500 tracking-wider uppercase mb-6">
+                Office of the Registrar
               </p>
-              <p className="text-gray-600 text-base">
-                Faculty of Engineering & Applied Sciences
-              </p>
-              <div className="w-32 h-1 bg-gradient-to-r from-yellow-500 to-blue-700 mx-auto mt-6"></div>
+
+              {/* Certificate Title */}
+              <div className="mb-8">
+                <h1 className="text-5xl font-serif text-blue-900 font-bold mb-4" style={{ letterSpacing: '0.1em' }}>
+                  CLEARANCE CERTIFICATE
+                </h1>
+                <div className="flex justify-center gap-2 items-center">
+                  <div className="w-12 h-0.5 bg-gradient-to-r from-transparent to-yellow-500"></div>
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                  <div className="w-12 h-0.5 bg-gradient-to-l from-transparent to-yellow-500"></div>
+                </div>
+              </div>
             </div>
 
-            {/* Main Content */}
-            <div className="text-left space-y-8">
-              {/* Greeting */}
-              <p className="text-center text-gray-700 text-lg">
-                This is to certify that
-              </p>
+            {/* Main Body */}
+            <div className="text-left space-y-8 max-w-3xl mx-auto">
+              {/* Statement */}
+              <div className="text-center space-y-4">
+                <p className="text-base text-gray-700 font-semibold">
+                  This is to certify that the student mentioned below has successfully completed
+                </p>
+                <p className="text-lg text-blue-900 font-bold italic">
+                  all required clearance procedures
+                </p>
+                <p className="text-base text-gray-700 font-semibold">
+                  and has been cleared by all departments to proceed.
+                </p>
+              </div>
 
-              {/* Student Info Card */}
-              <div className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg p-8 border-3 border-blue-700 shadow-md">
-                <p className="text-4xl font-serif text-blue-900 font-bold text-center mb-6" style={{ fontSize: '2rem' }}>
+              {/* Student Information Card */}
+              <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-50 rounded-2xl p-10 border-2 border-blue-300 shadow-md">
+                <p className="text-center text-3xl font-serif text-blue-900 font-bold mb-8">
                   {studentName}
                 </p>
 
-                {/* Student Details Grid */}
-                <div className="grid grid-cols-3 gap-8 mt-6">
-                  <div className="bg-white p-4 rounded border border-blue-200">
+                {/* Details Grid */}
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="bg-white/80 backdrop-blur p-5 rounded-xl border border-blue-200 shadow-sm">
                     <p className="text-xs font-bold text-blue-700 uppercase tracking-widest mb-2">
                       Student ID
                     </p>
-                    <p className="text-xl font-mono text-blue-900 font-semibold">{sapId}</p>
+                    <p className="text-base font-mono text-blue-900 font-bold">{sapId}</p>
                   </div>
-                  <div className="bg-white p-4 rounded border border-blue-200">
+                  <div className="bg-white/80 backdrop-blur p-5 rounded-xl border border-blue-200 shadow-sm">
                     <p className="text-xs font-bold text-blue-700 uppercase tracking-widest mb-2">
                       Issue Date
                     </p>
-                    <p className="text-lg text-blue-900 font-semibold">
-                      {date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "---"}
+                    <p className="text-base text-blue-900 font-bold">
+                      {date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : "---"}
                     </p>
                   </div>
-                  <div className="bg-white p-4 rounded border border-blue-200">
+                  <div className="bg-white/80 backdrop-blur p-5 rounded-xl border border-blue-200 shadow-sm">
                     <p className="text-xs font-bold text-blue-700 uppercase tracking-widest mb-2">
                       Valid Until
                     </p>
-                    <p className="text-lg text-blue-900 font-semibold">Until Graduation</p>
+                    <p className="text-base text-blue-900 font-bold">Graduation</p>
                   </div>
                 </div>
               </div>
 
-              {/* Certificate Body */}
-              <div className="space-y-6 text-gray-700 leading-relaxed py-8">
-                <p className="text-center text-xl text-blue-900 font-semibold italic">
-                  has successfully completed all clearance requirements from the University and has been cleared by all departments.
-                </p>
-
-                {/* Departments Section */}
-                <div className="mt-8 pt-8 border-t-2 border-blue-300">
-                  <p className="font-bold text-blue-900 text-center mb-6 uppercase tracking-wider" style={{ fontSize: '1.1rem' }}>
-                    ✓ Cleared By the Following Departments
+              {/* Departments Section */}
+              <div className="space-y-6 py-4">
+                <div className="border-t-2 border-b-2 border-blue-300 py-6">
+                  <p className="font-bold text-blue-900 text-center mb-8 uppercase tracking-wider text-lg">
+                    Departmental Clearances
                   </p>
 
-                  <div className="grid grid-cols-2 gap-5">
+                  <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
                     {departments && departments.length > 0 ? (
                       departments.map((dept, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-500 shadow-sm"
+                          className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-400 shadow-sm hover:shadow-md transition"
                         >
-                          <CheckCircle size={24} className="text-green-600 flex-shrink-0" />
-                          <span className="text-blue-900 font-semibold text-lg">
+                          <CheckCircle size={22} className="text-green-600 flex-shrink-0" />
+                          <span className="text-blue-900 font-bold text-sm">
                             {typeof dept === 'string' ? dept : dept.name || 'Department'}
                           </span>
                         </div>
                       ))
                     ) : (
-                      <div className="col-span-2 text-center py-4 bg-blue-50 rounded border border-blue-200">
-                        <p className="text-blue-700 font-semibold">All Required Departments</p>
+                      <div className="col-span-2 text-center py-4 bg-blue-50 rounded-xl border-2 border-blue-300">
+                        <p className="text-blue-700 font-bold">All Required Departments</p>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* QR Code Section */}
-              <div className="border-t-2 border-blue-300 pt-8 flex flex-col items-center">
-                <p className="text-sm font-bold text-blue-900 uppercase tracking-wider mb-6">
-                  Scan to Verify Certificate
-                </p>
+              {/* QR Code & Verification */}
+              <div className="flex flex-col items-center space-y-6 py-8 border-t-2 border-blue-300">
+                <div>
+                  <p className="text-sm font-bold text-blue-900 uppercase tracking-wider mb-2">
+                    Verify Certificate Authenticity
+                  </p>
+                  <p className="text-xs text-gray-500">Scan the QR code below using any smartphone</p>
+                </div>
+                
                 {qrCodeData && (
-                  <div className="bg-white p-4 rounded-lg border-4 border-blue-700 shadow-lg">
-                    <img src={qrCodeData} alt="QR Code" className="w-40 h-40" />
+                  <div className="bg-white p-6 rounded-2xl border-4 border-blue-900 shadow-lg">
+                    <img src={qrCodeData} alt="QR Code" className="w-48 h-48" />
                   </div>
                 )}
+                
                 {certificateData?.certificate_id ? (
-                  <p className="text-xs text-blue-700 font-semibold mt-4 font-mono">
-                    Verification ID: {certificateData.certificate_id.substring(0, 12).toUpperCase()}
+                  <p className="text-xs text-blue-900 font-mono font-bold tracking-wider">
+                    ID: {certificateData.certificate_id.substring(0, 16).toUpperCase()}
                   </p>
                 ) : (
-                  <p className="text-xs text-blue-700 font-semibold mt-4 font-mono">
-                    Verification ID: {certificateData._id?.substring(0, 12).toUpperCase() || 'N/A'}
+                  <p className="text-xs text-blue-900 font-mono font-bold tracking-wider">
+                    ID: {certificateData._id?.substring(0, 16).toUpperCase() || 'N/A'}
                   </p>
                 )}
               </div>
 
               {/* Signature Section */}
-              <div className="border-t-4 border-blue-700 pt-12 grid grid-cols-3 gap-8 text-center">
-                <div>
-                  <div className="h-20 mb-1 border-b-2 border-gray-400"></div>
-                  <p className="text-xs font-bold text-blue-900 uppercase tracking-widest mt-2">
-                    Registrar
-                  </p>
-                  <p className="text-xs text-gray-600 mt-1">Authorized Signature</p>
-                </div>
-                <div>
-                  <div className="h-20 mb-1 border-b-2 border-gray-400 flex items-center justify-center">
-                    {/* Official Seal Placeholder */}
+              <div className="pt-12 border-t-4 border-blue-900">
+                <div className="grid grid-cols-3 gap-12 text-center">
+                  <div>
+                    <div className="h-24 mb-2 border-b-2 border-gray-600"></div>
+                    <p className="text-xs font-bold text-blue-900 uppercase tracking-wider">
+                      Registrar
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">Authorized Signature</p>
                   </div>
-                  <p className="text-xs font-bold text-blue-900 uppercase tracking-widest mt-2">
-                    Official Seal
-                  </p>
-                  <p className="text-xs text-gray-600 mt-1">University Stamp</p>
-                </div>
-                <div>
-                  <div className="h-20 mb-1 border-b-2 border-gray-400"></div>
-                  <p className="text-xs font-bold text-blue-900 uppercase tracking-widest mt-2">
-                    Head of Department
-                  </p>
-                  <p className="text-xs text-gray-600 mt-1">Authorized Signature</p>
+                  <div className="flex flex-col items-center justify-end pb-2">
+                    <div className="w-20 h-20 border-4 border-gray-300 rounded-full flex items-center justify-center bg-gray-50">
+                      <span className="text-xs text-gray-400 font-bold">SEAL</span>
+                    </div>
+                    <p className="text-xs font-bold text-blue-900 uppercase tracking-wider mt-3">
+                      Official Seal
+                    </p>
+                  </div>
+                  <div>
+                    <div className="h-24 mb-2 border-b-2 border-gray-600"></div>
+                    <p className="text-xs font-bold text-blue-900 uppercase tracking-wider">
+                      HOD
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">Authorized Signature</p>
+                  </div>
                 </div>
               </div>
 
               {/* Footer */}
               <div className="border-t-2 border-blue-300 pt-8 text-center space-y-2">
-                <p className="text-sm text-blue-700 font-semibold">
+                <p className="text-sm text-blue-900 font-bold">
                   Riphah International University
                 </p>
                 <p className="text-xs text-gray-600">
-                  Office of the Registrar | Certificate ID: {certificateData._id?.substring(0, 12)}
+                  Office of the Registrar | Islamabad, Pakistan
                 </p>
-                <p className="text-xs text-gray-500 italic">
-                  This certificate is valid throughout the student's academic career at Riphah International University.
-                </p>
-                <p className="text-xs text-gray-400 mt-4">
-                  {new Date().toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric"
-                  })}
+                <p className="text-xs text-gray-500 italic mt-4">
+                  This certificate signifies that the student has fulfilled all clearance requirements and is eligible to graduate.
                 </p>
               </div>
             </div>
-            
-            {/* Decorative Bottom Border */}
-            <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-700 via-yellow-500 to-blue-700"></div>
+          </div>
+
+          {/* Bottom Decorative Bar */}
+          <div className="h-3 bg-gradient-to-r from-blue-800 via-yellow-500 to-blue-800"></div>
         </div>
       </div>
-    </div>
 
       {/* Print Styles */}
       <style>{`
