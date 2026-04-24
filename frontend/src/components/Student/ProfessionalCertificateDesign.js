@@ -289,16 +289,6 @@ export default function ProfessionalCertificateDesign({
                     <img src={qrCodeData} alt="QR Code" className="w-48 h-48" />
                   </div>
                 )}
-                
-                {certificateData?.certificate_id ? (
-                  <p className="text-xs text-blue-900 font-mono font-bold tracking-wider">
-                    ID: {certificateData.certificate_id.substring(0, 16).toUpperCase()}
-                  </p>
-                ) : (
-                  <p className="text-xs text-blue-900 font-mono font-bold tracking-wider">
-                    ID: {certificateData._id?.substring(0, 16).toUpperCase() || 'N/A'}
-                  </p>
-                )}
               </div>
 
               {/* Signature Section */}
