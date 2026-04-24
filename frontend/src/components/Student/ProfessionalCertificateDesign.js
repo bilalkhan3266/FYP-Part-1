@@ -18,16 +18,25 @@ export default function ProfessionalCertificateDesign({
 
   // Generate QR code on mount
   useEffect(() => {
-    const certId = certificateData?._id || certificateData?.certificate_id || certificateData?.qrData;
+    const certId = certificateData?._id || certificateData?.certificate_id || certificateData?.qr_code;
     if (certId) {
-      fetchQRCode(certId);
+      generateQRCode(certId);
     }
   }, [certificateData]);
 
-  const fetchQRCode = async (value) => {
+  const generateQRCode = async (certId) => {
     try {
+      // Get the API URL
+      const apiUrl = getApiUrl();
+      
+      // Build the verification URL - this is what will be encoded in the QR code
+      const verificationUrl = `${apiUrl}/api/verify-certificate/${encodeURIComponent(certId)}`;
+      
+      console.log('📱 QR Code URL:', verificationUrl);
+      
+      // Call QR server with the full verification URL
       const response = await axios.get(
-        `https://api.qrserver.com/v1/generate-qr-code/?size=200x200&data=${encodeURIComponent(value)}`,
+        `https://api.qrserver.com/v1/generate-qr-code/?size=200x200&data=${encodeURIComponent(verificationUrl)}`,
         { responseType: "blob" }
       );
       const url = URL.createObjectURL(response.data);
@@ -35,6 +44,10 @@ export default function ProfessionalCertificateDesign({
     } catch (err) {
       console.error("Error generating QR code:", err);
     }
+  };
+
+  const fetchQRCode = async (value) => {
+    // This is now handled by generateQRCode
   };
 
   const handleDownloadPDF = async () => {
