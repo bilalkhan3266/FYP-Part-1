@@ -514,10 +514,6 @@ export default function StudentDashboard() {
                 <span class="info-value">${sapId}</span>
               </div>
               <div class="info-row">
-                <span class="info-label">Registration Number:</span>
-                <span class="info-value">${regNo}</span>
-              </div>
-              <div class="info-row">
                 <span class="info-label">Program:</span>
                 <span class="info-value">${program}</span>
               </div>

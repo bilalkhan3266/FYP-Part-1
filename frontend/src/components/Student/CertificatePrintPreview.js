@@ -22,7 +22,6 @@ export const CertificatePrintPreview = ({ certificate, onClose }) => {
 
   const studentName = certData.student_name || certData.studentName || "Student Name";
   const sapId = certData.sapid || certData.sapId || "SAP ID";
-  const regNo = certData.registration_no || certData.registrationNo || "Registration Number";
   const program = certData.program || "Program";
   const qrCode = certData.qr_code || `CLEARANCE_${sapId}_${Date.now()}`;
 
@@ -126,10 +125,6 @@ export const CertificatePrintPreview = ({ certificate, onClose }) => {
                 <div className="cert-info-row">
                   <span className="cert-label">SAP ID:</span>
                   <span className="cert-value">{sapId}</span>
-                </div>
-                <div className="cert-info-row">
-                  <span className="cert-label">Registration Number:</span>
-                  <span className="cert-value">{regNo}</span>
                 </div>
                 <div className="cert-info-row">
                   <span className="cert-label">Program:</span>
@@ -256,10 +251,6 @@ export const CertificatePrintPreview = ({ certificate, onClose }) => {
                     <div>
                       <p className="font-bold">SAP ID:</p>
                       <p className="font-mono">{sapId}</p>
-                    </div>
-                    <div>
-                      <p className="font-bold">Registration No:</p>
-                      <p>{regNo}</p>
                     </div>
                     <div>
                       <p className="font-bold">Program:</p>
