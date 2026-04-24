@@ -118,6 +118,87 @@ app.get('/api/test-email', async (req, res) => {
     res.status(500).json({ success: false, message: 'Email test threw error', error: err.message });
   }
 });
+
+// --------------------
+// PUBLIC: Verify Certificate via QR Code (No Auth Required)
+// --------------------
+app.get('/api/verify-certificate/:certificateId', async (req, res) => {
+  try {
+    const { certificateId } = req.params;
+    
+    console.log(`🔍 Certificate verification request for: ${certificateId}`);
+
+    // Parse the QR code format: CLEARANCE_sapid_mongoId or just the mongoId
+    let recordId = certificateId;
+    
+    // If it's in the format CLEARANCE_sapid_id, extract the id
+    if (certificateId.startsWith('CLEARANCE_')) {
+      const parts = certificateId.split('_');
+      if (parts.length >= 3) {
+        // Get everything after the second underscore as it might contain underscores
+        recordId = parts.slice(2).join('_');
+      }
+    }
+
+    // Find the clearance request
+    let clearanceRecord = await ComprehensiveClearanceValidation.findById(recordId);
+
+    if (!clearanceRecord) {
+      // Try searching by _id if it's a valid MongoDB ObjectId string
+      try {
+        const objectId = new mongoose.Types.ObjectId(recordId);
+        clearanceRecord = await ComprehensiveClearanceValidation.findOne({ _id: objectId });
+      } catch (err) {
+        // Not a valid ObjectId format
+      }
+    }
+
+    if (!clearanceRecord) {
+      return res.status(404).json({ 
+        success: false, 
+        verified: false,
+        message: 'Certificate not found or invalid',
+        certificateId: certificateId,
+        searchedId: recordId
+      });
+    }
+
+    // Check if clearance is completed
+    const isCompleted = clearanceRecord.overallStatus === 'Completed';
+
+    console.log(`✅ Certificate verified: ${clearanceRecord.sapid} - Status: ${clearanceRecord.overallStatus}`);
+
+    res.json({
+      success: true,
+      verified: isCompleted,
+      certificate: {
+        student_name: clearanceRecord.student_name,
+        sapid: clearanceRecord.sapid,
+        program: clearanceRecord.program,
+        semester: clearanceRecord.semester,
+        overall_status: clearanceRecord.overallStatus,
+        certificate_id: certificateId,
+        departments_cleared: clearanceRecord.departmentStatuses
+          ? clearanceRecord.departmentStatuses.filter(d => d.status === 'Approved').map(d => d.name)
+          : [],
+        submitted_at: clearanceRecord.submittedAt,
+        verified_at: new Date(),
+        message: isCompleted 
+          ? `✅ Certificate verified for ${clearanceRecord.student_name}. All clearances completed.`
+          : `⚠️ Clearance not yet completed. Current status: ${clearanceRecord.overallStatus}`
+      }
+    });
+  } catch (err) {
+    console.error('❌ Certificate verification error:', err);
+    res.status(500).json({ 
+      success: false, 
+      verified: false,
+      message: 'Certificate verification failed', 
+      error: err.message 
+    });
+  }
+});
+
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/role_based_system';
 
 console.log('🔄 Attempting to connect to MongoDB...');
@@ -1068,9 +1149,17 @@ app.post('/api/clearance-requests', verifyToken, async (req, res) => {
     // Save ComprehensiveClearanceValidation record
     const comprehensiveRecord = new ComprehensiveClearanceValidation({
       student_id: req.user.id,
-      ...validationResult
+      ...validationResult,
+      qr_code: `CLEARANCE_${sapid_str}_${validationResult._id || 'pending'}`
     });
     const savedRecord = await comprehensiveRecord.save();
+    
+    // Update with actual QR code now that we have the _id
+    if (!savedRecord.qr_code || savedRecord.qr_code.includes('pending')) {
+      savedRecord.qr_code = `CLEARANCE_${sapid_str}_${savedRecord._id}`;
+      await savedRecord.save();
+    }
+    
     console.log(`✅ Validation saved: ${savedRecord._id}, status: ${validationResult.overallStatus}`);
 
     // Create DepartmentClearance records (for department dashboards)
