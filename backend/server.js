@@ -128,32 +128,48 @@ app.get('/api/verify-certificate/:certificateId', async (req, res) => {
     
     console.log(`🔍 Certificate verification request for: ${certificateId}`);
 
-    // Parse the QR code format: CLEARANCE_sapid_mongoId or just the mongoId
+    let clearanceRecord = null;
     let recordId = certificateId;
     
-    // If it's in the format CLEARANCE_sapid_id, extract the id
+    // Try different parsing strategies
+    
+    // Strategy 1: If it starts with CLEARANCE_, extract the ID
     if (certificateId.startsWith('CLEARANCE_')) {
       const parts = certificateId.split('_');
       if (parts.length >= 3) {
-        // Get everything after the second underscore as it might contain underscores
         recordId = parts.slice(2).join('_');
+        console.log(`📋 Extracted ID from CLEARANCE format: ${recordId}`);
       }
     }
 
-    // Find the clearance request
-    let clearanceRecord = await ComprehensiveClearanceValidation.findById(recordId);
+    // Strategy 2: Try to find by _id directly (works if valid MongoDB ObjectId)
+    try {
+      if (mongoose.Types.ObjectId.isValid(recordId)) {
+        clearanceRecord = await ComprehensiveClearanceValidation.findById(recordId);
+        if (clearanceRecord) {
+          console.log(`✅ Found by MongoDB ObjectId: ${recordId}`);
+        }
+      }
+    } catch (idErr) {
+      console.log(`⚠️ Not a valid MongoDB ObjectId: ${recordId}`);
+    }
 
+    // Strategy 3: Try as raw string/UUID in qr_code field
     if (!clearanceRecord) {
-      // Try searching by _id if it's a valid MongoDB ObjectId string
-      try {
-        const objectId = new mongoose.Types.ObjectId(recordId);
-        clearanceRecord = await ComprehensiveClearanceValidation.findOne({ _id: objectId });
-      } catch (err) {
-        // Not a valid ObjectId format
+      clearanceRecord = await ComprehensiveClearanceValidation.findOne({ 
+        $or: [
+          { qr_code: certificateId },
+          { qr_code: `CLEARANCE_${certificateId}` },
+          { _id: recordId }
+        ]
+      });
+      if (clearanceRecord) {
+        console.log(`✅ Found by qr_code field or alternative lookup`);
       }
     }
 
     if (!clearanceRecord) {
+      console.log(`❌ Certificate not found for: ${certificateId}`);
       return res.status(404).json({ 
         success: false, 
         verified: false,
