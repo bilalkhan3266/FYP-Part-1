@@ -2,11 +2,11 @@ const sgMail = require("@sendgrid/mail");
 const nodemailer = require("nodemailer");
 
 // ============================================================
-// PRIMARY: SendGrid HTTP API (works on Railway - no SMTP ports needed)
-// FALLBACK: Nodemailer SMTP (works locally)
+// USE GMAIL SMTP ONLY (Nodemailer)
+// SendGrid requires paid plan and proper configuration
 // ============================================================
 
-const useSendGrid = () => !!process.env.SENDGRID_API_KEY;
+const useSendGrid = () => false; // DISABLED - use Gmail SMTP instead
 
 // Nodemailer transporter (for local dev fallback)
 let transporter = null;
@@ -35,56 +35,47 @@ const createTransporter = () => {
 };
 
 /**
- * Unified send function - uses SendGrid if API key set, else nodemailer
+ * Unified send function - uses Gmail SMTP (Nodemailer)
  */
 const sendEmail = async ({ to, from, subject, html, text }) => {
   const fromAddr = from || `"Riphah Clearance System" <${process.env.EMAIL_USER || "noreply@riphah.edu.pk"}>`;
 
-  if (useSendGrid()) {
-    try {
-      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-      const msg = { to, from: fromAddr, subject, html, text };
-      console.log(`📨 [SendGrid] Sending email to: ${to}`);
-      const [response] = await sgMail.send(msg);
-      console.log(`✅ [SendGrid] Email sent successfully to ${to} | Message ID: ${response.headers["x-message-id"]}`);
-      return { success: true, messageId: response.headers["x-message-id"] };
-    } catch (err) {
-      console.error(`❌ [SendGrid] Error sending to ${to}:`, err.message);
-      console.error(`   Error Code: ${err.code}`);
-      console.error(`   Response:`, err.response?.body || 'No response body');
-      return { success: false, error: err.message };
-    }
-  }
-
-  // Nodemailer fallback
+  // Only use Nodemailer (Gmail SMTP)
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn(`⚠️ [Nodemailer] Email credentials missing - cannot send to ${to}`);
-    return { success: false, reason: "Email not configured (no EMAIL_USER/PASS)" };
+    console.error(`❌ [Gmail] Email credentials missing - cannot send to ${to}`);
+    console.error(`   EMAIL_USER: ${process.env.EMAIL_USER || 'NOT SET'}`);
+    console.error(`   EMAIL_PASS: ${process.env.EMAIL_PASS ? '***SET***' : 'NOT SET'}`);
+    return { success: false, reason: "Email not configured (EMAIL_USER or EMAIL_PASS missing)" };
   }
   
   try {
-    console.log(`📨 [Nodemailer] Connecting to Gmail SMTP for: ${to}`);
+    console.log(`📨 [Gmail SMTP] Sending email to: ${to}`);
     const xport = createTransporter();
     const info = await xport.sendMail({ from: fromAddr, to, subject, html, text });
-    console.log(`✅ [Nodemailer] Email sent successfully to ${to} | Message ID: ${info.messageId}`);
+    console.log(`✅ [Gmail SMTP] Email sent to ${to} | Message ID: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (err) {
-    console.error(`❌ [Nodemailer] Error sending to ${to}:`, err.message);
+    console.error(`❌ [Gmail SMTP] Error sending to ${to}: ${err.message}`);
     console.error(`   Error Code: ${err.code}`);
     if (err.code === 'EAUTH') {
-      console.error(`   ⚠️ Gmail authentication failed - check EMAIL_USER/EMAIL_PASS or generate new App Password`);
+      console.error(`   ⚠️ Gmail authentication failed!`);
+      console.error(`   1. Check that EMAIL_USER and EMAIL_PASS are correct`);
+      console.error(`   2. Generate new App Password: https://myaccount.google.com/apppasswords`);
+      console.error(`   3. Make sure you selected "Mail" and "Windows Computer"`);
     }
     return { success: false, error: err.message };
   }
 };
 
 if (process.env.SENDGRID_API_KEY) {
-  console.log("✅ Email: SendGrid HTTP API (Railway-compatible)");
-} else if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+  console.warn("⚠️ SENDGRID_API_KEY detected but DISABLED - using Gmail SMTP instead");
+}
+if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
   createTransporter();
-  console.log("✅ Email: Nodemailer SMTP (local dev)");
+  console.log("✅ Email: Gmail SMTP (Nodemailer) - production ready");
+  console.log(`   From: ${process.env.EMAIL_USER}`);
 } else {
-  console.warn("⚠️ Email not configured. Set SENDGRID_API_KEY for production.");
+  console.warn("⚠️ Email not configured. Set EMAIL_USER and EMAIL_PASS in .env");
 }
 
 /**
