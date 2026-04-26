@@ -24,9 +24,15 @@ export const setAuthToken = (token) => {
 // Axios request interceptor to automatically attach token from localStorage
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
+    // Don't add auth headers to static assets and public files
+    const staticAssets = ['/manifest.json', '/robots.txt', '/favicon.ico', '.png', '.jpg', '.jpeg', '.gif', '.svg'];
+    const isStaticAsset = staticAssets.some(asset => config.url?.includes(asset));
+    
+    if (!isStaticAsset) {
+      const token = localStorage.getItem("token");
+      if (token) {
+        config.headers["Authorization"] = `Bearer ${token}`;
+      }
     }
     return config;
   },
