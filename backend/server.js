@@ -919,21 +919,28 @@ app.post('/api/forgot-password-request', async (req, res) => {
     console.log(`📧 Reset code for ${email}: ${resetCode}`);
     console.log(`⏱️ Code expires in 15 minutes`);
 
-    // TODO: In production, send this code via email using nodemailer or similar
-    // For now, log it for testing
-    // Example implementation:
-    // const transporter = nodemailer.createTransport({...});
-    // await transporter.sendMail({
-    //   to: email,
-    //   subject: 'Password Reset Code',
-    //   html: `Your password reset code is: ${resetCode}. It expires in 15 minutes.`
-    // });
+    // ==================== SEND RESET CODE EMAIL ====================
+    console.log('📧 Sending password reset email...');
+    try {
+      const emailResult = await sendPasswordResetEmail({
+        userName: user.full_name || user.name || user.email,
+        userEmail: user.email,
+        resetCode: resetCode,
+        expiresInMinutes: 15
+      });
+      
+      if (emailResult.success) {
+        console.log(`✅ Password reset email sent successfully to ${user.email}`);
+      } else {
+        console.warn(`⚠️ Password reset email failed: ${emailResult.reason || emailResult.error}`);
+      }
+    } catch (emailErr) {
+      console.error('❌ Error sending password reset email:', emailErr.message);
+    }
 
     res.json({
       success: true,
-      message: 'Verification code sent to your email',
-      // Remove this in production - only for development/testing:
-      _testCode: process.env.NODE_ENV === 'development' ? resetCode : undefined
+      message: 'Password reset code has been sent to your email'
     });
   } catch (err) {
     console.error('❌ Forgot Password Error:', err.message);
