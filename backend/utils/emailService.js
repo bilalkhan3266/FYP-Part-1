@@ -17,11 +17,15 @@ const createTransporter = () => {
   if (transporter && (now - lastTransporterReset) < 30 * 60 * 1000) return transporter;
   if (transporter) { try { transporter.close(); } catch (e) {} }
 
+  console.log('🔧 Creating Gmail SMTP transporter...');
   transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
     secure: false,
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+    auth: { 
+      user: process.env.EMAIL_USER, 
+      pass: process.env.EMAIL_PASS 
+    },
     pool: true,
     maxConnections: 3,
     connectionTimeout: 30000,
@@ -49,20 +53,41 @@ const sendEmail = async ({ to, from, subject, html, text }) => {
   }
   
   try {
-    console.log(`📨 [Gmail SMTP] Sending email to: ${to}`);
+    console.log(`📨 [Gmail SMTP] Attempting to send email`);
+    console.log(`   To: ${to}`);
+    console.log(`   From: ${fromAddr}`);
+    console.log(`   Subject: ${subject}`);
+    
     const xport = createTransporter();
+    
+    // Verify connection before sending
+    console.log(`🔐 Verifying Gmail SMTP connection...`);
+    await xport.verify();
+    console.log(`✅ Gmail SMTP connection verified successfully`);
+    
+    // Send the email
+    console.log(`📤 Sending email via SMTP...`);
     const info = await xport.sendMail({ from: fromAddr, to, subject, html, text });
-    console.log(`✅ [Gmail SMTP] Email sent to ${to} | Message ID: ${info.messageId}`);
+    console.log(`✅ [Gmail SMTP] Email sent successfully`);
+    console.log(`   Message ID: ${info.messageId}`);
+    console.log(`   Response: ${info.response}`);
     return { success: true, messageId: info.messageId };
   } catch (err) {
-    console.error(`❌ [Gmail SMTP] Error sending to ${to}: ${err.message}`);
+    console.error(`❌ [Gmail SMTP] ERROR sending to ${to}`);
+    console.error(`   Error Message: ${err.message}`);
     console.error(`   Error Code: ${err.code}`);
-    if (err.code === 'EAUTH') {
-      console.error(`   ⚠️ Gmail authentication failed!`);
-      console.error(`   1. Check that EMAIL_USER and EMAIL_PASS are correct`);
-      console.error(`   2. Generate new App Password: https://myaccount.google.com/apppasswords`);
-      console.error(`   3. Make sure you selected "Mail" and "Windows Computer"`);
+    console.error(`   Error Command: ${err.command || 'N/A'}`);
+    
+    if (err.code === 'ECONNREFUSED') {
+      console.error(`   ⚠️ Connection refused - Railway may be blocking SMTP port 587`);
+    } else if (err.code === 'ETIMEDOUT') {
+      console.error(`   ⚠️ Connection timeout - SMTP server unreachable`);
+    } else if (err.code === 'EAUTH') {
+      console.error(`   ⚠️ Gmail authentication failed`);
+      console.error(`   Check: EMAIL_USER and EMAIL_PASS must be correct`);
     }
+    
+    console.error(`   Full Error:`, err);
     return { success: false, error: err.message };
   }
 };

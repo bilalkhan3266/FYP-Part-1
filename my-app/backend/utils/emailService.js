@@ -238,6 +238,11 @@ const sendClearanceCertificateEmail = async ({
     console.log(`   To: ${mailOptions.to}`);
     console.log(`   Subject: ${mailOptions.subject}`);
 
+    // Verify connection first
+    console.log('🔐 Verifying SMTP connection...');
+    await transporter.verify();
+    console.log('✅ SMTP connection verified');
+
     const info = await transporter.sendMail(mailOptions);
     console.log(`✅ Clearance email SENT to ${studentEmail}`);
     console.log(`   Message ID: ${info.messageId}`);
@@ -246,6 +251,12 @@ const sendClearanceCertificateEmail = async ({
   } catch (err) {
     console.error(`❌ FAILED to send clearance email to ${studentEmail}`);
     console.error(`   Error: ${err.message}`);
+    console.error(`   Code: ${err.code}`);
+    if (err.code === 'ECONNREFUSED') {
+      console.error(`   ⚠️ Connection refused - Railway may be blocking SMTP port`);
+    } else if (err.code === 'ETIMEDOUT') {
+      console.error(`   ⚠️ Connection timeout - SMTP unreachable`);
+    }
     console.error(`   Stack: ${err.stack}`);
     return { success: false, error: err.message };
   }
