@@ -53,25 +53,17 @@ router.put('/clearance/department/approve-or-reject', verifyToken, async (req, r
     console.log(`${'='.repeat(70)}\n`);
 
     // Find the clearance validation record
-    console.log(`  🔍 Looking for record with ID: ${requestId}`);
     const ccvRecord = await ComprehensiveClearanceValidation.findById(requestId);
 
     if (!ccvRecord) {
-      console.log(`  ❌ Record NOT FOUND with ID: ${requestId}`);
       return res.status(404).json({
         success: false,
         message: 'Clearance request not found'
       });
     }
 
-    console.log(`  ✅ Record found:`);
-    console.log(`     - SAP ID in record: ${ccvRecord.sapid}`);
-    console.log(`     - Current overallStatus: ${ccvRecord.overallStatus}`);
-    console.log(`     - departmentStatuses count: ${ccvRecord.departmentStatuses.length}`);
-
     // Verify the student SAP ID matches
     if (ccvRecord.sapid !== studentSapId.toString().trim()) {
-      console.log(`  ❌ SAP ID mismatch: record=${ccvRecord.sapid} vs request=${studentSapId}`);
       return res.status(400).json({
         success: false,
         message: 'Student SAP ID does not match the request'
@@ -82,15 +74,11 @@ router.put('/clearance/department/approve-or-reject', verifyToken, async (req, r
     const deptStatusIndex = ccvRecord.departmentStatuses.findIndex(d => d.name === departmentName);
 
     if (deptStatusIndex === -1) {
-      console.log(`  ❌ Department "${departmentName}" not found. Available departments:`);
-      ccvRecord.departmentStatuses.forEach(d => console.log(`    - ${d.name}: ${d.status}`));
       return res.status(400).json({
         success: false,
         message: `Department "${departmentName}" not found in this clearance request`
       });
     }
-
-    console.log(`  ✅ Found department at index ${deptStatusIndex}: ${departmentName} (current status: ${ccvRecord.departmentStatuses[deptStatusIndex].status})`);
 
     const status = action.toUpperCase() === 'APPROVE' ? 'Approved' : 'Rejected';
 
@@ -99,9 +87,6 @@ router.put('/clearance/department/approve-or-reject', verifyToken, async (req, r
     ccvRecord.departmentStatuses[deptStatusIndex].reason = remarks || '';
     ccvRecord.departmentStatuses[deptStatusIndex].validatedAt = new Date();
     ccvRecord.updatedAt = new Date();
-    
-    console.log(`  📝 Updated ${departmentName} status to: ${status}`);
-    console.log(`  📝 Reason: ${remarks || '(none)}'}`);
 
     // Check if all departments are now approved
     const allApproved = ccvRecord.departmentStatuses.every(d => d.status === 'Approved');
@@ -118,50 +103,14 @@ router.put('/clearance/department/approve-or-reject', verifyToken, async (req, r
     }
 
     // Save the updated record
-    const savedRecord = await ccvRecord.save();
-    
-    console.log(`  💾 Record saved successfully`);
-    console.log(`  Verifying saved data:`);
-    console.log(`    - Request ID: ${savedRecord._id}`);
-    console.log(`    - Student SAP: ${savedRecord.sapid}`);
-    console.log(`    - Department Statuses:`);
-    savedRecord.departmentStatuses.forEach(d => {
-      const marker = d.name === departmentName ? '📍' : '  ';
-      console.log(`      ${marker} ${d.name}: ${d.status} (reason: ${d.reason || 'none'})`);
+    await ccvRecord.save();
+
+    console.log(`✅ Updated department status: ${departmentName} → ${status}`);
+    console.log(`   Overall Status: ${ccvRecord.overallStatus}`);
+    console.log(`   Department Statuses:`);
+    ccvRecord.departmentStatuses.forEach(d => {
+      console.log(`     - ${d.name}: ${d.status}`);
     });
-    console.log(`    - Overall Status: ${savedRecord.overallStatus}`);
-
-    // 🔍 VERIFY BY QUERYING DATABASE DIRECTLY
-    console.log(`\n  🔍 Verifying via direct database query...`);
-    const verifyRecord = await ComprehensiveClearanceValidation.findById(requestId);
-    if (verifyRecord) {
-      const verifyDeptStatus = verifyRecord.departmentStatuses.find(d => d.name === departmentName);
-      console.log(`    - Database record found: ${verifyRecord._id}`);
-      console.log(`    - ${departmentName} status in DB: ${verifyDeptStatus?.status || 'NOT FOUND'}`);
-      console.log(`    - ${departmentName} reason in DB: ${verifyDeptStatus?.reason || 'none'}`);
-      console.log(`    - Overall status in DB: ${verifyRecord.overallStatus}`);
-    } else {
-      console.log(`    ❌ Record NOT found in database after save!`);
-    };
-
-    // ✅ SYNC TO DepartmentClearance for dashboard queries
-    const DepartmentClearance = require('../models/DepartmentClearance');
-    console.log(`\n📊 Syncing to DepartmentClearance...`);
-    
-    const syncResult = await DepartmentClearance.updateMany(
-      { clearance_request_id: requestId },
-      {
-        $set: {
-          status: status,
-          remarks: remarks || (status === 'Approved' ? 'Approved by ' + departmentName : ''),
-          approved_by: req.user.email || req.user.full_name,
-          approved_at: status === 'Approved' ? new Date() : null
-        }
-      }
-    );
-    
-    console.log(`   Updated ${syncResult.modifiedCount} DepartmentClearance records`);
-    console.log(`   Status in DepartmentClearance: ${status}\n`);
 
     // Send notification to student
     const notificationMessage = status === 'Approved'

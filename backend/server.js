@@ -325,22 +325,8 @@ app.get('/api/clearance/department', verifyToken, async (req, res) => {
   try {
     const ccvDeptName = req.user.department;
     console.log('\n🔍 Department staff fetching requests for:', ccvDeptName);
-    console.log(`   Staff user info:`);
-    console.log(`   - Email: ${req.user.email}`);
-    console.log(`   - Full Name: ${req.user.full_name}`);
-    console.log(`   - Role: ${req.user.role}`);
-    console.log(`   - Department: "${ccvDeptName}" (type: ${typeof ccvDeptName})`);
-    
-    if (!ccvDeptName) {
-      console.log(`   ⚠️  WARNING: Department is NULL or UNDEFINED!`);
-      return res.status(403).json({
-        success: false,
-        message: 'Your account does not have a department assigned. Contact administrator.'
-      });
-    }
 
     const allRecords = await ComprehensiveClearanceValidation.find().sort({ createdAt: -1 });
-    console.log(`   Total CCV records in database: ${allRecords.length}`);
 
     const transformRecord = (record, statusOverride) => {
       const deptStatus = record.departmentStatuses.find(d => d.name === ccvDeptName);
@@ -360,57 +346,18 @@ app.get('/api/clearance/department', verifyToken, async (req, res) => {
       };
     };
 
+    // APPROVED: fully completed clearances
+    const approvedRecords = allRecords
+      .filter(r => r.overallStatus === 'Completed')
+      .map(r => transformRecord(r, 'Approved'));
+
     // REJECTED: this department specifically rejected the student
     const rejectedRecords = allRecords
       .filter(r => {
         const deptStatus = r.departmentStatuses.find(d => d.name === ccvDeptName);
-        const isRejected = deptStatus && deptStatus.status === 'Rejected';
-        // Log first few for debugging
-        if (r.sapid && (r.sapid === '46451' || allRecords.indexOf(r) < 3)) {
-          console.log(`   [DEBUG] SAP ${r.sapid}: deptStatus=${deptStatus ? deptStatus.status : 'NOT_FOUND'} → isRejected=${isRejected}`);
-        }
-        return isRejected;
+        return deptStatus && deptStatus.status === 'Rejected';
       })
       .map(r => transformRecord(r, 'Rejected'));
-    
-    if (rejectedRecords.length > 0) {
-      console.log(`  🔴 REJECTED RECORDS FOUND (${rejectedRecords.length}):`);
-      rejectedRecords.forEach(r => {
-        console.log(`    - ${r.studentName} (${r.sapid}): ${r.phaseRemarks}`);
-      });
-    } else {
-      console.log(`  🔴 No rejected records found for ${ccvDeptName}`);
-      // Debug: show all department statuses for this department
-      console.log(`  Debug: Checking departmentStatuses for ${ccvDeptName}:`);
-      const allDeptStatuses = allRecords
-        .map(r => {
-          const ds = r.departmentStatuses.find(d => d.name === ccvDeptName);
-          return ds ? { sapid: r.sapid, status: ds.status, reason: ds.reason } : null;
-        })
-        .filter(x => x);
-      if (allDeptStatuses.length > 0) {
-        console.log(`    Found ${allDeptStatuses.length} records with ${ccvDeptName} status:`);
-        allDeptStatuses.forEach(s => {
-          console.log(`      - ${s.sapid}: ${s.status} (${s.reason || 'no reason'})`);
-        });
-      } else {
-        console.log(`    ⚠️  No records found with ${ccvDeptName} in departmentStatuses`);
-        // Show what departments ARE in the records
-        const allDepts = new Set();
-        allRecords.forEach(r => {
-          r.departmentStatuses.forEach(d => allDepts.add(d.name));
-        });
-        console.log(`    Departments found in all records: ${Array.from(allDepts).join(', ')}`);
-      }
-    }
-
-    // APPROVED: this department specifically approved the student
-    const approvedRecords = allRecords
-      .filter(r => {
-        const deptStatus = r.departmentStatuses.find(d => d.name === ccvDeptName);
-        return deptStatus && deptStatus.status === 'Approved';
-      })
-      .map(r => transformRecord(r, 'Approved'));
 
     // PENDING: in-progress requests for this department
     const pendingRecords = allRecords
@@ -4598,11 +4545,6 @@ app.put('/api/hod/requests/:id/reject', verifyToken, async (req, res) => {
 });
 
 // ============================================
-// COMPREHENSIVE APPROVAL/REJECTION ROUTES
-// ============================================
-app.use('/api', comprehensiveApprovalRoutes);
-
-// ============================================
 // CLEARANCE WORKFLOW ROUTES (Sequential 5-Phase)
 // ============================================
 app.use('/api/clearance', clearanceWorkflowRoutes);
@@ -4613,6 +4555,11 @@ app.use('/api/clearance', clearanceWorkflowRoutes);
 app.use('/api/auto-clearance', autoClearanceRoutes);
 app.use('/api/department-issues', issueRoutes);
 app.use('/api/department-returns', returnRoutes);
+
+// ============================================
+// COMPREHENSIVE APPROVAL/REJECTION ROUTES
+// ============================================
+app.use('/api', comprehensiveApprovalRoutes);
 
 // ============================================
 // ADMIN PANEL ROUTES
