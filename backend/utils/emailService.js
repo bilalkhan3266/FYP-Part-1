@@ -41,19 +41,41 @@ const sendEmail = async ({ to, from, subject, html, text }) => {
   const fromAddr = from || `"Riphah Clearance System" <${process.env.EMAIL_USER || "noreply@riphah.edu.pk"}>`;
 
   if (useSendGrid()) {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    const msg = { to, from: fromAddr, subject, html, text };
-    const [response] = await sgMail.send(msg);
-    return { success: true, messageId: response.headers["x-message-id"] };
+    try {
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+      const msg = { to, from: fromAddr, subject, html, text };
+      console.log(`📨 [SendGrid] Sending email to: ${to}`);
+      const [response] = await sgMail.send(msg);
+      console.log(`✅ [SendGrid] Email sent successfully to ${to} | Message ID: ${response.headers["x-message-id"]}`);
+      return { success: true, messageId: response.headers["x-message-id"] };
+    } catch (err) {
+      console.error(`❌ [SendGrid] Error sending to ${to}:`, err.message);
+      console.error(`   Error Code: ${err.code}`);
+      console.error(`   Response:`, err.response?.body || 'No response body');
+      return { success: false, error: err.message };
+    }
   }
 
   // Nodemailer fallback
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    return { success: false, reason: "Email not configured (no SENDGRID_API_KEY or EMAIL_USER/PASS)" };
+    console.warn(`⚠️ [Nodemailer] Email credentials missing - cannot send to ${to}`);
+    return { success: false, reason: "Email not configured (no EMAIL_USER/PASS)" };
   }
-  const xport = createTransporter();
-  const info = await xport.sendMail({ from: fromAddr, to, subject, html, text });
-  return { success: true, messageId: info.messageId };
+  
+  try {
+    console.log(`📨 [Nodemailer] Connecting to Gmail SMTP for: ${to}`);
+    const xport = createTransporter();
+    const info = await xport.sendMail({ from: fromAddr, to, subject, html, text });
+    console.log(`✅ [Nodemailer] Email sent successfully to ${to} | Message ID: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err) {
+    console.error(`❌ [Nodemailer] Error sending to ${to}:`, err.message);
+    console.error(`   Error Code: ${err.code}`);
+    if (err.code === 'EAUTH') {
+      console.error(`   ⚠️ Gmail authentication failed - check EMAIL_USER/EMAIL_PASS or generate new App Password`);
+    }
+    return { success: false, error: err.message };
+  }
 };
 
 if (process.env.SENDGRID_API_KEY) {
