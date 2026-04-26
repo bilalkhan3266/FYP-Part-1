@@ -3575,22 +3575,64 @@ app.get('/api/student/sent-messages', verifyToken, async (req, res) => {
 });
 
 // ========== ADMIN MESSAGE LOG (GET /api/admin/message-log) ==========
-// Admin can view all messages they've sent
+// Admin can view all messages they've sent and received
 app.get('/api/admin/message-log', verifyToken, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Admin access required' });
     }
 
-    const messages = await AdminMessage.find({ 'sender.id': req.user.id })
+    // Fetch messages SENT by admin
+    const sentMessages = await AdminMessage.find({ 'sender.id': req.user.id })
       .sort({ createdAt: -1 })
       .limit(100)
       .lean();
 
-    res.json({ success: true, data: messages });
+    // Transform sent messages to frontend format
+    const transformedSent = sentMessages.map(msg => ({
+      _id: msg._id,
+      sender_type: 'admin',
+      subject: msg.subject,
+      message: msg.message,
+      created_at: msg.createdAt,
+      recipient: msg.recipientDepartment || msg.recipientSapId || 'System',
+      status: msg.status,
+      priority: msg.priority,
+      messageType: msg.messageType
+    }));
+
+    // Fetch messages RECEIVED by admin (from Message collection)
+    const receivedMessages = await Message.find({ 
+      recipient_id: req.user.id,
+      recipient_role: 'admin'
+    })
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
+
+    // Transform received messages to frontend format
+    const transformedReceived = receivedMessages.map(msg => ({
+      _id: msg._id,
+      sender_type: msg.sender_role,
+      subject: msg.subject,
+      message: msg.message,
+      created_at: msg.createdAt,
+      recipient: msg.sender_name || 'Unknown',
+      status: msg.is_read ? 'read' : 'unread',
+      messageType: msg.message_type
+    }));
+
+    // Combine and sort by date
+    const allMessages = [...transformedSent, ...transformedReceived]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 100);
+
+    console.log(`✅ Message log: ${transformedSent.length} sent, ${transformedReceived.length} received`);
+
+    res.json({ success: true, data: allMessages });
   } catch (err) {
     console.error('❌ Message Log Error:', err.message);
-    res.status(500).json({ success: false, message: 'Failed to fetch message log' });
+    res.status(500).json({ success: false, message: 'Failed to fetch message log: ' + err.message });
   }
 });
 
