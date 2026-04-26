@@ -340,6 +340,7 @@ app.get('/api/clearance/department', verifyToken, async (req, res) => {
     }
 
     const allRecords = await ComprehensiveClearanceValidation.find().sort({ createdAt: -1 });
+    console.log(`   Total CCV records in database: ${allRecords.length}`);
 
     const transformRecord = (record, statusOverride) => {
       const deptStatus = record.departmentStatuses.find(d => d.name === ccvDeptName);
@@ -359,27 +360,28 @@ app.get('/api/clearance/department', verifyToken, async (req, res) => {
       };
     };
 
-    // APPROVED: fully completed clearances
-    const approvedRecords = allRecords
-      .filter(r => r.overallStatus === 'Completed')
-      .map(r => transformRecord(r, 'Approved'));
-
     // REJECTED: this department specifically rejected the student
     const rejectedRecords = allRecords
       .filter(r => {
         const deptStatus = r.departmentStatuses.find(d => d.name === ccvDeptName);
-        return deptStatus && deptStatus.status === 'Rejected';
+        const isRejected = deptStatus && deptStatus.status === 'Rejected';
+        // Log first few for debugging
+        if (r.sapid && (r.sapid === '46451' || allRecords.indexOf(r) < 3)) {
+          console.log(`   [DEBUG] SAP ${r.sapid}: deptStatus=${deptStatus ? deptStatus.status : 'NOT_FOUND'} → isRejected=${isRejected}`);
+        }
+        return isRejected;
       })
       .map(r => transformRecord(r, 'Rejected'));
     
     if (rejectedRecords.length > 0) {
-      console.log(`  🔴 REJECTED RECORDS FOUND:`);
+      console.log(`  🔴 REJECTED RECORDS FOUND (${rejectedRecords.length}):`);
       rejectedRecords.forEach(r => {
         console.log(`    - ${r.studentName} (${r.sapid}): ${r.phaseRemarks}`);
       });
     } else {
       console.log(`  🔴 No rejected records found for ${ccvDeptName}`);
       // Debug: show all department statuses for this department
+      console.log(`  Debug: Checking departmentStatuses for ${ccvDeptName}:`);
       const allDeptStatuses = allRecords
         .map(r => {
           const ds = r.departmentStatuses.find(d => d.name === ccvDeptName);
@@ -387,12 +389,28 @@ app.get('/api/clearance/department', verifyToken, async (req, res) => {
         })
         .filter(x => x);
       if (allDeptStatuses.length > 0) {
-        console.log(`  Debug: Statuses for ${ccvDeptName}:`);
+        console.log(`    Found ${allDeptStatuses.length} records with ${ccvDeptName} status:`);
         allDeptStatuses.forEach(s => {
-          console.log(`    - ${s.sapid}: ${s.status} (${s.reason || 'no reason'})`);
+          console.log(`      - ${s.sapid}: ${s.status} (${s.reason || 'no reason'})`);
         });
+      } else {
+        console.log(`    ⚠️  No records found with ${ccvDeptName} in departmentStatuses`);
+        // Show what departments ARE in the records
+        const allDepts = new Set();
+        allRecords.forEach(r => {
+          r.departmentStatuses.forEach(d => allDepts.add(d.name));
+        });
+        console.log(`    Departments found in all records: ${Array.from(allDepts).join(', ')}`);
       }
     }
+
+    // APPROVED: this department specifically approved the student
+    const approvedRecords = allRecords
+      .filter(r => {
+        const deptStatus = r.departmentStatuses.find(d => d.name === ccvDeptName);
+        return deptStatus && deptStatus.status === 'Approved';
+      })
+      .map(r => transformRecord(r, 'Approved'));
 
     // PENDING: in-progress requests for this department
     const pendingRecords = allRecords

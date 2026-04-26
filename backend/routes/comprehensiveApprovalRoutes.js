@@ -53,17 +53,25 @@ router.put('/clearance/department/approve-or-reject', verifyToken, async (req, r
     console.log(`${'='.repeat(70)}\n`);
 
     // Find the clearance validation record
+    console.log(`  🔍 Looking for record with ID: ${requestId}`);
     const ccvRecord = await ComprehensiveClearanceValidation.findById(requestId);
 
     if (!ccvRecord) {
+      console.log(`  ❌ Record NOT FOUND with ID: ${requestId}`);
       return res.status(404).json({
         success: false,
         message: 'Clearance request not found'
       });
     }
 
+    console.log(`  ✅ Record found:`);
+    console.log(`     - SAP ID in record: ${ccvRecord.sapid}`);
+    console.log(`     - Current overallStatus: ${ccvRecord.overallStatus}`);
+    console.log(`     - departmentStatuses count: ${ccvRecord.departmentStatuses.length}`);
+
     // Verify the student SAP ID matches
     if (ccvRecord.sapid !== studentSapId.toString().trim()) {
+      console.log(`  ❌ SAP ID mismatch: record=${ccvRecord.sapid} vs request=${studentSapId}`);
       return res.status(400).json({
         success: false,
         message: 'Student SAP ID does not match the request'
@@ -122,6 +130,19 @@ router.put('/clearance/department/approve-or-reject', verifyToken, async (req, r
       console.log(`      ${marker} ${d.name}: ${d.status} (reason: ${d.reason || 'none'})`);
     });
     console.log(`    - Overall Status: ${savedRecord.overallStatus}`);
+
+    // 🔍 VERIFY BY QUERYING DATABASE DIRECTLY
+    console.log(`\n  🔍 Verifying via direct database query...`);
+    const verifyRecord = await ComprehensiveClearanceValidation.findById(requestId);
+    if (verifyRecord) {
+      const verifyDeptStatus = verifyRecord.departmentStatuses.find(d => d.name === departmentName);
+      console.log(`    - Database record found: ${verifyRecord._id}`);
+      console.log(`    - ${departmentName} status in DB: ${verifyDeptStatus?.status || 'NOT FOUND'}`);
+      console.log(`    - ${departmentName} reason in DB: ${verifyDeptStatus?.reason || 'none'}`);
+      console.log(`    - Overall status in DB: ${verifyRecord.overallStatus}`);
+    } else {
+      console.log(`    ❌ Record NOT found in database after save!`);
+    };
 
     // ✅ SYNC TO DepartmentClearance for dashboard queries
     const DepartmentClearance = require('../models/DepartmentClearance');
