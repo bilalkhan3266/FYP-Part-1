@@ -1324,6 +1324,19 @@ app.get('/api/clearance/department', verifyToken, async (req, res) => {
     const allRecords = await ComprehensiveClearanceValidation.find().sort({ createdAt: -1 });
     console.log(`  📊 Total CCV records: ${allRecords.length}`);
 
+    // ✅ DEDUPLICATE: Keep only latest record per student (by SAP ID)
+    const deduplicatedRecords = [];
+    const seenSapIds = new Set();
+    
+    for (const record of allRecords) {
+      if (!seenSapIds.has(record.sapid)) {
+        seenSapIds.add(record.sapid);
+        deduplicatedRecords.push(record);
+      }
+    }
+    
+    console.log(`  📊 Deduplication: ${allRecords.length} total records → ${deduplicatedRecords.length} unique students`);
+
     // Transform a CCV record into the format the frontend expects
     const transformRecord = (record, statusOverride) => {
       const deptStatus = record.departmentStatuses.find(d => d.name === ccvDeptName);
@@ -1343,12 +1356,12 @@ app.get('/api/clearance/department', verifyToken, async (req, res) => {
     };
 
     // APPROVED: Students cleared from ALL departments (overallStatus === "Completed")
-    const approvedRecords = allRecords
+    const approvedRecords = deduplicatedRecords
       .filter(r => r.overallStatus === 'Completed')
       .map(r => transformRecord(r, 'Approved'));
 
     // REJECTED: Students where THIS specific department rejected them
-    const rejectedRecords = allRecords
+    const rejectedRecords = deduplicatedRecords
       .filter(r => {
         const deptStatus = r.departmentStatuses.find(d => d.name === ccvDeptName);
         return deptStatus && deptStatus.status === 'Rejected';
@@ -1356,7 +1369,7 @@ app.get('/api/clearance/department', verifyToken, async (req, res) => {
       .map(r => transformRecord(r, 'Rejected'));
 
     // PENDING: Students whose request is still in progress for this department
-    const pendingRecords = allRecords
+    const pendingRecords = deduplicatedRecords
       .filter(r => {
         if (r.overallStatus === 'Completed') return false;
         const deptStatus = r.departmentStatuses.find(d => d.name === ccvDeptName);

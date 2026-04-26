@@ -194,6 +194,16 @@ async function canStudentSubmitClearance(sapId, ComprehensiveClearanceValidation
       };
     }
 
+    // ✅ Allow resubmission when status is "Resubmission"
+    if (existingRecord.overallStatus === "Resubmission") {
+      return {
+        canSubmit: true,
+        reason: "Your request is in resubmission state. You can submit again.",
+        existingRecord: existingRecord,
+        isResubmission: true
+      };
+    }
+
     return {
       canSubmit: false,
       reason: "Unable to determine clearance status",
