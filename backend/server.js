@@ -2853,6 +2853,26 @@ app.post('/api/admin/send-message', verifyToken, async (req, res) => {
   }
 });
 
+// ========== ADMIN MESSAGE LOG (GET /api/admin/message-log) ==========
+// Admin can view all messages they've sent
+app.get('/api/admin/message-log', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
+
+    const messages = await AdminMessage.find({ 'sender.id': req.user.id })
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
+
+    res.json({ success: true, data: messages });
+  } catch (err) {
+    console.error('❌ Message Log Error:', err.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch message log' });
+  }
+});
+
 // Get all conversations for a student (by SAPID)
 app.get('/api/conversations', verifyToken, async (req, res) => {
   try {
