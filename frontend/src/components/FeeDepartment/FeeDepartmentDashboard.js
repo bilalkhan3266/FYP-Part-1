@@ -11,9 +11,9 @@ export default function FeeDepartmentDashboard() {
   const { user, logout } = useAuthContext();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState("approved");
+  const [activeTab, setActiveTab] = useState("pending");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [allData, setAllData] = useState({ approved: [], rejected: [] });
+  const [allData, setAllData] = useState({ pending: [], approved: [], rejected: [] });
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -38,6 +38,20 @@ export default function FeeDepartmentDashboard() {
       if (response.data.success) {
         // Store all data
         const allTabsData = {
+          pending: (response.data.pending || []).map(r => ({
+            _id: r._id,
+            student_name: r.studentName || "Unknown Student",
+            sapid: r.sapid,
+            program: r.program,
+            semester: r.semester,
+            status: r.phaseStatus,
+            remarks: r.phaseRemarks,
+            createdAt: r.submittedAt,
+            completedAt: r.completedAt,
+            overallStatus: r.overallStatus,
+            currentPhase: r.currentPhase,
+            phases: r.phases,
+          })),
           approved: (response.data.approved || []).map(r => ({
             _id: r._id,
             student_name: r.studentName || "Unknown Student",
@@ -180,8 +194,9 @@ export default function FeeDepartmentDashboard() {
   const [stats, setStats] = useState({ approved: 0, rejected: 0, total: 0 });
 
   useEffect(() => {
-    const totalRequests = allData.approved.length + allData.rejected.length;
+    const totalRequests = allData.pending.length + allData.approved.length + allData.rejected.length;
     setStats({
+      pending: allData.pending.length,
       approved: allData.approved.length,
       rejected: allData.rejected.length,
       total: totalRequests,

@@ -15,6 +15,7 @@ const clearanceWorkflowRoutes = require("./routes/clearanceWorkflowRoutes");
 const issueRoutes = require("./routes/issueRoutes");
 const returnRoutes = require("./routes/returnRoutes");
 const autoClearanceRoutes = require("./routes/autoClearanceRoutes");
+const comprehensiveApprovalRoutes = require("./routes/comprehensiveApprovalRoutes");
 
 // Import Models
 const User = require("./models/User");
@@ -1719,6 +1720,8 @@ app.post('/api/clearance-requests/resubmit', verifyToken, async (req, res) => {
 // --------------------
 // Re-run validation for a rejected clearance request (student resubmit)
 // --------------------
+// Student resubmits after rejection - re-validates clearance across all departments
+// --------------------
 app.post('/api/clearance-requests/:id/resubmit', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
@@ -1737,6 +1740,9 @@ app.post('/api/clearance-requests/:id/resubmit', verifyToken, async (req, res) =
     if (existingRecord.overallStatus === 'Completed') {
       return res.status(400).json({ success: false, message: 'This clearance request is already completed' });
     }
+
+    console.log(`  Current status: ${existingRecord.overallStatus}`);
+    console.log(`  Department statuses:`, existingRecord.departmentStatuses.map(d => `${d.name}: ${d.status}`).join(', '));
 
     // Archive current state before overwriting
     const snapshot = {
@@ -1757,7 +1763,9 @@ app.post('/api/clearance-requests/:id/resubmit', verifyToken, async (req, res) =
     };
     const sapid = existingRecord.sapid;
     const validationResult = await validateStudentClearanceAllDepartments(sapid, studentInfo);
+    console.log(`\n  ✅ Re-validation complete:`);
     console.log(`  New overall status: ${validationResult.overallStatus}`);
+    console.log(`  Department results:`, validationResult.departmentStatuses.map(d => `${d.name}: ${d.status}`).join(', '));
 
     // Update the record with fresh validation results
     const updatedRecord = await ComprehensiveClearanceValidation.findByIdAndUpdate(
@@ -1780,22 +1788,27 @@ app.post('/api/clearance-requests/:id/resubmit', verifyToken, async (req, res) =
     );
 
     // Sync DepartmentClearance records for department dashboards
+    // This ensures rejected requests are removed from department rejected tabs and moved to pending
     for (const dept of validationResult.departmentStatuses) {
-      const newStatus = dept.status === 'Approved' ? 'Approved' : (dept.status === 'Not Processed' ? 'Pending' : 'Pending');
+      const newStatus = dept.status === 'Approved' ? 'Approved' : (dept.status === 'Rejected' ? 'Rejected' : 'Pending');
+      console.log(`  Syncing DepartmentClearance: ${dept.name} → ${newStatus}`);
+      
       await DepartmentClearance.findOneAndUpdate(
         { clearance_request_id: id, department_name: dept.name },
         {
           $set: {
             status: newStatus,
-            remarks: dept.status === 'Approved' ? 'Re-validated: Approved' : (dept.reason || 'Resubmitted'),
-            approved_at: dept.status === 'Approved' ? new Date() : null
+            remarks: newStatus === 'Approved' ? 'Re-validated: Approved' : (dept.reason || 'Resubmitted for review'),
+            approved_at: newStatus === 'Approved' ? new Date() : null
           }
-        }
+        },
+        { upsert: true }
       );
     }
 
     // Send certificate email if now completed
     if (validationResult.overallStatus === 'Completed') {
+      console.log('\n  🎉 ALL DEPARTMENTS CLEARED! Sending certificate email...');
       try {
         const studentUser = await User.findById(studentId);
         if (studentUser && studentUser.email) {
@@ -1810,12 +1823,12 @@ app.post('/api/clearance-requests/:id/resubmit', verifyToken, async (req, res) =
             approvedAt: new Date(),
             departments: validationResult.departmentStatuses.map(d => ({ name: d.name, status: d.status }))
           }).then(r => {
-            if (r.success) console.log(`✅ Certificate email sent to ${studentUser.email}`);
-            else console.warn(`⚠️ Certificate email failed: ${r.reason || r.error}`);
-          }).catch(e => console.error('Certificate email error:', e.message));
+            if (r.success) console.log(`  ✅ Certificate email sent to ${studentUser.email}`);
+            else console.warn(`  ⚠️ Certificate email failed: ${r.reason || r.error}`);
+          }).catch(e => console.error('  Certificate email error:', e.message));
         }
       } catch (emailErr) {
-        console.error('Certificate email lookup error:', emailErr.message);
+        console.error('  Certificate email lookup error:', emailErr.message);
       }
 
       // Notification to student
@@ -1832,25 +1845,39 @@ app.post('/api/clearance-requests/:id/resubmit', verifyToken, async (req, res) =
         message: 'Congratulations! Your resubmitted clearance request has been APPROVED by all departments.',
         message_type: 'notification'
       }).save().catch(e => console.error('Notification error:', e));
+    } else if (validationResult.overallStatus === 'Rejected') {
+      console.log('\n  ❌ Still has rejected departments');
+      // Notify student which departments rejected them
+      const rejectedDepts = validationResult.departmentStatuses.filter(d => d.status === 'Rejected');
+      new Message({
+        conversation_id: `${sapid}-resubmit-still-rejected-${Date.now()}`,
+        sender_id: new mongoose.Types.ObjectId(),
+        sender_name: 'Clearance System',
+        sender_role: 'system',
+        sender_sapid: 'SYSTEM',
+        recipient_sapid: sapid,
+        recipient_id: studentId,
+        recipient_department: 'System',
+        subject: '⚠️ Clearance Still Rejected',
+        message: `Your resubmitted request still has rejections from: ${rejectedDepts.map(d => d.name).join(', ')}.\n\nReason(s):\n${rejectedDepts.map(d => `${d.name}: ${d.reason}`).join('\n')}`,
+        message_type: 'warning'
+      }).save().catch(e => console.error('Notification error:', e));
     }
 
-    // Build transformed response (same shape as GET /api/clearance-requests)
-    const statusMap = { 'Completed': 'Approved', 'Pending': 'Pending', 'Rejected': 'Rejected', 'Resubmission': 'Resubmission' };
-    const responseRecord = {
-      _id: updatedRecord._id,
-      overallStatus: updatedRecord.overallStatus,
-      status: statusMap[updatedRecord.overallStatus] || updatedRecord.overallStatus,
-      departmentStatuses: updatedRecord.departmentStatuses.map(d => ({
-        name: d.name, status: d.status, reason: d.reason, pendingItems: d.pendingItems || [], validatedAt: d.validatedAt
-      }))
-    };
-
+    // Return success response with updated record
     res.json({
       success: true,
       message: validationResult.overallStatus === 'Completed'
         ? '✅ Clearance APPROVED - All departments cleared!'
-        : '⚠️ Resubmitted. Some departments still have pending issues.',
-      record: responseRecord
+        : validationResult.overallStatus === 'Rejected'
+        ? '⚠️ Resubmitted, but some departments still have pending issues.'
+        : '⏳ Resubmitted and awaiting department review.',
+      data: {
+        _id: updatedRecord._id,
+        overallStatus: updatedRecord.overallStatus,
+        departmentStatuses: updatedRecord.departmentStatuses,
+        submissionCount: updatedRecord.submissionCount
+      }
     });
   } catch (err) {
     console.error('❌ Resubmit Validation Error:', err);
@@ -4528,6 +4555,11 @@ app.use('/api/clearance', clearanceWorkflowRoutes);
 app.use('/api/auto-clearance', autoClearanceRoutes);
 app.use('/api/department-issues', issueRoutes);
 app.use('/api/department-returns', returnRoutes);
+
+// ============================================
+// COMPREHENSIVE APPROVAL/REJECTION ROUTES
+// ============================================
+app.use('/api', comprehensiveApprovalRoutes);
 
 // ============================================
 // ADMIN PANEL ROUTES
