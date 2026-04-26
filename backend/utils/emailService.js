@@ -2,11 +2,11 @@ const sgMail = require("@sendgrid/mail");
 const nodemailer = require("nodemailer");
 
 // ============================================================
-// USE GMAIL SMTP ONLY (Nodemailer)
-// SendGrid requires paid plan and proper configuration
+// USE SendGrid HTTP API (Primary - works on Railway)
+// No SMTP port blocking issues
 // ============================================================
 
-const useSendGrid = () => false; // DISABLED - use Gmail SMTP instead
+const useSendGrid = () => !!process.env.SENDGRID_API_KEY;
 
 // Nodemailer transporter (for local dev fallback)
 let transporter = null;
@@ -39,19 +39,48 @@ const createTransporter = () => {
 };
 
 /**
- * Unified send function - uses Gmail SMTP (Nodemailer)
+ * Unified send function - uses SendGrid first, Gmail SMTP as fallback (dev only)
  */
 const sendEmail = async ({ to, from, subject, html, text }) => {
   const fromAddr = from || `"Riphah Clearance System" <${process.env.EMAIL_USER || "noreply@riphah.edu.pk"}>`;
 
-  // Only use Nodemailer (Gmail SMTP)
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.error(`❌ [Gmail] Email credentials missing - cannot send to ${to}`);
-    console.error(`   EMAIL_USER: ${process.env.EMAIL_USER || 'NOT SET'}`);
-    console.error(`   EMAIL_PASS: ${process.env.EMAIL_PASS ? '***SET***' : 'NOT SET'}`);
-    return { success: false, reason: "Email not configured (EMAIL_USER or EMAIL_PASS missing)" };
+  // PRIMARY: SendGrid HTTP API (works on Railway)
+  if (useSendGrid()) {
+    try {
+      console.log(`📨 [SendGrid HTTP] Sending to: ${to}`);
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+      const msg = { to, from: fromAddr, subject, html, text };
+      const response = await sgMail.send(msg);
+      console.log(`✅ [SendGrid HTTP] Email sent successfully | Status: ${response[0].statusCode}`);
+      return { success: true, messageId: response[0].headers["x-message-id"] || "sendgrid-" + Date.now() };
+    } catch (err) {
+      console.error(`❌ [SendGrid HTTP] Error: ${err.message}`);
+      if (err.response?.body?.errors) {
+        console.error(`   Details:`, err.response.body.errors);
+      }
+      // On production, fail immediately
+      if (process.env.NODE_ENV === 'production') {
+        console.error(`❌ PRODUCTION: SendGrid required but failed!`);
+        return { success: false, error: `SendGrid failed: ${err.message}` };
+      }
+      // Only fallback on development
+      console.log(`⚠️ DEVELOPMENT: Falling back to Gmail SMTP...`);
+    }
   }
-  
+
+  // PRODUCTION MODE: Require SendGrid
+  if (process.env.NODE_ENV === 'production' && !useSendGrid()) {
+    console.error(`❌ PRODUCTION ERROR: SENDGRID_API_KEY not set!`);
+    console.error(`   Cannot send emails without SendGrid on production.`);
+    return { success: false, error: "SendGrid not configured (SENDGRID_API_KEY missing)" };
+  }
+
+  // FALLBACK: Gmail SMTP (only in development)
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.error(`❌ Email credentials missing`);
+    return { success: false, error: "Email credentials not configured" };
+  }
+
   try {
     console.log(`📨 [Gmail SMTP] Attempting to send email`);
     console.log(`   To: ${to}`);
@@ -76,8 +105,7 @@ const sendEmail = async ({ to, from, subject, html, text }) => {
     console.error(`❌ [Gmail SMTP] ERROR sending to ${to}`);
     console.error(`   Error Message: ${err.message}`);
     console.error(`   Error Code: ${err.code}`);
-    console.error(`   Error Command: ${err.command || 'N/A'}`);
-    
+    console.error(`   Error Command: ${err.command || 'N/A'}`);    
     if (err.code === 'ECONNREFUSED') {
       console.error(`   ⚠️ Connection refused - Railway may be blocking SMTP port 587`);
     } else if (err.code === 'ETIMEDOUT') {
